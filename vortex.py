@@ -2,58 +2,70 @@
 from fractions import Fraction
 from math import floor
 
-def sam(t):
-    return Fraction(floor(t))
-
-def nextSam(t):
-    return sam(t)+1
-
-def wholeCycle(t):
-    return (sam(t), nextSam(t))
-
-def spanCycles(b, e):
-    if e <= b:
-        return []
-    if sam(b) == sam(e):
-        return [(b,e)]
-    # otherwise
-    nextB = nextSam(b)
-    spans = spanCycles(nextB, e)
-    spans.insert(0, (b, nextB))
-    return spans
-    
+# flatten list of lists
 def concat(t):
     return [item for sublist in t for item in sublist]
 
+Fraction.sam = lambda self: Fraction(floor(self))
+Fraction.nextSam = lambda self: self.sam() + 1
+Fraction.wholeCycle = lambda self: TimeSpan(self.sam(), self.nextSam())
+
+class TimeSpan:
+    def __init__(self, begin, end):
+        self.begin = begin
+        self.end = end
+
+    # TODO - make this more imperative
+    def spanCycles(self):
+        if self.end <= self.begin:
+            return []
+        if self.begin.sam() == self.end.sam():
+            return [self]
+        
+        # otherwise
+        nextB = self.begin.nextSam()
+        spans = TimeSpan(nextB, self.end).spanCycles()
+        spans.insert(0, TimeSpan(self.begin, nextB))
+        return spans
+    
+    def __repr__(self):
+        return ("TimeSpan(" + self.begin.__repr__()
+                + ", "
+                + self.end.__repr__() + ")"
+               )
+    
 class Pattern:
     def __init__(self, query):
         self.query = query
 
-    # Splits queries at cycle boundaries. Makes some calculations easy
-    # express, as everything then happens within a cycle.
+    # Splits queries at cycle boundaries. Makes some calculations easier
+    # to express, as everything then happens within a cycle.
     def splitQueries(self):
-        def query (b, e): 
-            return list(map(lambda span: self.query(span[0],span[1]), spanCycles(b, e)))
+        def query(span): 
+            return concat(list(map(self.query, span.spanCycles())))
         return Pattern(query)
-        
 
-def silence():
-    return Pattern(lambda b, e: [])
+# Should this be a value or a function?
+silence = Pattern(lambda _: [])
 
 def atom(value):
-    def query(b, e):
-        spans = spanCycles(b,e)
-        return list(map(lambda span: (wholeCycle(span[0]), span, value), spans))
+    def query(span):
+        return list(map(lambda subspan: (subspan.begin.wholeCycle(),
+                                         subspan,
+                                         value
+                                        ),
+                        span.spanCycles()
+                       )
+                   )
     return Pattern(query)
 
 def slowcat(pats):
-    def query(b,e):
-        pat = pats[floor(b) % len(pats)]
-        return pat.query(b,e)
-    pat = Pattern(query)
-    return pat.splitQueries()
+    def query(span):
+        pat = pats[floor(span.begin) % len(pats)]
+        return pat.query(span)
+    return Pattern(query).splitQueries()
 
 a = atom("hello")
 b = atom("world")
 c = slowcat([a,b])
-c.query(0,2)
+c.query(TimeSpan(Fraction(0),Fraction(2)))
