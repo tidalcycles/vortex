@@ -43,6 +43,13 @@ class Event:
         self.part = part
         self.value = value
 
+    def withSpan(self, f):
+        if self.whole == None:
+            whole = None
+        else:
+            whole = f(self.whole)
+        return Event(whole, f(self.part), self.value)
+            
     def __repr__(self):
         return ("Event(" + self.whole.__repr__()
                 + ", "
@@ -68,13 +75,21 @@ class Pattern:
     def withQueryTime(self, f):
         return Pattern(lambda span: self.query(span.withTime(f)))
 
-    #def withEventSpan(self, f):
-    #    def query(span):
-    #        events = self.query(span)
-    #        def x(event):
-    #            
-    #        map (
-    #    return Pattern(query)
+    def withEventSpan(self, f):
+        def query(span):
+            return list(map(lambda event: event.withSpan(f),
+                            self.query(span)
+                           )
+                       )
+        return Pattern(query)
+    
+    def withEventTime(self, f):
+        return self.withEventSpan(lambda span: span.withTime(f))
+
+    def fast(self, factor):
+        fastQuery = self.withQueryTime(lambda t: t*factor)
+        fastEvents = fastQuery.withEventTime(lambda t: t/factor)
+        return fastEvents
 
 # Should this be a value or a function?
 silence = Pattern(lambda _: [])
@@ -96,7 +111,11 @@ def slowcat(pats):
         return pat.query(span)
     return Pattern(query).splitQueries()
 
+def fastcat(pats):
+    return slowcat(pats).fast(len(pats))
+
 a = atom("hello")
 b = atom("world")
-c = slowcat([a,b])
+c = fastcat([a,b])
 c.query(TimeSpan(Fraction(0),Fraction(2)))
+c.fast(2).query(TimeSpan(Fraction(0), Fraction(1)))
