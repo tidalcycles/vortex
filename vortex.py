@@ -25,43 +25,43 @@ def removeNone(t) -> list:
 Time = Fraction # Time is rational
 def sam(frac: Time) -> Time: return Time(floor(frac))
 def nextSam(frac: Time) -> Time: return Time(sam(frac) + 1)
-def wholeCycle(frac: Time) -> Arc: return Arc(sam(frac), nextSam(frac))
+def wholeCycle(frac: Time) -> TimeSpan: return TimeSpan(sam(frac), nextSam(frac))
 
 
-class Arc:
+class TimeSpan:
 
-    """ Arc is (Time, Time) """
-
+    """ TimeSpan is (Time, Time) """
+    
     def __init__(self, begin: Time, end: Time):
         self.begin = begin
         self.end = end
 
-    # TODO - make this more imperative
     def spanCycles(self) -> list:
+        """ Splits a timespan at cycle boundaries """
+        
+        # TODO - make this more imperative
 
-        # Tests
-        endLower = self.end <= self.begin
-        endEqual = sam(self.begin) == sam(self.end)
-
-        if endLower:
+        if self.end <= self.begin:
+            # no cycles in the timespan..
             return []
-        elif endEqual:
+        elif sam(self.begin) == sam(self.end):
+            # Timespan is all within one cycle
             return [self]
         else:
             nextB = nextSam(self.begin)
-            spans = Arc(nextB, self.end).spanCycles()
-            spans.insert(0, Arc(self.begin, nextB))
+            spans = TimeSpan(nextB, self.end).spanCycles()
+            spans.insert(0, TimeSpan(self.begin, nextB))
             return spans
 
-    def withTime(self, f) -> Arc:
-        return Arc(f(self.begin), f(self.end))
+    def withTime(self, f) -> TimeSpan:
+        return TimeSpan(f(self.begin), f(self.end))
 
-    """ Intersection of two timespans """
     def sect(self, other):
-        return Arc(max(self.begin, other.begin), min(self.end, other.end))
+        """ Intersection of two timespans """
+        return TimeSpan(max(self.begin, other.begin), min(self.end, other.end))
 
-    """ Like sect, but returns None if they don't intersect """
     def maybeSect(a, b):
+        """ Like sect, but returns None if they don't intersect """
         s = a.sect(b)
         if s.end <= s.begin:
             return None
@@ -69,7 +69,7 @@ class Arc:
             return s
     
     def __repr__(self) -> str:
-        return ("Arc(" + self.begin.__repr__() + ", " 
+        return ("TimeSpan(" + self.begin.__repr__() + ", " 
                 +  self.end.__repr__() + ")")
 
 
@@ -138,13 +138,13 @@ class Pattern:
     # alias
     fmap = withValue
     
-    """
-    Assumes self is a pattern of functions, and given a function to
-    resolve wholes, applies a given pattern of values to that pattern
-    of functions.
-
-    """
     def _app(self, wf, patv):
+        """
+        Assumes self is a pattern of functions, and given a function to
+        resolve wholes, applies a given pattern of values to that
+        pattern of functions.
+
+        """
         patf = self
         def query(span):
             efs = patf.query(span)
@@ -157,24 +157,24 @@ class Pattern:
             return list(concat(map (lambda ef: removeNone(map (lambda ev: apply(ef, ev),evs)),efs)))
         return Pattern(query)
 
-    """ Tidal's pattern <*> """
     def app(self, patv):
+        """ Tidal's <*> """
         def wholef(a, b):
             if a == None or b == None:
                 return None
             return a.sect(b)
         return self._app(wholef, patv)
 
-    """ Tidal's <* """
     def appl(self, patv):
+        """ Tidal's <* """
         def wholef(a, b):
             if a == None or b == None:
                 return None
             return a
         return self._app(wholef, patv)
 
-    """ Tidal's *> """
     def appr(self, patv):
+        """ Tidal's *> """
         def wholef(a, b):
             if a == None or b == None:
                 return None
@@ -192,18 +192,19 @@ class Pattern:
         return self.fast(1/factor)
 
     def early(self, offset) -> Pattern:
-        """ Equivalent of Haskell Tidal <~ operator """
+        """ Equivalent of Tidal's <~ operator """
         return self.withQueryTime(
                 lambda t: t+offset).withEventTime(lambda t: t-offset)
 
     def late(self, offset) -> Pattern:
-        """ Equivalent of Haskell Tidal ~> operator """
+        """ Equivalent of Tidal's ~> operator """
         return self.early(0-offset)
     
-    def firstCycle(self) -> Pattern:
-        return self.query(Arc(Time(0), Time(1)))            
-    
-def atom(value) -> Pattern:
+    def firstCycle(self):
+        return self.query(TimeSpan(Time(0), Time(1)))            
+
+def pure(value) -> Pattern:
+    """ Returns a pattern that repeats the given value once per cycle """
     def query(span):
         return list(map(
             lambda subspan: Event(
@@ -211,16 +212,27 @@ def atom(value) -> Pattern:
             span.spanCycles()))
     return Pattern(query)
 
+# alias
+atom = pure
+
 def slowcat(pats) -> Pattern:
-    """ Concatenation: will join two patterns """
+    """Concatenation: combines a list of patterns, switching between them
+    successively, one per cycle. 
+    (currently behaves slightly differently from Tidal)
+
+    """
     def query(span):
         pat = pats[floor(span.begin) % len(pats)]
         return pat.query(span)
     return Pattern(query).splitQueries()
 
 def fastcat(pats) -> Pattern:
-    """ Concatenation: pushes everything into a pattern """
+    """Concatenation: as with slowcat, but squashes a cycle from each
+    pattern into one cycle"""
     return slowcat(pats).fast(len(pats))
+
+# alias
+cat = fastcat
 
 def stack(pats) -> Pattern:
     """ Pile up patterns """
@@ -228,10 +240,9 @@ def stack(pats) -> Pattern:
         return concat(list(map(lambda pat: pat.query(span), pats)))
     return Pattern(query)
 
-
-def pattern_pretty_printing(pattern: Pattern, query_arc: Arc) -> None:
+def pattern_pretty_printing(pattern: Pattern, query_span: TimeSpan) -> None:
     """ Better formatting for printing Tidal Patterns """
-    for event in pattern.query(query_arc):
+    for event in pattern.query(query_span):
         print(event)
 
 # Should this be a value or a function?
@@ -240,7 +251,7 @@ silence = Pattern(lambda _: [])
 
 if __name__ == "__main__":
 
-    # Simple pattern
+    # Simple patterns
     a = atom("hello")
     b = atom("world")
     c = fastcat([a,b])
@@ -249,13 +260,13 @@ if __name__ == "__main__":
     print("\n== TEST PATTERN ==\n")
     pattern_pretty_printing(
             pattern= c, 
-            query_arc= Arc(Time(0),Time(2)))
+            query_span= TimeSpan(Time(0),Time(2)))
 
     # Printing the pattern with fast
     print("\n== SAME BUT FASTER==\n")
     pattern_pretty_printing(
             pattern= c.fast(2),
-            query_arc= Arc(Time(0), Time(1)))
+            query_span= TimeSpan(Time(0), Time(1)))
 
     # Apply pattern of values to a pattern of functions
     print("\n== APPLICATIVE ==\n")
@@ -264,6 +275,6 @@ if __name__ == "__main__":
     z = x.app(y)
     pattern_pretty_printing(
             pattern= z,
-            query_arc= Arc(Time(0), Time(1)))
+            query_span= TimeSpan(Time(0), Time(1)))
 
 
