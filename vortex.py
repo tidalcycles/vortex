@@ -27,11 +27,28 @@ class TimeSpan:
         spans = TimeSpan(nextB, self.end).spanCycles()
         spans.insert(0, TimeSpan(self.begin, nextB))
         return spans
+
+    def withTime(self, f):
+        return TimeSpan(f(self.begin), f(self.end))
     
     def __repr__(self):
         return ("TimeSpan(" + self.begin.__repr__()
                 + ", "
                 + self.end.__repr__() + ")"
+               )
+
+class Event:
+    def __init__(self, whole, part, value):
+        self.whole = whole
+        self.part = part
+        self.value = value
+
+    def __repr__(self):
+        return ("Event(" + self.whole.__repr__()
+                + ", "
+                + self.part.__repr__() + ")"
+                + ", "
+                + self.value.__repr__() + ")"
                )
     
 class Pattern:
@@ -45,15 +62,29 @@ class Pattern:
             return concat(list(map(self.query, span.spanCycles())))
         return Pattern(query)
 
+    def withQuerySpan(self, f):
+        return Pattern(lambda span: self.query(f(span)))
+
+    def withQueryTime(self, f):
+        return Pattern(lambda span: self.query(span.withTime(f)))
+
+    #def withEventSpan(self, f):
+    #    def query(span):
+    #        events = self.query(span)
+    #        def x(event):
+    #            
+    #        map (
+    #    return Pattern(query)
+
 # Should this be a value or a function?
 silence = Pattern(lambda _: [])
 
 def atom(value):
     def query(span):
-        return list(map(lambda subspan: (subspan.begin.wholeCycle(),
-                                         subspan,
-                                         value
-                                        ),
+        return list(map(lambda subspan: Event(subspan.begin.wholeCycle(),
+                                              subspan,
+                                              value
+                                             ),
                         span.spanCycles()
                        )
                    )
