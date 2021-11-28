@@ -4,6 +4,7 @@
 """
 Experiment: porting Tidalcycles to Python 3.x.
 """
+
 from __future__ import annotations
 from fractions import Fraction
 from dataclasses import dataclass
@@ -11,16 +12,17 @@ from typing import Any, Union
 from math import floor
 
 # flatten list of lists
-def concat(t): return [item for sublist in t for item in sublist]
+def concat(t) -> list: 
+    return [item for sublist in t for item in sublist]
 
 # Couldn't subclass Fraction to call it "Time" for some strange inheritance
 # issue (inheritance of magic methods). Stuck with Fraction for now. Someone
 # might know how to properly subclass Fraction.
 
 Time = Fraction # Time is rational
-def sam(frac: Time): return Time(floor(frac))
-def nextSam(frac: Time): return Time(sam(frac) + 1)
-def wholeCycle(frac: Time): return Arc(sam(frac), nextSam(frac))
+def sam(frac: Time) -> Time: return Time(floor(frac))
+def nextSam(frac: Time) -> Time: return Time(sam(frac) + 1)
+def wholeCycle(frac: Time) -> Arc: return Arc(sam(frac), nextSam(frac))
 
 
 class Arc:
@@ -69,7 +71,7 @@ class Event:
         whole = None if not self.whole else f(self.whole)
         return Event(whole, f(self.part), self.value)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return ("Event(" + self.whole.__repr__()
                 + ", "
                 + self.part.__repr__() + ")"
@@ -88,7 +90,7 @@ class Pattern:
         """ Splits queries at cycle boundaries. Makes some calculations easier
         to express, as everything then happens within a cycle. """
 
-        def query(span): 
+        def query(span) -> list: 
             return concat(list(map(self.query, span.spanCycles())))
         return Pattern(query)
 
@@ -107,7 +109,7 @@ class Pattern:
     def withEventTime(self, f) -> Pattern:
         return self.withEventSpan(lambda span: span.withTime(f))
 
-    def fast(self, factor):
+    def fast(self, factor) -> Pattern:
         """ Fast speeds up a pattern """
         fastQuery = self.withQueryTime(lambda t: t*factor)
         fastEvents = fastQuery.withEventTime(lambda t: t/factor)
@@ -117,20 +119,20 @@ class Pattern:
         """ Slow slows down a pattern """
         return self.fast(1/factor)
 
-    def early(self, offset):
+    def early(self, offset) -> Pattern:
         """ Equivalent of Haskell Tidal <~ operator """
         return self.withQueryTime(
                 lambda t: t+offset).withEventTime(lambda t: t-offset)
 
-    def late(self, offset):
+    def late(self, offset) -> Pattern:
         """ Equivalent of Haskell Tidal ~> operator """
         return self.early(0-offset)
     
-    def firstCycle(self):
+    def firstCycle(self) -> Pattern:
         return self.query(Arc(Time(0), Time(1)))
     
 
-def atom(value):
+def atom(value) -> Pattern:
     def query(span):
         return list(map(
             lambda subspan: Event(
@@ -138,18 +140,18 @@ def atom(value):
             span.spanCycles()))
     return Pattern(query)
 
-def slowcat(pats):
+def slowcat(pats) -> Pattern:
     """ Concatenation: will join two patterns """
     def query(span):
         pat = pats[floor(span.begin) % len(pats)]
         return pat.query(span)
     return Pattern(query).splitQueries()
 
-def fastcat(pats):
+def fastcat(pats) -> Pattern:
     """ Concatenation: pushes everything into a pattern """
     return slowcat(pats).fast(len(pats))
 
-def stack(pats):
+def stack(pats) -> Pattern:
     """ Pile up patterns """
     def query(span):
         return concat(list(map(lambda pat: pat.query(span), pats)))
