@@ -138,7 +138,7 @@ class Pattern:
     # alias
     fmap = withValue
     
-    def _app(self, wf, patv):
+    def _appWhole(self, wf, patv):
         """
         Assumes self is a pattern of functions, and given a function to
         resolve wholes, applies a given pattern of values to that
@@ -163,7 +163,7 @@ class Pattern:
             if a == None or b == None:
                 return None
             return a.sect(b)
-        return self._app(wholef, patv)
+        return self._appWhole(wholef, patv)
 
     def appl(self, patv):
         """ Tidal's <* """
@@ -171,7 +171,7 @@ class Pattern:
             if a == None or b == None:
                 return None
             return a
-        return self._app(wholef, patv)
+        return self._appWhole(wholef, patv)
 
     def appr(self, patv):
         """ Tidal's *> """
@@ -179,7 +179,43 @@ class Pattern:
             if a == None or b == None:
                 return None
             return b
-        return self._app(wholef, patv)
+        return self._appWhole(wholef, patv)
+
+    def _bindWhole(self, chooseWhole, f):
+        patv = self
+        def query(span):
+            def withWhole(ev, ev2):
+                return Event(chooseWhole(ev.whole, ev2.whole), ev2.part,
+                             ev2.value
+                            )
+            def match(ev):
+                return list(map (lambda ev2: withWhole(ev, ev2),
+                                 f(ev.value).query(ev.part)
+                                )
+                           )
+            return list(concat(map(match, patv.query(span))))
+        return Pattern(query)
+
+    def bind(self, f):
+        def wholef(a, b):
+            if a == None or b == None:
+                return None
+            return a.sect(b)
+        return self._bindWhole(wholef, f)
+
+    def bindInner(self, f):
+        def wholef(a, b):
+            if a == None or b == None:
+                return None
+            return a
+        return self._bindWhole(wholef, f)
+
+    def bindOuter(self, f):
+        def wholef(a, b):
+            if a == None or b == None:
+                return None
+            return b
+        return self._bindInner(wholef, f)
     
     def fast(self, factor) -> Pattern:
         """ Fast speeds up a pattern """
