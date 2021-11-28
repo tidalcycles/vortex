@@ -15,6 +15,9 @@ from math import floor
 def concat(t) -> list: 
     return [item for sublist in t for item in sublist]
 
+def removeNone(t) -> list:
+    return filter(lambda x: x != None, t)
+
 # Couldn't subclass Fraction to call it "Time" for some strange inheritance
 # issue (inheritance of magic methods). Stuck with Fraction for now. Someone
 # might know how to properly subclass Fraction.
@@ -52,6 +55,18 @@ class Arc:
 
     def withTime(self, f) -> Arc:
         return Arc(f(self.begin), f(self.end))
+
+    """ Intersection of two timespans """
+    def sect(self, other):
+        return Arc(max(self.begin, other.begin), min(self.end, other.end))
+
+    """ Like sect, but returns None if they don't intersect """
+    def maybeSect(a, b):
+        s = a.sect(b)
+        if s.end <= s.begin:
+            return None
+        else:
+            return s
     
     def __repr__(self) -> str:
         return ("Arc(" + self.begin.__repr__() + ", " 
@@ -70,6 +85,9 @@ class Event:
     def withSpan(self, f) -> Event:
         whole = None if not self.whole else f(self.whole)
         return Event(whole, f(self.part), self.value)
+
+    def withValue(self, f) -> Event:
+        return Event(self.whole, self.part, f(self.value))
 
     def __repr__(self) -> str:
         return ("Event(" + self.whole.__repr__()
@@ -109,6 +127,60 @@ class Pattern:
     def withEventTime(self, f) -> Pattern:
         return self.withEventSpan(lambda span: span.withTime(f))
 
+    def withValue(self, f) -> Pattern:
+        def query(span):
+            return list(map(lambda event: event.withValue(f),
+                            self.query(span)
+                           )
+                       )
+        return Pattern(query)
+
+    # alias
+    fmap = withValue
+    
+    """
+    Assumes self is a pattern of functions, and given a function to
+    resolve wholes, applies a given pattern of values to that pattern
+    of functions.
+
+    """
+    def _app(self, wf, patv):
+        patf = self
+        def query(span):
+            efs = patf.query(span)
+            evs = patv.query(span)
+            def apply(ef, ev):
+                s = ef.part.maybeSect(ev.part)
+                if s == None:
+                    return None
+                return Event(wf(ef.whole, ev.whole), s, ef.value(ev.value))
+            return list(concat(map (lambda ef: removeNone(map (lambda ev: apply(ef, ev),evs)),efs)))
+        return Pattern(query)
+
+    """ Tidal's pattern <*> """
+    def app(self, patv):
+        def wholef(a, b):
+            if a == None or b == None:
+                return None
+            return a.sect(b)
+        return self._app(wholef, patv)
+
+    """ Tidal's <* """
+    def appl(self, patv):
+        def wholef(a, b):
+            if a == None or b == None:
+                return None
+            return a
+        return self._app(wholef, patv)
+
+    """ Tidal's *> """
+    def appr(self, patv):
+        def wholef(a, b):
+            if a == None or b == None:
+                return None
+            return b
+        return self._app(wholef, patv)
+    
     def fast(self, factor) -> Pattern:
         """ Fast speeds up a pattern """
         fastQuery = self.withQueryTime(lambda t: t*factor)
@@ -129,9 +201,8 @@ class Pattern:
         return self.early(0-offset)
     
     def firstCycle(self) -> Pattern:
-        return self.query(Arc(Time(0), Time(1)))
+        return self.query(Arc(Time(0), Time(1)))            
     
-
 def atom(value) -> Pattern:
     def query(span):
         return list(map(
@@ -185,3 +256,14 @@ if __name__ == "__main__":
     pattern_pretty_printing(
             pattern= c.fast(2),
             query_arc= Arc(Time(0), Time(1)))
+
+    # Apply pattern of values to a pattern of functions
+    print("\n== APPLICATIVE ==\n")
+    x = fastcat([atom(lambda x: x + 1), atom(lambda x: x + 2)])
+    y = fastcat([atom(3),atom(4),atom(5)])
+    z = x.app(y)
+    pattern_pretty_printing(
+            pattern= z,
+            query_arc= Arc(Time(0), Time(1)))
+
+
