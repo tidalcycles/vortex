@@ -94,9 +94,11 @@ class Pattern:
     def slow(self, factor):
         return self.fast(1/factor)
 
+    # equivalent of tidal <~ operator
     def early(self, offset):
         return self.withQueryTime(lambda t: t+offset).withEventTime(lambda t: t-offset)
 
+    # equivalent of tidal ~> operator
     def late(self, offset):
         return self.early(0-offset)
     
@@ -125,6 +127,11 @@ def slowcat(pats):
 
 def fastcat(pats):
     return slowcat(pats).fast(len(pats))
+
+def stack(pats):
+    def query(span):
+        return concat(list(map(lambda pat: pat.query(span), pats)))
+    return Pattern(query)
 
 a = atom("hello")
 b = atom("world")
