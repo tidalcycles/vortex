@@ -90,7 +90,19 @@ class Pattern:
         fastQuery = self.withQueryTime(lambda t: t*factor)
         fastEvents = fastQuery.withEventTime(lambda t: t/factor)
         return fastEvents
+    
+    def slow(self, factor):
+        return self.fast(1/factor)
 
+    def early(self, offset):
+        return self.withQueryTime(lambda t: t+offset).withEventTime(lambda t: t-offset)
+
+    def late(self, offset):
+        return self.early(0-offset)
+    
+    def firstCycle(self):
+        return self.query(TimeSpan(Fraction(0), Fraction(1)))
+    
 # Should this be a value or a function?
 silence = Pattern(lambda _: [])
 
