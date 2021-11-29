@@ -109,7 +109,8 @@ class Pattern:
         to express, as everything then happens within a cycle. """
 
         def query(span) -> list: 
-            return concat(list(map(self.query, span.spanCycles())))
+            return concat([self.query(subspan) for subspan in span.spanCycles()])
+        
         return Pattern(query)
 
     def withQuerySpan(self, f) -> Pattern:
@@ -120,8 +121,7 @@ class Pattern:
 
     def withEventSpan(self, f) -> Pattern:
         def query(span):
-            return list(map(lambda event: event.withSpan(f),
-                            self.query(span)))
+            return [event.withSpan(f) for event in self.query(span)]
         return Pattern(query)
     
     def withEventTime(self, f) -> Pattern:
@@ -129,10 +129,7 @@ class Pattern:
 
     def withValue(self, f) -> Pattern:
         def query(span):
-            return list(map(lambda event: event.withValue(f),
-                            self.query(span)
-                           )
-                       )
+            return [event.withValue(f) for event in self.query(span)]
         return Pattern(query)
 
     # alias
@@ -154,7 +151,10 @@ class Pattern:
                 if s == None:
                     return None
                 return Event(wf(ef.whole, ev.whole), s, ef.value(ev.value))
-            return list(concat(map (lambda ef: removeNone(map (lambda ev: apply(ef, ev),evs)),efs)))
+            return concat([removeNone([apply(ef, ev) for ev in evs])
+                           for ef in efs
+                          ]
+                         )
         return Pattern(query)
 
     def app(self, patv):
@@ -184,16 +184,14 @@ class Pattern:
     def _bindWhole(self, chooseWhole, f):
         patv = self
         def query(span):
-            def withWhole(ev, ev2):
-                return Event(chooseWhole(ev.whole, ev2.whole), ev2.part,
-                             ev2.value
+            def withWhole(a, b):
+                return Event(chooseWhole(a.whole, b.whole), b.part,
+                             b.value
                             )
-            def match(ev):
-                return list(map (lambda ev2: withWhole(ev, ev2),
-                                 f(ev.value).query(ev.part)
-                                )
-                           )
-            return list(concat(map(match, patv.query(span))))
+            def match(a):
+                return [withWhole(a, b) for b in f(a.value).query(a.part)]
+            
+            return concat([match(ev) for ev in patv.query(span)])
         return Pattern(query)
 
     def bind(self, f):
@@ -242,10 +240,9 @@ class Pattern:
 def pure(value) -> Pattern:
     """ Returns a pattern that repeats the given value once per cycle """
     def query(span):
-        return list(map(
-            lambda subspan: Event(
-                wholeCycle(subspan.begin), subspan, value),
-            span.spanCycles()))
+        return [Event(wholeCycle(subspan.begin), subspan, value)
+                for subspan in span.spanCycles()
+               ]
     return Pattern(query)
 
 # alias
@@ -273,7 +270,7 @@ cat = fastcat
 def stack(pats) -> Pattern:
     """ Pile up patterns """
     def query(span):
-        return concat(list(map(lambda pat: pat.query(span), pats)))
+        return concat([pat.query(span) for pat in pats])
     return Pattern(query)
 
 def pattern_pretty_printing(pattern: Pattern, query_span: TimeSpan) -> None:
