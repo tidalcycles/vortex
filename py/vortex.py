@@ -108,9 +108,9 @@ class Event:
         logging.debug(f"EVENT: withSpan {self} {f}")
         return Event(whole, f(self.part), self.value)
 
-    # def withValue(self, f) -> Event:
-    #     logging.debug(f"EVENT: withValue {self} {f}")
-    #     return Event(self.whole, self.part, f(self.value))
+    def withValue(self, f) -> Event:
+        logging.debug(f"EVENT: withValue {self} {f}")
+        return Event(self.whole, self.part, f(self.value))
 
     def __repr__(self) -> str:
         return ("Event(" + self.whole.__repr__()
@@ -138,9 +138,9 @@ class Pattern:
 
         return Pattern(query)
 
-    # def withQuerySpan(self, f) -> Pattern:
-    #     logging.debug(f"PATTERN: withQuerySpan {self} {self.query} {f}")
-    #     return Pattern(lambda span: self.query(f(span)))
+    def withQuerySpan(self, f) -> Pattern:
+        logging.debug(f"PATTERN: withQuerySpan {self} {self.query} {f}")
+        return Pattern(lambda span: self.query(f(span)))
 
     def withQueryTime(self, f) -> Pattern:
         logging.debug(f"PATTERN: withQueryTime {self} {self.query} {f}")
@@ -156,14 +156,14 @@ class Pattern:
         logging.debug(f"PATTERN: withEventTime {self} {self.query} {f}")
         return self.withEventSpan(lambda span: span.withTime(f))
 
-    # def withValue(self, f) -> Pattern:
-    #     logging.debug(f"PATTERN: withValue {self} {self.query} {f}")
-    #     def query(span):
-    #         return [event.withValue(f) for event in self.query(span)]
-    #     return Pattern(query)
+    def withValue(self, f) -> Pattern:
+        logging.debug(f"PATTERN: withValue {self} {self.query} {f}")
+        def query(span):
+            return [event.withValue(f) for event in self.query(span)]
+        return Pattern(query)
 
     # alias
-    # fmap = withValue
+    fmap = withValue
 
     def _appWhole(self, wf, patv):
         """
@@ -199,70 +199,70 @@ class Pattern:
         logging.debug(f"PATTERN: app {wholef} {patv}")
         return self._appWhole(wholef, patv)
 
-    # def appl(self, patv):
-    #     """ Tidal's <* """
-    #     logging.debug(f"PATTERN: appl <* {self} {self.query} {patv}")
-    #     def wholef(a, b):
-    #         if a == None or b == None:
-    #             return None
-    #         return a
-    #
-    #     logging.debug(f"PATTERN: appl {wholef} {patv}")
-    #     return self._appWhole(wholef, patv)
-    #
-    # def appr(self, patv):
-    #     """ Tidal's *> """
-    #     logging.debug(f"PATTERN: appr *> {self} {self.query} {patv}")
-    #     def wholef(a, b):
-    #         if a == None or b == None:
-    #             return None
-    #         return b
-    #
-    #     logging.debug(f"PATTERN: appr {wholef} {patv}")
-    #     return self._appWhole(wholef, patv)
-    #
-    # def _bindWhole(self, chooseWhole, f):
-    #     logging.debug(f"PATTERN: _bindwhole *> {self} {chooseWhole} {f}")
-    #     patv = self
-    #     def query(span):
-    #         def withWhole(a, b):
-    #             logging.debug(f"PATTERN: _bindwhole withWhole *> {a} {b}")
-    #             return Event(chooseWhole(a.whole, b.whole), b.part,
-    #                          b.value
-    #                         )
-    #         def match(a):
-    #             logging.debug(f"PATTERN: _bindwhole match *> {a} {b}")
-    #             return [withWhole(a, b) for b in f(a.value).query(a.part)]
-    #
-    #         return concat([match(ev) for ev in patv.query(span)])
-    #     return Pattern(query)
-    #
-    # def bind(self, f):
-    #     logging.debug(f"PATTERN: bind {self} {f}")
-    #     def wholef(a, b):
-    #         logging.debug(f"PATTERN: bind wholef {a} {b}")
-    #         if a == None or b == None:
-    #             return None
-    #         return a.sect(b)
-    #     return self._bindWhole(wholef, f)
-    #
-    # def bindInner(self, f):
-    #     logging.debug(f"PATTERN: bindInner {self} {f}")
-    #     def wholef(a, b):
-    #         logging.debug(f"PATTERN: bindInner wholef {a} {b}")
-    #         if a == None or b == None:
-    #             return None
-    #         return a
-    #     return self._bindWhole(wholef, f)
-    #
-    # def bindOuter(self, f):
-    #     logging.debug(f"PATTERN: bindOuter {self} {f}")
-    #     def wholef(a, b):
-    #         logging.debug(f"PATTERN: bindOuter wholef {a} {b}")
-    #         if a == None or b == None:
-    #             return None
-    #         return b
-    #     return self._bindInner(wholef, f)
+    def appl(self, patv):
+        """ Tidal's <* """
+        logging.debug(f"PATTERN: appl <* {self} {self.query} {patv}")
+        def wholef(a, b):
+            if a == None or b == None:
+                return None
+            return a
+
+        logging.debug(f"PATTERN: appl {wholef} {patv}")
+        return self._appWhole(wholef, patv)
+
+    def appr(self, patv):
+        """ Tidal's *> """
+        logging.debug(f"PATTERN: appr *> {self} {self.query} {patv}")
+        def wholef(a, b):
+            if a == None or b == None:
+                return None
+            return b
+
+        logging.debug(f"PATTERN: appr {wholef} {patv}")
+        return self._appWhole(wholef, patv)
+
+    def _bindWhole(self, chooseWhole, f):
+        logging.debug(f"PATTERN: _bindwhole *> {self} {chooseWhole} {f}")
+        patv = self
+        def query(span):
+            def withWhole(a, b):
+                logging.debug(f"PATTERN: _bindwhole withWhole *> {a} {b}")
+                return Event(chooseWhole(a.whole, b.whole), b.part,
+                             b.value
+                            )
+            def match(a):
+                logging.debug(f"PATTERN: _bindwhole match *> {a} {b}")
+                return [withWhole(a, b) for b in f(a.value).query(a.part)]
+
+            return concat([match(ev) for ev in patv.query(span)])
+        return Pattern(query)
+
+    def bind(self, f):
+        logging.debug(f"PATTERN: bind {self} {f}")
+        def wholef(a, b):
+            logging.debug(f"PATTERN: bind wholef {a} {b}")
+            if a == None or b == None:
+                return None
+            return a.sect(b)
+        return self._bindWhole(wholef, f)
+
+    def bindInner(self, f):
+        logging.debug(f"PATTERN: bindInner {self} {f}")
+        def wholef(a, b):
+            logging.debug(f"PATTERN: bindInner wholef {a} {b}")
+            if a == None or b == None:
+                return None
+            return a
+        return self._bindWhole(wholef, f)
+
+    def bindOuter(self, f):
+        logging.debug(f"PATTERN: bindOuter {self} {f}")
+        def wholef(a, b):
+            logging.debug(f"PATTERN: bindOuter wholef {a} {b}")
+            if a == None or b == None:
+                return None
+            return b
+        return self._bindInner(wholef, f)
 
     def fast(self, factor) -> Pattern:
         """ Fast speeds up a pattern """
