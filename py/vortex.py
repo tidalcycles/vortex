@@ -20,11 +20,15 @@ def removeNone(t) -> list:
     logging.debug(f"REMOVENONE: list {t}")
     return filter(lambda x: x != None, t)
 
+# Identity function
+def id(x):
+    return x
+
 # Couldn't subclass Fraction to call it "Time" for some strange inheritance
 # issue (inheritance of magic methods). Stuck with Fraction for now. Someone
 # might know how to properly subclass Fraction.
 
-Time = Fraction # Time is rational
+Time = Fraction # Time is rational
 def sam(frac: Time) -> Time:
     logging.debug(f"SAM: {frac}")
     return Time(floor(frac))
@@ -221,6 +225,26 @@ class Pattern:
         logging.debug(f"PATTERN: appr {wholef} {patv}")
         return self._appWhole(wholef, patv)
 
+    def __add__(self, other):
+        # If we're passed a non-pattern, turn it into a pattern
+        if not (other.__class__ == Pattern):
+            other = atom(other)
+        return self.fmap(lambda x: lambda y: x + y).app(other)
+
+    def __radd__(self, other):
+        return self.__add__(other)
+    
+    def __sub__(self, other):
+        # If we're passed a non-pattern, turn it into a pattern
+        if not (other.__class__ == Pattern):
+            other = atom(other)
+        return self.fmap(lambda x: lambda y: x - y).app(other)
+
+    def __rsub__(self, other):
+        if not (other.__class__ == Pattern):
+            return self - Pattern(other)
+        raise ValueError # or return NotImplemented?
+    
     def _bindWhole(self, chooseWhole, f):
         logging.debug(f"PATTERN: _bindwhole *> {self} {chooseWhole} {f}")
         patv = self
@@ -246,6 +270,11 @@ class Pattern:
             return a.sect(b)
         return self._bindWhole(wholef, f)
 
+    def join(self):
+        """Flattens a pattern of patterns into a pattern, where wholes are
+        the intersection of matched inner and outer events."""
+        return self.bind(id)
+    
     def bindInner(self, f):
         logging.debug(f"PATTERN: bindInner {self} {f}")
         def wholef(a, b):
@@ -255,6 +284,11 @@ class Pattern:
             return a
         return self._bindWhole(wholef, f)
 
+    def joinInner(self):
+        """Flattens a pattern of patterns into a pattern, where wholes are
+        taken from inner events."""
+        return self.bindInner(id)
+    
     def bindOuter(self, f):
         logging.debug(f"PATTERN: bindOuter {self} {f}")
         def wholef(a, b):
@@ -262,20 +296,30 @@ class Pattern:
             if a == None or b == None:
                 return None
             return b
-        return self._bindInner(wholef, f)
+        return self._bindWhole(wholef, f)
 
-    def fast(self, factor) -> Pattern:
-        """ Fast speeds up a pattern """
+    def joinOuter(self):
+        """Flattens a pattern of patterns into a pattern, where wholes are
+        taken from outer events."""
+        return self.bindOuter(id)
+    
+    def _fast(self, factor) -> Pattern:
+        """ Speeds up a pattern by the given factor"""
         logging.debug(f"PATTERN: fast {self} {factor}")
         fastQuery = self.withQueryTime(lambda t: t*factor)
         fastEvents = fastQuery.withEventTime(lambda t: t/factor)
         logging.debug(f"PATTERN: fast fastEvents {fastEvents}")
         return fastEvents
 
+    def fast(self, pfactor) -> Pattern:
+        """ Speeds up a pattern using the given pattern of factors"""
+        logging.debug(f"PATTERN: fast {self} {pfactor}")
+        return pfactor.fmap(lambda factor: self._fast(factor)).joinOuter()
+        
     def slow(self, factor) -> Pattern:
         logging.debug(f"PATTERN: slow {self} {factor}")
         """ Slow slows down a pattern """
-        return self.fast(1/factor)
+        return self._fast(1/factor)
 
     def early(self, offset) -> Pattern:
         """ Equivalent of Tidal's <~ operator """
@@ -322,7 +366,7 @@ def fastcat(pats) -> Pattern:
     """Concatenation: as with slowcat, but squashes a cycle from each
     pattern into one cycle"""
     logging.debug(f"PURE: fastCat {pats}")
-    return slowcat(pats).fast(len(pats))
+    return slowcat(pats)._fast(len(pats))
 
 
 
@@ -357,14 +401,23 @@ if __name__ == "__main__":
 
     # Printing the pattern
     print("\n== TEST PATTERN ==\n")
+    print('Like: "hello world" (over two cycles)')
     pattern_pretty_printing(
             pattern= c,
             query_span= TimeSpan(Time(0),Time(2)))
 
     # Printing the pattern with fast
     print("\n== SAME BUT FASTER==\n")
+    print('Like: fast 4 "hello world"')
     pattern_pretty_printing(
-            pattern= c.fast(2),
+            pattern= c._fast(2),
+            query_span= TimeSpan(Time(0), Time(1)))
+
+    # Printing the pattern with patterned fast
+    print("\n== PATTERNS OF FAST OF PATTERNS==\n")
+    print('Like: fast "2 4" "hello world"')
+    pattern_pretty_printing(
+            pattern= c.fast(fastcat([atom(2), atom(4)])),
             query_span= TimeSpan(Time(0), Time(1)))
 
     # Printing the pattern with stack
@@ -388,4 +441,10 @@ if __name__ == "__main__":
             pattern= z,
             query_span= TimeSpan(Time(0), Time(1)))
 
-
+    # Add number patterns together
+    print("\n== ADDITION ==\n")
+    numbers = fastcat([atom(v) for v in [2,3,4,5]])
+    more_numbers = fastcat([atom(10), atom(100)])
+    pattern_pretty_printing(
+            pattern= numbers + more_numbers,
+            query_span= TimeSpan(Time(0), Time(1)))
