@@ -386,13 +386,7 @@ def fastcat(pats) -> Pattern:
     pattern into one cycle"""
     logging.debug(f"PURE: fastCat {pats}")
     return slowcat(pats)._fast(len(pats))
-
-def fromSequence(l):
-    if l.__class__ == list:
-        return fastcat([fromSequence(x) for x in l])
-    else:
-        return atom(l)
-
+    
 # alias
 cat = fastcat
 
@@ -412,6 +406,44 @@ def pattern_pretty_printing(pattern: Pattern, query_span: TimeSpan) -> None:
 # Should this be a value or a function?
 silence = Pattern(lambda _: [])
 
+def _sequence(xs):
+    if xs.__class__ == list:
+        return (fastcat([sequence(x) for x in xs]), len(xs))
+    elif xs.__class__ == Pattern:
+        return (xs,1)
+    else:
+        return (atom(xs), 1)
+
+def sequence(xs):
+    return _sequence(xs)[0]
+
+def polyrhythm(xs, steps=None):
+    seqs = [_sequence(x) for x in xs]
+    if len(seqs) == 0:
+        return silence
+    if not steps:
+        steps = seqs[0][1]
+    pats = []
+    for seq in seqs:
+        if seq[1] == 0:
+            next
+        if steps == seq[1]:
+            pats.append(seq[0])
+        else:
+            pats.append(seq[0]._fast(Time(steps)/Time(seq[1])))
+    return stack(pats)
+
+pr = polyrhythm
+
+def polymeter(xs):
+    seqs = [sequence(x) for x in xs]
+
+    if len(seqs) == 0:
+        return silence
+
+    return stack(seqs)
+
+pm = polymeter
 
 if __name__ == "__main__":
 
@@ -471,9 +503,34 @@ if __name__ == "__main__":
             pattern= numbers + more_numbers,
             query_span= TimeSpan(Time(0), Time(1)))
 
-    # Add number patterns together
     print("\n== EMBEDDED SEQUENCES ==\n")
-    # fromSequence([0,1,[2, [3, 4]]]) is the same as "[0 1 [2 [3 4]]]" in mininotation
+    # sequence([0,1,[2, [3, 4]]]) is the same as "[0 1 [2 [3 4]]]" in mininotation
     pattern_pretty_printing(
-            pattern= fromSequence([0,1,[2, [3, 4]]]),
+            pattern= sequence([0,1,[2, [3, 4]]]),
             query_span= TimeSpan(Time(0), Time(1)))
+
+    print("\n== Polyrhythm ==\n")
+    pattern_pretty_printing(
+            pattern= polyrhythm([[0,1,2,3],[20,30]]),
+            query_span= TimeSpan(Time(0), Time(1)))
+
+    print("\n== Polyrhythm with fewer steps ==\n")
+    pattern_pretty_printing(
+            pattern= polyrhythm([[0,1,2,3],[20,30]], steps=2),
+            query_span= TimeSpan(Time(0), Time(1)))
+
+    print("\n== Polymeter ==\n")
+    pattern_pretty_printing(
+            pattern= polymeter([[0,1,2],[20,30]]),
+            query_span= TimeSpan(Time(0), Time(1)))
+
+    print("\n== Polymeter with embedded polyrhythm ==\n")
+    pattern_pretty_printing(
+            pattern = pm([pr([[100,200,300,400],
+                              [0,1]
+                             ]
+                            ),
+                          [20,30]
+                         ]),
+            query_span= TimeSpan(Time(0), Time(1)))
+
