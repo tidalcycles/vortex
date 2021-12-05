@@ -20,6 +20,15 @@ def removeNone(t) -> list:
     logging.debug(f"REMOVENONE: list {t}")
     return filter(lambda x: x != None, t)
 
+# Turn a value into a pattern unless it is one already
+def toPattern(x) -> Pattern:
+    if x.__class__ == Pattern:
+        return x
+    return atom(x)
+
+def toPatterns(xs):
+    return [toPattern(x) for x in xs]
+
 # Identity function
 def id(x):
     return x
@@ -62,15 +71,11 @@ class TimeSpan:
             return []
         elif sam(self.begin) == sam(self.end):
             # Timespan is all within one cycle
-            logging.debug(f"TIMESPAN: spanCycles sam(begin) == sam(end) {self}")
             return [self]
         else:
-            logging.debug(f"TIMESPAN: spanCycles {self}")
             nextB = nextSam(self.begin)
             spans = TimeSpan(nextB, self.end).spanCycles()
-            logging.debug(f"before insert {spans}")
             spans.insert(0, TimeSpan(self.begin, nextB))
-            logging.debug(f"TIMESPAN: spanCycles {spans}")
             return spans
 
     def withTime(self, f) -> TimeSpan:
@@ -227,8 +232,7 @@ class Pattern:
 
     def __add__(self, other):
         # If we're passed a non-pattern, turn it into a pattern
-        if not (other.__class__ == Pattern):
-            other = atom(other)
+        other = toPattern(other)
         return self.fmap(lambda x: lambda y: x + y).app(other)
 
     def __radd__(self, other):
@@ -236,8 +240,7 @@ class Pattern:
     
     def __sub__(self, other):
         # If we're passed a non-pattern, turn it into a pattern
-        if not (other.__class__ == Pattern):
-            other = atom(other)
+        other = toPattern(other)
         return self.fmap(lambda x: lambda y: x - y).app(other)
 
     def __rsub__(self, other):
@@ -368,8 +371,11 @@ def fastcat(pats) -> Pattern:
     logging.debug(f"PURE: fastCat {pats}")
     return slowcat(pats)._fast(len(pats))
 
-
-
+def fromSequence(l):
+    if l.__class__ == list:
+        return fastcat([fromSequence(x) for x in l])
+    else:
+        return atom(l)
 
 # alias
 cat = fastcat
@@ -447,4 +453,11 @@ if __name__ == "__main__":
     more_numbers = fastcat([atom(10), atom(100)])
     pattern_pretty_printing(
             pattern= numbers + more_numbers,
+            query_span= TimeSpan(Time(0), Time(1)))
+
+    # Add number patterns together
+    print("\n== EMBEDDED SEQUENCES ==\n")
+    # fromSequence([0,1,[2, [3, 4]]]) is the same as "[0 1 [2 [3 4]]]" in mininotation
+    pattern_pretty_printing(
+            pattern= fromSequence([0,1,[2, [3, 4]]]),
             query_span= TimeSpan(Time(0), Time(1)))
