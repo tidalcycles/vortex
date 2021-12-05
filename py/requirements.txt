@@ -1,0 +1,3 @@
+parsy >= 1.4.0
+link-python
+
