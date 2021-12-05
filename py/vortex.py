@@ -54,7 +54,6 @@ def wholeCycle(frac: Time) -> TimeSpan:
 class TimeSpan:
 
     """ TimeSpan is (Time, Time) """
-
     def __init__(self, begin: Time, end: Time):
         self.begin = begin
         self.end = end
@@ -64,8 +63,8 @@ class TimeSpan:
         logging.debug(f"TIMESPAN: spanCycles {self}")
         """ Splits a timespan at cycle boundaries """
 
-        # TODO - make this more imperative
-
+        # TODO - a loop rather than recursion might be more efficient in
+        # python?
         if self.end <= self.begin:
             # no cycles in the timespan..
             return []
@@ -79,7 +78,7 @@ class TimeSpan:
             return spans
 
     def withTime(self, f) -> TimeSpan:
-        logging.debug(f"TIMESPAN: withTime {f} {self}")
+        """ Applies given function to both the begin and end value of the timespan"""
         return TimeSpan(f(self.begin), f(self.end))
 
     def sect(self, other):
@@ -88,10 +87,8 @@ class TimeSpan:
         return TimeSpan(max(self.begin, other.begin), min(self.end, other.end))
 
     def maybeSect(a, b):
-        logging.debug(f"TIMESPAN: maybeSect {a} {b}")
         """ Like sect, but returns None if they don't intersect """
         s = a.sect(b)
-        logging.debug(f"TIMESPAN: maybeSect {s}")
         if s.end <= s.begin:
             return None
         else:
@@ -104,7 +101,17 @@ class TimeSpan:
 
 class Event:
 
-    """ Event class """
+    """
+    Event class, representing a value active during the timespan
+    'part'. This might be a fragment of an event, in which case the
+    timespan will be smaller than the 'whole' timespan, otherwise they
+    will be the same. The 'part' must never extend outside of the
+    'whole'. If the event represents a continuously changing value
+    then the whole will be returned as None, in which case the given
+    value will have been sampled from the point halfway between the
+    start and end of the 'part' timespan.
+
+    """
 
     def __init__(self, whole, part, value):
         self.whole = whole
@@ -113,12 +120,12 @@ class Event:
         logging.debug(f"EVENT: __init__ {self}")
 
     def withSpan(self, f) -> Event:
+        """ Returns a new event with the function f applies to the event timespan. """
         whole = None if not self.whole else f(self.whole)
-        logging.debug(f"EVENT: withSpan {self} {f}")
         return Event(whole, f(self.part), self.value)
 
     def withValue(self, f) -> Event:
-        logging.debug(f"EVENT: withValue {self} {f}")
+        """ Returns a new event with the function f applies to the event value. """
         return Event(self.whole, self.part, f(self.value))
 
     def __repr__(self) -> str:
@@ -128,45 +135,54 @@ class Event:
                 + ", "
                 + self.value.__repr__() + ")")
 
-
 class Pattern:
 
-    """ Pattern class """
+    """
+    Pattern class, representing discrete and continuous events as a
+    function of time.
+    """
 
     def __init__(self, query):
         self.query = query
         logging.debug(f"PATTERN: __init__ {self} {query}")
 
     def splitQueries(self) -> Pattern:
-        """ Splits queries at cycle boundaries. Makes some calculations easier
-        to express, as everything then happens within a cycle. """
-        logging.debug(f"PATTERN: splitQueries {self} {self.query}")
-
+        """ Splits queries at cycle boundaries. This makes some calculations 
+        easier to express, as all events are then constrained to happen within 
+        a cycle. """
         def query(span) -> list:
             return concat([self.query(subspan) for subspan in span.spanCycles()])
 
         return Pattern(query)
 
     def withQuerySpan(self, f) -> Pattern:
+        """ Returns a new pattern, with the function applied to the timespan of the query. """
         logging.debug(f"PATTERN: withQuerySpan {self} {self.query} {f}")
         return Pattern(lambda span: self.query(f(span)))
 
     def withQueryTime(self, f) -> Pattern:
-        logging.debug(f"PATTERN: withQueryTime {self} {self.query} {f}")
+        """ Returns a new pattern, with the function applied to both the begin
+        and end of the the query timespan. """
         return Pattern(lambda span: self.query(span.withTime(f)))
 
     def withEventSpan(self, f) -> Pattern:
-        logging.debug(f"PATTERN: withEventSpan {self} {self.query} {f}")
+        """ Returns a new pattern, with the function applied to each event
+        timespan. """
         def query(span):
             return [event.withSpan(f) for event in self.query(span)]
         return Pattern(query)
 
     def withEventTime(self, f) -> Pattern:
-        logging.debug(f"PATTERN: withEventTime {self} {self.query} {f}")
+        """ Returns a new pattern, with the function applied to both the begin
+        and end of each event timespan.
+        """
         return self.withEventSpan(lambda span: span.withTime(f))
 
     def withValue(self, f) -> Pattern:
-        logging.debug(f"PATTERN: withValue {self} {self.query} {f}")
+        """Returns a new pattern, with the function applied to the value of
+        each event. It has the alias 'fmap'.
+
+        """
         def query(span):
             return [event.withValue(f) for event in self.query(span)]
         return Pattern(query)
