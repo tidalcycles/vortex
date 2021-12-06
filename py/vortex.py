@@ -273,16 +273,13 @@ class Pattern:
         return self.fmap(lambda x: lambda y: {**y, **x}).app(other)
     
     def _bindWhole(self, chooseWhole, f):
-        logging.debug(f"PATTERN: _bindwhole *> {self} {chooseWhole} {f}")
         patv = self
         def query(span):
             def withWhole(a, b):
-                logging.debug(f"PATTERN: _bindwhole withWhole *> {a} {b}")
                 return Event(chooseWhole(a.whole, b.whole), b.part,
                              b.value
                             )
             def match(a):
-                logging.debug(f"PATTERN: _bindwhole match *> {a} {b}")
                 return [withWhole(a, b) for b in f(a.value).query(a.part)]
 
             return concat([match(ev) for ev in patv.query(span)])
@@ -525,9 +522,9 @@ def _sequence(xs):
     return pats[0].__class__._sequence(pats)
 
 def sequence(xs):
-    if len(pats) == 0:
+    if len(xs) == 0:
         return Pattern.silence()
-    return pats[0].__class__.sequence(pats)
+    return xs[0].__class__.sequence(xs)
 
 def polyrhythm(xs, steps=None):
     if len(xs) == 0:
@@ -552,8 +549,8 @@ def polymeter(xs):
 pm = polyrhythm
     
 controls = [
-    (S, "S", ["sound", "vowel"]),
-    (F, "F", ["n", "note", "gain", "pan"])
+    (S, "S", ["s", "vowel"]),
+    (F, "F", ["n", "note", "gain", "pan", "speed", "room", "size"])
 ]
 
 
