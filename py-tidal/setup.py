@@ -16,7 +16,7 @@ setup(
     name = package_name,
     version = "0.0.1",
     description = "Python Tidal port",
-    author = "Cyclists",
+    author = "Tydal Ciclists",
     author_email = "artheist@lgmail.com",
     url = "http://tidalcycles.org",
     packages = find_packages(),

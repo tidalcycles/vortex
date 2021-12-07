@@ -1,0 +1,4 @@
+parsy >= 1.4.0
+#link-python
+pyliblo3 >= 0.12.0
+
