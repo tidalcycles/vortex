@@ -24,18 +24,24 @@ def removeNone(t) -> list:
 # issue (inheritance of magic methods). Stuck with Fraction for now. Someone
 # might know how to properly subclass Fraction.
 
-Time = Fraction # Time is rational
-def sam(frac: Time) -> Time:
-    #print(f"SAM: {frac}")
-    return Time(floor(frac))
+class Time(Fraction):
+    """Fraction is immutable so new instead of init"""
 
-def nextSam(frac: Time) -> Time:
-    #print(f"NEXT SAM: {frac}")
-    return Time(sam(frac) + 1)
+    def new(cls, numerator=0, denominator=None):
+        self = super(Time, cls).new(cls, numerator, denominator)
+        return self
 
-def wholeCycle(frac: Time) -> TimeSpan:
-    print(f"in wholeCycle {sam(frac)} {nextSam(frac)}")
-    return TimeSpan(sam(frac), nextSam(frac))
+    def sam(frac: Time) -> Time:
+        log.debug(f"SAM: {frac}")
+        return Time(floor(frac))
+
+    def nextSam(frac: Time) -> Time:
+        log.debug(f"NEXT SAM: {frac}")
+        return Time(self.sam(frac) + 1)
+
+    def wholeCycle(frac: Time) -> TimeSpan:
+        print(f"in wholeCycle {self.sam(frac)} {self.nextSam(frac)}")
+        return TimeSpan(self.sam(frac), self.nextSam(frac))
 
 
 class TimeSpan:
