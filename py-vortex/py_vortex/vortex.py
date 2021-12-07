@@ -268,8 +268,12 @@ class Pattern:
 
     # TODO - make a ControlPattern subclass for patterns of dictionaries?
     def __rshift__(self, other):
-        """The union of two patterns of dictionaries, with values from right
-        replacing any with the same name from the left"""
+        """Overrides the >> operator to support combining patterns of
+        dictionaries (AKA 'control patterns'). Produces the union of
+        two patterns of dictionaries, with values from right replacing
+        any with the same name from the left
+
+        """
         return self.fmap(lambda x: lambda y: {**x, **y}).app(other)
 
     def __lshift__(self, other):
@@ -483,6 +487,12 @@ class T(Pattern):
     def checkType(cls, value) -> bool:
         return isinstance(value, Time)
 
+class Control(Pattern):
+    @classmethod
+    def checkType(cls, value) -> Bool:
+        return isinstance(value, dict)
+
+    
 # Hippie type inference..
     
 def guessValueClass(v):
@@ -494,6 +504,8 @@ def guessValueClass(v):
         return F
     if isinstance(v, Time):
         return T
+    if isinstance(v, dict):
+        return Control
     return Pattern
 
     
@@ -551,16 +563,17 @@ def polymeter(xs):
     return cls.polymeter(xs)
 
 pm = polyrhythm
-    
+
+
+# Create functions for making control patterns (patterns of dictionaries)
 controls = [
     (S, "S", ["s", "vowel"]),
     (F, "F", ["n", "note", "gain", "pan", "speed", "room", "size"])
 ]
 
-
-# Had to go in its own function for weird scoping reasons
+# This had to go in its own function, for weird scoping reasons..
 def setter(cls, clsname, name):
-    setattr(cls, name, lambda pat: pat.fmap(lambda v: {name: v}))
+    setattr(cls, name, lambda pat: Control(pat.fmap(lambda v: {name: v}).query))
 
 for controltype in controls:
     cls = controltype[0]
