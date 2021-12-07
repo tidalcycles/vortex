@@ -8,5 +8,5 @@ Once in your virtual environment, do:
 `pip install -r requirements` <br>
 `pip install -e .` <br>
 
-link-python needs to be installed separately, instructions will follow
-
+link-python needs to be installed separately, instructions will follow. <br>
+Once build, place the lib directory at the same level as `play.py`
