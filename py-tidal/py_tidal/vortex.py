@@ -414,7 +414,7 @@ class Pattern:
 
     @classmethod
     def _sequence(cls,xs):
-        if xs.__class__ == list:
+        if type(xs) == list:
             return (cls.fastcat([cls.sequence(x) for x in xs]), len(xs))
         elif isinstance(xs, Pattern):
             return (xs,1)
