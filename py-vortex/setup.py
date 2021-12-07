@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 _base_dir = os.path.dirname(__file__)
 
-package_name = "py-tidal".replace("_", "-").lower()
+package_name = "py-vortex".replace("_", "-").lower()
 
 def get_requirements():
     with open(os.path.join(_base_dir, "requirements.txt")) as fp:
@@ -14,10 +14,10 @@ def get_requirements():
 
 setup(
     name = package_name,
-    version = "0.0.1",
+    version = "0.0.1", # TODO: replace that an automated version generator
     description = "Python Tidal port",
     author = "Tydal Ciclists",
-    author_email = "artheist@lgmail.com",
+    author_email = "vortex@tidalcycles.org",
     url = "http://tidalcycles.org",
     packages = find_packages(),
     include_package_data = True,
