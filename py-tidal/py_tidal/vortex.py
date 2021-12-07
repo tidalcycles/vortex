@@ -13,11 +13,11 @@ logging.basicConfig(level=logging.INFO)
 
 # flatten list of lists
 def concat(t) -> list:
-    print(f"CONCAT: list {t}")
+    logging.debug(f"CONCAT: list {t}")
     return [item for sublist in t for item in sublist]
 
 def removeNone(t) -> list:
-    print(f"REMOVENONE: list {t}")
+    logging.debug(f"REMOVENONE: list {t}")
     return filter(lambda x: x != None, t)
 
 # Identity function
@@ -26,21 +26,20 @@ def id(x):
 
 class Time(Fraction):
     """Fraction is immutable so new instead of init"""
-    def new(cls, numerator=0, denominator=None):
-        self = super(Time, cls).new(cls, numerator, denominator)
+    def __new__(cls, *args, **kwargs) -> Time:
+        self = super(Time, cls).__new__(cls, *args, **kwargs)
         return self
 
-    def sam(self) -> Time:
+    def sam(self):
         logging.debug(f"SAM: {self}")
         return floor(self)
 
-    def nextSam(self) -> Time:
+    def nextSam(self):
         logging.debug(f"NEXT SAM: {self}")
         return self.sam() + 1
 
-    @classmethod
-    def wholeCycle(self) -> TimeSpan:
-        print(f"in wholeCycle {self.sam()} {self.nextSam()}")
+    def wholeCycle(self):
+        logging.debug(f"in wholeCycle {self.sam()} {self.nextSam()}")
         return TimeSpan(self.sam(), self.nextSam())
 
 
@@ -48,12 +47,12 @@ class TimeSpan(object):
 
     """ TimeSpan is (Time, Time) """
     def __init__(self, begin: Time, end: Time):
-        self.begin = begin
-        self.end = end
-        print(f"TIMESPAN: __init__ {self}")
+        self.begin = Time(begin)
+        self.end = Time(end)
+        logging.debug(f"TIMESPAN: __init__ {self}")
 
     def spanCycles(self) -> list:
-        print(f"TIMESPAN: spanCycles {self}")
+        logging.debug(f"TIMESPAN: spanCycles {self}")
         """ Splits a timespan at cycle boundaries """
 
         # TODO - a loop rather than recursion might be more efficient in
@@ -76,7 +75,7 @@ class TimeSpan(object):
 
     def sect(self, other):
         """ Intersection of two timespans """
-        print(f"TIMESPAN: sect {self} {other}")
+        logging.debug(f"TIMESPAN: sect {self} {other}")
         return TimeSpan(max(self.begin, other.begin), min(self.end, other.end))
 
     def maybeSect(a, b):
@@ -110,7 +109,7 @@ class Event:
         self.whole = whole
         self.part = part
         self.value = value
-        print(f"EVENT: __init__ {self}")
+        logging.debug(f"EVENT: __init__ {self}")
 
     def withSpan(self, f) -> Event:
         """ Returns a new event with the function f applies to the event timespan. """
@@ -140,7 +139,7 @@ class Pattern:
 
     def __init__(self, query):
         self.query = query
-        print(f"PATTERN: __init__ {self} {query}")
+        logging.debug(f"PATTERN: __init__ {self} {query}")
 
     def splitQueries(self) -> Pattern:
         """ Splits queries at cycle boundaries. This makes some calculations 
@@ -201,15 +200,15 @@ class Pattern:
         pattern of functions.
 
         """
-        print(f"PATTERN: _appWhole {self} {self.query} {wf} {patv}")
+        logging.debug(f"PATTERN: _appWhole {self} {self.query} {wf} {patv}")
         patf = self
         def query(span):
-            print(f"PATTERN: _appWhole query {wf} {patf} {span}")
+            logging.debug(f"PATTERN: _appWhole query {wf} {patf} {span}")
             efs = patf.query(span)
             evs = patv.query(span)
-            print(f"PATTERN: _appWhole query {efs} {evs}")
+            logging.debug(f"PATTERN: _appWhole query {efs} {evs}")
             def apply(ef, ev):
-                print(f"PATTERN: _appWhole apply {ef} {ev}")
+                logging.debug(f"PATTERN: _appWhole apply {ef} {ev}")
                 s = ef.part.maybeSect(ev.part)
                 if s == None:
                     return None
@@ -221,36 +220,36 @@ class Pattern:
         return self.__class__(query)
 
     def app(self, patv):
-        print(f"PATTERN: app <*> {self} {self.query} {patv}")
+        logging.debug(f"PATTERN: app <*> {self} {self.query} {patv}")
         """ Tidal's <*> """
         def wholef(a, b):
             if a == None or b == None:
                 return None
             return a.sect(b)
 
-        print(f"PATTERN: app {wholef} {patv}")
+        logging.debug(f"PATTERN: app {wholef} {patv}")
         return self._appWhole(wholef, patv)
 
     def appl(self, patv):
         """ Tidal's <* """
-        print(f"PATTERN: appl <* {self} {self.query} {patv}")
+        logging.debug(f"PATTERN: appl <* {self} {self.query} {patv}")
         def wholef(a, b):
             if a == None or b == None:
                 return None
             return a
 
-        print(f"PATTERN: appl {wholef} {patv}")
+        logging.debug(f"PATTERN: appl {wholef} {patv}")
         return self._appWhole(wholef, patv)
 
     def appr(self, patv):
         """ Tidal's *> """
-        print(f"PATTERN: appr *> {self} {self.query} {patv}")
+        logging.debug(f"PATTERN: appr *> {self} {self.query} {patv}")
         def wholef(a, b):
             if a == None or b == None:
                 return None
             return b
 
-        print(f"PATTERN: appr {wholef} {patv}")
+        logging.debug(f"PATTERN: appr {wholef} {patv}")
         return self._appWhole(wholef, patv)
 
     def __add__(self, other):
@@ -291,9 +290,9 @@ class Pattern:
         return self.__class__(query)
 
     def bind(self, f):
-        print(f"PATTERN: bind {self} {f}")
+        logging.debug(f"PATTERN: bind {self} {f}")
         def wholef(a, b):
-            print(f"PATTERN: bind wholef {a} {b}")
+            logging.debug(f"PATTERN: bind wholef {a} {b}")
             if a == None or b == None:
                 return None
             return a.sect(b)
@@ -305,9 +304,9 @@ class Pattern:
         return self.bind(id)
     
     def bindInner(self, f):
-        print(f"PATTERN: bindInner {self} {f}")
+        logging.debug(f"PATTERN: bindInner {self} {f}")
         def wholef(a, b):
-            print(f"PATTERN: bindInner wholef {a} {b}")
+            logging.debug(f"PATTERN: bindInner wholef {a} {b}")
             if a == None or b == None:
                 return None
             return a
@@ -319,9 +318,9 @@ class Pattern:
         return self.bindInner(id)
     
     def bindOuter(self, f):
-        print(f"PATTERN: bindOuter {self} {f}")
+        logging.debug(f"PATTERN: bindOuter {self} {f}")
         def wholef(a, b):
-            print(f"PATTERN: bindOuter wholef {a} {b}")
+            logging.debug(f"PATTERN: bindOuter wholef {a} {b}")
             if a == None or b == None:
                 return None
             return b
@@ -337,7 +336,7 @@ class Pattern:
         logging.debug(f"PATTERN: fast {self} {factor}")
         fastQuery = self.withQueryTime(lambda t: t*factor)
         fastEvents = fastQuery.withEventTime(lambda t: t/factor)
-        print(f"PATTERN: fast fastEvents {fastEvents}")
+        logging.debug(f"PATTERN: fast fastEvents {fastEvents}")
         return fastEvents
 
     def fast(self, pfactor) -> Pattern:
@@ -346,23 +345,23 @@ class Pattern:
         return pfactor.fmap(lambda factor: self._fast(factor)).joinOuter()
         
     def slow(self, factor) -> Pattern:
-        print(f"PATTERN: slow {self} {factor}")
+        logging.debug(f"PATTERN: slow {self} {factor}")
         """ Slow slows down a pattern """
         return self._fast(1/factor)
 
     def early(self, offset) -> Pattern:
         """ Equivalent of Tidal's <~ operator """
-        print(f"PATTERN: early {self} {offset}")
+        logging.debug(f"PATTERN: early {self} {offset}")
         return self.withQueryTime(
                 lambda t: t+offset).withEventTime(lambda t: t-offset)
 
     def late(self, offset) -> Pattern:
         """ Equivalent of Tidal's ~> operator """
-        print(f"PATTERN: late {self} {offset}")
+        logging.debug(f"PATTERN: late {self} {offset}")
         return self.early(0-offset)
 
     def firstCycle(self):
-        print(f"PATTERN: firstCycle {self}")
+        logging.debug(f"PATTERN: firstCycle {self}")
         return self.query(TimeSpan(Time(0), Time(1)))
 
     @classmethod
@@ -380,7 +379,7 @@ class Pattern:
             raise ValueError
         
         def query(span):
-            return [Event(Time.wholeCycle(subspan.begin), subspan, v)
+            return [Event(Time(subspan.begin).wholeCycle(), subspan, v)
                     for subspan in span.spanCycles()
             ]
         return cls(query)
@@ -572,9 +571,9 @@ for controltype in controls:
         exec("%s = %s.%s" % (name, clsname, name))
 
 def pattern_pretty_printing(pattern: Pattern, query_span: TimeSpan) -> None:
-    """ Better formatting for printing Tidal Patterns """
+    """ Better formatting for logging.debuging Tidal Patterns """
     for event in pattern.query(query_span):
-        logging.info(event)
+        logging.debug.info(event)
         
 if __name__ == "__main_":
     # Simple patterns
@@ -583,41 +582,41 @@ if __name__ == "__main_":
     c = S.fastcat([a, b])
     d = S.stack([a, b])
 
-    # Printing the pattern
-    print("\n== TEST PATTERN ==\n")
-    print('Like: "hello world" (over two cycles)')
+    # logging.debuging the pattern
+    logging.debug("\n== TEST PATTERN ==\n")
+    logging.debug('Like: "hello world" (over two cycles)')
     pattern_pretty_printing(
         pattern=c,
         query_span=TimeSpan(Time(0), Time(2)))
 
-    # Printing the pattern with fast
-    print("\n== SAME BUT FASTER==\n")
-    print('Like: fast 4 "hello world"')
+    # logging.debuging the pattern with fast
+    logging.debug("\n== SAME BUT FASTER==\n")
+    logging.debug('Like: fast 4 "hello world"')
     pattern_pretty_printing(
         pattern=c._fast(2),
         query_span=TimeSpan(Time(0), Time(1)))
 
-    # Printing the pattern with patterned fast
-    print("\n== PATTERNS OF FAST OF PATTERNS==\n")
-    print('Like: fast "2 4" "hello world"')
+    # logging.debuging the pattern with patterned fast
+    logging.debug("\n== PATTERNS OF FAST OF PATTERNS==\n")
+    logging.debug('Like: fast "2 4" "hello world"')
     pattern_pretty_printing(
         pattern=c.fast(S.fastcat([F.pure(2), F.pure(4)])),
         query_span=TimeSpan(Time(0), Time(1)))
 
-    # Printing the pattern with stack
-    print("\n== STACK ==\n")
+    # logging.debuging the pattern with stack
+    logging.debug("\n== STACK ==\n")
     pattern_pretty_printing(
         pattern=d,
         query_span=TimeSpan(Time(0), Time(1)))
 
-    # Printing the pattern with late
-    print("\n== LATE ==\n")
+    # logging.debuging the pattern with late
+    logging.debug("\n== LATE ==\n")
     pattern_pretty_printing(
         pattern=c.late(0.5),
         query_span=TimeSpan(Time(0), Time(1)))
 
     # Apply pattern of values to a pattern of functions
-    print("\n== APPLICATIVE ==\n")
+    logging.debug("\n== APPLICATIVE ==\n")
     x = F.fastcat([Pattern.pure(lambda x: x + 1), Pattern.pure(lambda x: x + 4)])
     y = F.fastcat([F.pure(3), F.pure(4), F.pure(5)])
     z = x.app(y)
@@ -626,35 +625,35 @@ if __name__ == "__main_":
         query_span=TimeSpan(Time(0), Time(1)))
 
     # Add number patterns together
-    print("\n== ADDITION ==\n")
+    logging.debug("\n== ADDITION ==\n")
     numbers = F.fastcat([F.pure(v) for v in [2, 3, 4, 5]])
     more_numbers = F.fastcat([F.pure(10), F.pure(100)])
     pattern_pretty_printing(
         pattern=numbers + more_numbers,
         query_span=TimeSpan(Time(0), Time(1)))
 
-    print("\n== EMBEDDED SEQUENCES ==\n")
+    logging.debug("\n== EMBEDDED SEQUENCES ==\n")
     # sequence([0,1,[2, [3, 4]]]) is the same as "[0 1 [2 [3 4]]]" in mininotation
     pattern_pretty_printing(
         pattern=I.sequence([0, 1, [2, [3, 4]]]),
         query_span=TimeSpan(Time(0), Time(1)))
 
-    print("\n== Polyrhythm ==\n")
+    logging.debug("\n== Polyrhythm ==\n")
     pattern_pretty_printing(
         pattern=I.polyrhythm([[0, 1, 2, 3], [20, 30]]),
         query_span=TimeSpan(Time(0), Time(1)))
 
-    print("\n== Polyrhythm with fewer steps ==\n")
+    logging.debug("\n== Polyrhythm with fewer steps ==\n")
     pattern_pretty_printing(
         pattern=I.polyrhythm([[0, 1, 2, 3], [20, 30]], steps=2),
         query_span=TimeSpan(Time(0), Time(1)))
 
-    print("\n== Polymeter ==\n")
+    logging.debug("\n== Polymeter ==\n")
     pattern_pretty_printing(
         pattern=I.polymeter([[0, 1, 2], [20, 30]]),
         query_span=TimeSpan(Time(0), Time(1)))
 
-    print("\n== Polymeter with embedded polyrhythm ==\n")
+    logging.debug("\n== Polymeter with embedded polyrhythm ==\n")
     pattern_pretty_printing(
         pattern=I.pm([I.pr([[100, 200, 300, 400],
                             [0, 1]]),
