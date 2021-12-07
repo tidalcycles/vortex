@@ -12,7 +12,7 @@ sys.path.insert(0, lib_dir)
 
 import link
 
-from vortex import *
+from py_vortex import *
 
 l = link.Link(120)
 
@@ -50,7 +50,7 @@ try:
         cps = (s.tempo() / bpc) / 60
         cycle_from = s.beatAtTime(logical_now, 0) / bpc
         cycle_to = s.beatAtTime(logical_next, 0) / bpc
-        es = pattern.onsetsOnly().query(TimeSpan(Time(cycle_from),Time(cycle_to)))
+        es = pattern.onsetsOnly().query(TimeSpan(cycle_from, cycle_to))
         if len(es):
             print("\n" + str([e.value for e in es]))
             

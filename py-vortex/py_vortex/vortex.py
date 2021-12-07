@@ -24,30 +24,31 @@ def removeNone(t) -> list:
 def id(x):
     return x
 
-# Couldn't subclass Fraction to call it "Time" for some strange inheritance
-# issue (inheritance of magic methods). Stuck with Fraction for now. Someone
-# might know how to properly subclass Fraction.
+class Time(Fraction):
+    """Fraction is immutable so new instead of init"""
+    def __new__(cls, *args, **kwargs) -> Time:
+        self = super(Time, cls).__new__(cls, *args, **kwargs)
+        return self
 
-Time = Fraction # Time is rational
-def sam(frac: Time) -> Time:
-    logging.debug(f"SAM: {frac}")
-    return Time(floor(frac))
+    def sam(self):
+        logging.debug(f"SAM: {self}")
+        return floor(self)
 
-def nextSam(frac: Time) -> Time:
-    logging.debug(f"NEXT SAM: {frac}")
-    return Time(sam(frac) + 1)
+    def nextSam(self):
+        logging.debug(f"NEXT SAM: {self}")
+        return self.sam() + 1
 
-def wholeCycle(frac: Time) -> TimeSpan:
-    logging.debug(f"in wholeCycle {frac}")
-    return TimeSpan(sam(frac), nextSam(frac))
+    def wholeCycle(self):
+        logging.debug(f"in wholeCycle {self.sam()} {self.nextSam()}")
+        return TimeSpan(self.sam(), self.nextSam())
 
 
-class TimeSpan:
+class TimeSpan(object):
 
     """ TimeSpan is (Time, Time) """
     def __init__(self, begin: Time, end: Time):
-        self.begin = begin
-        self.end = end
+        self.begin = Time(begin)
+        self.end = Time(end)
         logging.debug(f"TIMESPAN: __init__ {self}")
 
     def spanCycles(self) -> list:
@@ -59,11 +60,11 @@ class TimeSpan:
         if self.end <= self.begin:
             # no cycles in the timespan..
             return []
-        elif sam(self.begin) == sam(self.end):
+        elif self.begin.sam() == self.end.sam():
             # Timespan is all within one cycle
             return [self]
         else:
-            nextB = nextSam(self.begin)
+            nextB = self.begin.nextSam()
             spans = TimeSpan(nextB, self.end).spanCycles()
             spans.insert(0, TimeSpan(self.begin, nextB))
             return spans
@@ -119,7 +120,7 @@ class Event:
         """ Returns a new event with the function f applies to the event value. """
         return Event(self.whole, self.part, f(self.value))
 
-    def hasOnset(self) -> Bool:
+    def hasOnset(self) -> bool:
         return self.whole and self.whole.begin == self.part.begin
     
     def __repr__(self) -> str:
@@ -202,9 +203,12 @@ class Pattern:
         logging.debug(f"PATTERN: _appWhole {self} {self.query} {wf} {patv}")
         patf = self
         def query(span):
+            logging.debug(f"PATTERN: _appWhole query {wf} {patf} {span}")
             efs = patf.query(span)
             evs = patv.query(span)
+            logging.debug(f"PATTERN: _appWhole query {efs} {evs}")
             def apply(ef, ev):
+                logging.debug(f"PATTERN: _appWhole apply {ef} {ev}")
                 s = ef.part.maybeSect(ev.part)
                 if s == None:
                     return None
@@ -365,7 +369,7 @@ class Pattern:
         cls(lambda _: [])
 
     @classmethod
-    def checkType(cls, value) -> Bool:
+    def checkType(cls, value) -> bool:
         return True
     
     @classmethod
@@ -375,7 +379,7 @@ class Pattern:
             raise ValueError
         
         def query(span):
-            return [Event(wholeCycle(subspan.begin), subspan, v)
+            return [Event(Time(subspan.begin).wholeCycle(), subspan, v)
                     for subspan in span.spanCycles()
             ]
         return cls(query)
@@ -410,7 +414,7 @@ class Pattern:
 
     @classmethod
     def _sequence(cls,xs):
-        if xs.__class__ == list:
+        if type(xs) == list:
             return (cls.fastcat([cls.sequence(x) for x in xs]), len(xs))
         elif isinstance(xs, Pattern):
             return (xs,1)
@@ -458,25 +462,25 @@ class Pattern:
 
 class S(Pattern):
     @classmethod
-    def checkType(cls, value) -> Bool:
+    def checkType(cls, value) -> bool:
         return isinstance(value, str)
 
 
 class F(Pattern):
     @classmethod
-    def checkType(cls, value) -> Bool:
+    def checkType(cls, value) -> bool:
         return isinstance(value, float) or isinstance(value, int)
 
 
 class I(Pattern):
     @classmethod
-    def checkType(cls, value) -> Bool:
+    def checkType(cls, value) -> bool:
         return isinstance(value, int)
 
 
 class T(Pattern):
     @classmethod
-    def checkType(cls, value) -> Bool:
+    def checkType(cls, value) -> bool:
         return isinstance(value, Time)
 
 # Hippie type inference..
@@ -516,7 +520,7 @@ def stack(pats) -> Pattern:
         return Pattern.silence()
     return pats[0].__class__.stack(pats)
 
-def _sequence(xs):
+def _sequence(pats):
     if len(pats) == 0:
         return Pattern.silence()
     return pats[0].__class__._sequence(pats)
@@ -565,95 +569,93 @@ for controltype in controls:
         setter(cls, clsname, name)
         # Couldn't find a better way of adding functions to __main__ ..
         exec("%s = %s.%s" % (name, clsname, name))
-        
+
 def pattern_pretty_printing(pattern: Pattern, query_span: TimeSpan) -> None:
-    """ Better formatting for printing Tidal Patterns """
+    """ Better formatting for logging.debuging Tidal Patterns """
     for event in pattern.query(query_span):
-        logging.info(event)
+        logging.debug.info(event)
         
 if __name__ == "__main_":
-
-    # Simple patterns
+    # Simple patterns
     a = S.pure("hello")
     b = S.pure("world")
-    c = S.fastcat([a,b])
+    c = S.fastcat([a, b])
     d = S.stack([a, b])
 
-    # Printing the pattern
-    print("\n== TEST PATTERN ==\n")
-    print('Like: "hello world" (over two cycles)')
+    # logging.debuging the pattern
+    logging.debug("\n== TEST PATTERN ==\n")
+    logging.debug('Like: "hello world" (over two cycles)')
     pattern_pretty_printing(
-            pattern= c,
-            query_span= TimeSpan(Time(0),Time(2)))
+        pattern=c,
+        query_span=TimeSpan(Time(0), Time(2)))
 
-    # Printing the pattern with fast
-    print("\n== SAME BUT FASTER==\n")
-    print('Like: fast 4 "hello world"')
+    # logging.debuging the pattern with fast
+    logging.debug("\n== SAME BUT FASTER==\n")
+    logging.debug('Like: fast 4 "hello world"')
     pattern_pretty_printing(
-            pattern= c._fast(2),
-            query_span= TimeSpan(Time(0), Time(1)))
+        pattern=c._fast(2),
+        query_span=TimeSpan(Time(0), Time(1)))
 
-    # Printing the pattern with patterned fast
-    print("\n== PATTERNS OF FAST OF PATTERNS==\n")
-    print('Like: fast "2 4" "hello world"')
+    # logging.debuging the pattern with patterned fast
+    logging.debug("\n== PATTERNS OF FAST OF PATTERNS==\n")
+    logging.debug('Like: fast "2 4" "hello world"')
     pattern_pretty_printing(
-            pattern= c.fast(S.fastcat([F.pure(2), F.pure(4)])),
-            query_span= TimeSpan(Time(0), Time(1)))
+        pattern=c.fast(S.fastcat([F.pure(2), F.pure(4)])),
+        query_span=TimeSpan(Time(0), Time(1)))
 
-    # Printing the pattern with stack
-    print("\n== STACK ==\n")
+    # logging.debuging the pattern with stack
+    logging.debug("\n== STACK ==\n")
     pattern_pretty_printing(
-            pattern=d,
-            query_span= TimeSpan(Time(0), Time(1)))
+        pattern=d,
+        query_span=TimeSpan(Time(0), Time(1)))
 
-    # Printing the pattern with late
-    print("\n== LATE ==\n")
+    # logging.debuging the pattern with late
+    logging.debug("\n== LATE ==\n")
     pattern_pretty_printing(
-            pattern=c.late(0.5),
-            query_span= TimeSpan(Time(0), Time(1)))
+        pattern=c.late(0.5),
+        query_span=TimeSpan(Time(0), Time(1)))
 
     # Apply pattern of values to a pattern of functions
-    print("\n== APPLICATIVE ==\n")
+    logging.debug("\n== APPLICATIVE ==\n")
     x = F.fastcat([Pattern.pure(lambda x: x + 1), Pattern.pure(lambda x: x + 4)])
-    y = F.fastcat([F.pure(3),F.pure(4),F.pure(5)])
+    y = F.fastcat([F.pure(3), F.pure(4), F.pure(5)])
     z = x.app(y)
     pattern_pretty_printing(
-            pattern= z,
-            query_span= TimeSpan(Time(0), Time(1)))
+        pattern=z,
+        query_span=TimeSpan(Time(0), Time(1)))
 
     # Add number patterns together
-    print("\n== ADDITION ==\n")
-    numbers = F.fastcat([F.pure(v) for v in [2,3,4,5]])
+    logging.debug("\n== ADDITION ==\n")
+    numbers = F.fastcat([F.pure(v) for v in [2, 3, 4, 5]])
     more_numbers = F.fastcat([F.pure(10), F.pure(100)])
     pattern_pretty_printing(
-            pattern= numbers + more_numbers,
-            query_span= TimeSpan(Time(0), Time(1)))
+        pattern=numbers + more_numbers,
+        query_span=TimeSpan(Time(0), Time(1)))
 
-    print("\n== EMBEDDED SEQUENCES ==\n")
+    logging.debug("\n== EMBEDDED SEQUENCES ==\n")
     # sequence([0,1,[2, [3, 4]]]) is the same as "[0 1 [2 [3 4]]]" in mininotation
     pattern_pretty_printing(
-            pattern= I.sequence([0,1,[2, [3, 4]]]),
-            query_span= TimeSpan(Time(0), Time(1)))
+        pattern=I.sequence([0, 1, [2, [3, 4]]]),
+        query_span=TimeSpan(Time(0), Time(1)))
 
-    print("\n== Polyrhythm ==\n")
+    logging.debug("\n== Polyrhythm ==\n")
     pattern_pretty_printing(
-            pattern= I.polyrhythm([[0,1,2,3],[20,30]]),
-            query_span= TimeSpan(Time(0), Time(1)))
+        pattern=I.polyrhythm([[0, 1, 2, 3], [20, 30]]),
+        query_span=TimeSpan(Time(0), Time(1)))
 
-    print("\n== Polyrhythm with fewer steps ==\n")
+    logging.debug("\n== Polyrhythm with fewer steps ==\n")
     pattern_pretty_printing(
-            pattern= I.polyrhythm([[0,1,2,3],[20,30]], steps=2),
-            query_span= TimeSpan(Time(0), Time(1)))
+        pattern=I.polyrhythm([[0, 1, 2, 3], [20, 30]], steps=2),
+        query_span=TimeSpan(Time(0), Time(1)))
 
-    print("\n== Polymeter ==\n")
+    logging.debug("\n== Polymeter ==\n")
     pattern_pretty_printing(
-            pattern= I.polymeter([[0,1,2],[20,30]]),
-            query_span= TimeSpan(Time(0), Time(1)))
+        pattern=I.polymeter([[0, 1, 2], [20, 30]]),
+        query_span=TimeSpan(Time(0), Time(1)))
 
-    print("\n== Polymeter with embedded polyrhythm ==\n")
+    logging.debug("\n== Polymeter with embedded polyrhythm ==\n")
     pattern_pretty_printing(
-            pattern = I.pm([I.pr([[100,200,300,400],
-                                  [0,1]]),
-                            [20,30]]),
-            query_span= TimeSpan(Time(0), Time(1)))
-
+        pattern=I.pm([I.pr([[100, 200, 300, 400],
+                            [0, 1]]),
+                      [20, 30]]),
+        query_span=TimeSpan(Time(0), Time(1)))

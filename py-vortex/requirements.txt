@@ -1,0 +1,5 @@
+parsy >= 1.4.0
+#link-python - TODO: fork it and build with link API & python latest
+pyliblo3 >= 0.12.0
+# Mac OSX -> pyliblo3 == 0.11.3
+
