@@ -12,7 +12,6 @@ sys.path.insert(0, lib_dir)
 
 import link
 
-#from vortex import *
 from py_tidal import *
 
 l = link.Link(120)
