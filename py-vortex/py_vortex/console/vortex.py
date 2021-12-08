@@ -8,6 +8,7 @@ import sys
 
 from py_vortex import __version__
 from py_vortex.repl import start_repl
+from py_vortex.gui import start_gui
 
 _logger = logging.getLogger(__name__)
 
@@ -22,7 +23,21 @@ def parse_args(args):
     Returns:
       :obj:`argparse.Namespace`: command line parameters namespace
     """
-    parser = argparse.ArgumentParser(description="Start a Vortex REPL")
+    parser = argparse.ArgumentParser(description="Start Vortex editor or REPL")
+
+    parser.add_argument(
+        "--gui",
+        default=True,
+        action="store_true",
+        help="Start the editor instead of the REPL",
+    )
+    parser.add_argument(
+        "--repl",
+        dest="gui",
+        action="store_false",
+        help="Start the REPL instead of the editor",
+    )
+
     parser.add_argument(
         "--version",
         action="version",
@@ -72,7 +87,10 @@ def main(args):
     args = parse_args(args)
     setup_logging(args.loglevel)
 
-    start_repl()
+    if args.gui:
+        start_gui()
+    else:
+        start_repl()
 
 
 def run():
