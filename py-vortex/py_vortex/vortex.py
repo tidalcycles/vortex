@@ -8,6 +8,7 @@ from fractions import Fraction
 # from typing import Any, Union
 from math import floor
 import logging
+from functools import partial
 
 logging.basicConfig(level=logging.INFO)
 
@@ -23,6 +24,14 @@ def removeNone(t) -> list:
 # Identity function
 def id(x):
     return x
+
+def partial_decorator(f):
+    def wrapper(*args):
+        try:
+            return f(*args)
+        except (TypeError) as e:
+            return partial(f, *args)
+    return wrapper
 
 class Time(Fraction):
     """Fraction is immutable so new instead of init"""
@@ -343,6 +352,7 @@ class Pattern:
         logging.debug(f"PATTERN: fast fastEvents {fastEvents}")
         return fastEvents
 
+    @partial_decorator
     def fast(self, pfactor) -> Pattern:
         """ Speeds up a pattern using the given pattern of factors"""
         logging.debug(f"PATTERN: fast {self} {pfactor}")
@@ -586,9 +596,9 @@ for controltype in controls:
 def pattern_pretty_printing(pattern: Pattern, query_span: TimeSpan) -> None:
     """ Better formatting for logging.debuging Tidal Patterns """
     for event in pattern.query(query_span):
-        logging.debug.info(event)
-        
-if __name__ == "__main_":
+        logging.debug(event)
+
+if __name__ == "__main__":
     # Simple patterns
     a = S.pure("hello")
     b = S.pure("world")
@@ -672,3 +682,5 @@ if __name__ == "__main_":
                             [0, 1]]),
                       [20, 30]]),
         query_span=TimeSpan(Time(0), Time(1)))
+
+    
