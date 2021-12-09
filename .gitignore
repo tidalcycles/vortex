@@ -130,3 +130,9 @@ dmypy.json
 
 #Pycharm
 .idea
+
+# text editor temp files
+*~
+\#*\#
+.\#*
+
