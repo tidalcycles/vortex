@@ -20,8 +20,8 @@ class LinkClock:
 
     Parameters
     ----------
-    bpm: Union[float, int]
-        default beats per minute
+    bpm: float
+        beats per minute (default: 120)
 
     """
 
