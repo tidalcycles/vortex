@@ -76,7 +76,10 @@ class TimeSpan(object):
     def sect(self, other):
         """ Intersection of two timespans """
         logging.debug(f"TIMESPAN: sect {self} {other}")
-        return TimeSpan(max(self.begin, other.begin), min(self.end, other.end))
+        if self.begin >= other.end or self.end <= other.begin:
+            return None
+        else:
+            return TimeSpan(max(self.begin, other.begin), min(self.end, other.end))
 
     def maybeSect(a, b):
         """ Like sect, but returns None if they don't intersect """
@@ -209,7 +212,7 @@ class Pattern:
             logging.debug(f"PATTERN: _appWhole query {efs} {evs}")
             def apply(ef, ev):
                 logging.debug(f"PATTERN: _appWhole apply {ef} {ev}")
-                s = ef.part.maybeSect(ev.part)
+                s = ef.part.sect(ev.part)
                 if s == None:
                     return None
                 return Event(wf(ef.whole, ev.whole), s, ef.value(ev.value))
@@ -586,50 +589,52 @@ for controltype in controls:
 def pattern_pretty_printing(pattern: Pattern, query_span: TimeSpan) -> None:
     """ Better formatting for logging.debuging Tidal Patterns """
     for event in pattern.query(query_span):
-        logging.debug.info(event)
-        
-if __name__ == "__main_":
+        print(event)
+
+
+if __name__ == "__main__":
     # Simple patterns
+    print('WTF')
     a = S.pure("hello")
     b = S.pure("world")
     c = S.fastcat([a, b])
     d = S.stack([a, b])
 
-    # logging.debuging the pattern
-    logging.debug("\n== TEST PATTERN ==\n")
-    logging.debug('Like: "hello world" (over two cycles)')
+    # printing the pattern
+    print("\n== TEST PATTERN ==\n")
+    print('Like: "hello world" (over two cycles)')
     pattern_pretty_printing(
         pattern=c,
         query_span=TimeSpan(Time(0), Time(2)))
 
-    # logging.debuging the pattern with fast
-    logging.debug("\n== SAME BUT FASTER==\n")
-    logging.debug('Like: fast 4 "hello world"')
+    # printing the pattern with fast
+    print("\n== SAME BUT FASTER==\n")
+    print('Like: fast 4 "hello world"')
     pattern_pretty_printing(
         pattern=c._fast(2),
         query_span=TimeSpan(Time(0), Time(1)))
 
-    # logging.debuging the pattern with patterned fast
-    logging.debug("\n== PATTERNS OF FAST OF PATTERNS==\n")
-    logging.debug('Like: fast "2 4" "hello world"')
+    # printing the pattern with patterned fast
+    print("\n== PATTERNS OF FAST OF PATTERNS==\n")
+    print('Like: fast "2 4" "hello world"')
     pattern_pretty_printing(
         pattern=c.fast(S.fastcat([F.pure(2), F.pure(4)])),
         query_span=TimeSpan(Time(0), Time(1)))
 
-    # logging.debuging the pattern with stack
-    logging.debug("\n== STACK ==\n")
+    # printing the pattern with stack
+    print("\n== STACK ==\n")
     pattern_pretty_printing(
         pattern=d,
         query_span=TimeSpan(Time(0), Time(1)))
 
-    # logging.debuging the pattern with late
-    logging.debug("\n== LATE ==\n")
+    # printing the pattern with late
+    print("\n== LATE ==\n")
     pattern_pretty_printing(
         pattern=c.late(0.5),
         query_span=TimeSpan(Time(0), Time(1)))
 
     # Apply pattern of values to a pattern of functions
-    logging.debug("\n== APPLICATIVE ==\n")
+    print("\n== APPLICATIVE ==\n")
     x = F.fastcat([Pattern.pure(lambda x: x + 1), Pattern.pure(lambda x: x + 4)])
     y = F.fastcat([F.pure(3), F.pure(4), F.pure(5)])
     z = x.app(y)
@@ -638,35 +643,35 @@ if __name__ == "__main_":
         query_span=TimeSpan(Time(0), Time(1)))
 
     # Add number patterns together
-    logging.debug("\n== ADDITION ==\n")
+    print("\n== ADDITION ==\n")
     numbers = F.fastcat([F.pure(v) for v in [2, 3, 4, 5]])
     more_numbers = F.fastcat([F.pure(10), F.pure(100)])
     pattern_pretty_printing(
         pattern=numbers + more_numbers,
         query_span=TimeSpan(Time(0), Time(1)))
 
-    logging.debug("\n== EMBEDDED SEQUENCES ==\n")
+    print("\n== EMBEDDED SEQUENCES ==\n")
     # sequence([0,1,[2, [3, 4]]]) is the same as "[0 1 [2 [3 4]]]" in mininotation
     pattern_pretty_printing(
         pattern=I.sequence([0, 1, [2, [3, 4]]]),
         query_span=TimeSpan(Time(0), Time(1)))
 
-    logging.debug("\n== Polyrhythm ==\n")
+    print("\n== Polyrhythm ==\n")
     pattern_pretty_printing(
         pattern=I.polyrhythm([[0, 1, 2, 3], [20, 30]]),
         query_span=TimeSpan(Time(0), Time(1)))
 
-    logging.debug("\n== Polyrhythm with fewer steps ==\n")
+    print("\n== Polyrhythm with fewer steps ==\n")
     pattern_pretty_printing(
         pattern=I.polyrhythm([[0, 1, 2, 3], [20, 30]], steps=2),
         query_span=TimeSpan(Time(0), Time(1)))
 
-    logging.debug("\n== Polymeter ==\n")
+    print("\n== Polymeter ==\n")
     pattern_pretty_printing(
         pattern=I.polymeter([[0, 1, 2], [20, 30]]),
         query_span=TimeSpan(Time(0), Time(1)))
 
-    logging.debug("\n== Polymeter with embedded polyrhythm ==\n")
+    print("\n== Polymeter with embedded polyrhythm ==\n")
     pattern_pretty_printing(
         pattern=I.pm([I.pr([[100, 200, 300, 400],
                             [0, 1]]),

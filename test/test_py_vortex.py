@@ -6,7 +6,7 @@ import py_vortex as pyt
 def multi_list():
     return [[1, 2, 3], [4, 5, 6]]
 
-
+# Utilities
 def test_concat(multi_list):
     flat_list = pyt.concat(multi_list)
     assert flat_list == [1, 2, 3, 4, 5, 6]
@@ -17,6 +17,7 @@ def test_remove_none(multi_list):
     assert list(no_none_list) == [1, 2, 3]
 
 
+#Time Class tests
 def test_sam():
     a = pyt.Time(3, 2).sam()
     assert a == 1
@@ -30,11 +31,15 @@ def test_whole_cycle():
     assert a.end == 2
 
 
+# TimeSpan Class tests
 def test_sect():
     a = pyt.TimeSpan(1, 4)
     sector = a.sect(pyt.TimeSpan(3, 6))
     assert sector.begin == pyt.TimeSpan(3, 4).begin
     assert sector.end == pyt.TimeSpan(3, 4).end
+    a = pyt.TimeSpan(1, 2)
+    sector = a.sect(pyt.TimeSpan(3, 6))
+    assert sector is None
 
 def test_with_time():
     a = pyt.TimeSpan(1, 4)
@@ -54,6 +59,7 @@ def test_span_cycles():
     assert sc[2].begin == pyt.Time(2)
     assert sc[2].end == a.end
 
+# Event Class tests
 def test_event_span():
     e = pyt.Event(0.25, 0.5, 1)
     ws = e.withSpan(lambda x: x * 2)
@@ -73,3 +79,10 @@ def test_event_value():
     assert ws.part.end == 0.5
     assert ws.value == 2
 
+def test_has_onset():
+    e = pyt.Event(pyt.TimeSpan(0.5, 1.5), pyt.TimeSpan(0.5, 1), "hello")
+    assert e.hasOnset
+
+# Pattern Class tests
+def test_split_queries():
+    Pattern.splitQueries(TimeSpan(0.5, 1.5))
