@@ -10,7 +10,7 @@ from math import floor
 import logging
 from functools import partial
 
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO)
 
 # flatten list of lists
 def concat(t) -> list:
