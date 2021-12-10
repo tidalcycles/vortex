@@ -352,10 +352,15 @@ class Pattern:
         logging.debug(f"PATTERN: fast fastEvents {fastEvents}")
         return fastEvents
 
-    @partial_decorator
+    def every(self, n, f):
+        return self.slowcat([f(self)] + ([self] * (n-1)))
+
     def fast(self, pfactor) -> Pattern:
         """ Speeds up a pattern using the given pattern of factors"""
         logging.debug(f"PATTERN: fast {self} {pfactor}")
+        if not isinstance(pfactor, Pattern):
+            # Not patterned, run normally
+            return self._fast(pfactor)
         return pfactor.fmap(lambda factor: self._fast(factor)).joinOuter()
         
     def slow(self, factor) -> Pattern:
@@ -502,7 +507,24 @@ class Control(Pattern):
     def checkType(cls, value) -> Bool:
         return isinstance(value, dict)
 
-    
+# Hippie partial application..
+
+@partial_decorator
+def fast(a, b):
+    return b.fast(a)
+
+@partial_decorator
+def slow(a, b):
+    return b.slow(a)
+
+@partial_decorator
+def early(a, b):
+    return b.early(a)
+
+@partial_decorator
+def late(a, b):
+    return b.late(a)
+
 # Hippie type inference..
     
 def guessValueClass(v):
@@ -683,4 +705,7 @@ if __name__ == "__main__":
                       [20, 30]]),
         query_span=TimeSpan(Time(0), Time(1)))
 
-    
+    logging.debug("\n== Every with partially applied 'fast' ==\n")
+    pattern_pretty_printing(
+        pattern=c.every(3, fast(2)),
+        query_span=TimeSpan(Time(0), Time(1)))
