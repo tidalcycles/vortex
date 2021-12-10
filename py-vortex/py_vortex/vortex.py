@@ -27,7 +27,7 @@ def id(x):
     """Identity function"""
     return x
 
-def partial_decorator(f):
+def partial_function(f):
     def wrapper(*args):
         try:
             return f(*args)
@@ -515,19 +515,19 @@ class Control(Pattern):
 
 # Hippie partial application..
 
-@partial_decorator
+@partial_function
 def fast(a, b):
     return b.fast(a)
 
-@partial_decorator
+@partial_function
 def slow(a, b):
     return b.slow(a)
 
-@partial_decorator
+@partial_function
 def early(a, b):
     return b.early(a)
 
-@partial_decorator
+@partial_function
 def late(a, b):
     return b.late(a)
 
