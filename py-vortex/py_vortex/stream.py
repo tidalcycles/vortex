@@ -43,7 +43,7 @@ class LinkClock:
     def unsubscribe(self, subscriber):
         """Unsubscribe from tick notifications"""
         with self._mutex:
-            self._subscribers.delete(subscriber)
+            self._subscribers.remove(subscriber)
 
     def start(self):
         """Start the clock"""
