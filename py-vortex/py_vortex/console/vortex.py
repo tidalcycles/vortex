@@ -29,13 +29,13 @@ def parse_args(args):
         "--gui",
         default=True,
         action="store_true",
-        help="Start the editor instead of the REPL",
+        help="Start a GUI code editor",
     )
     parser.add_argument(
-        "--repl",
+        "--cli",
         dest="gui",
         action="store_false",
-        help="Start the REPL instead of the editor",
+        help="Start the command line interpreter",
     )
 
     parser.add_argument(
