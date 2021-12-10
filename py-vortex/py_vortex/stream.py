@@ -167,7 +167,7 @@ class SuperDirtStream:
             return
 
         cycle_from, cycle_to = cycle
-        es = self.pattern.onsetsOnly().query(TimeSpan(cycle_from, cycle_to))
+        es = self.pattern.onsets_only().query(TimeSpan(cycle_from, cycle_to))
         if len(es):
             print("\n" + str([e.value for e in es]))
 
