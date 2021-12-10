@@ -11,15 +11,21 @@ def start_repl(*kwargs):
     default_clock.start()
 
     # Define a few useful functions...
-    _patterns = {}
+    _streams = {}
 
     def p(key, pattern):
-        if key not in _patterns:
+        if key not in _streams:
             stream = SuperDirtStream(*kwargs)
             default_clock.subscribe(stream)
-            _patterns[key] = stream
-        _patterns[key].pattern = pattern
+            _streams[key] = stream
+        _streams[key].pattern = pattern
         return pattern
+
+    def hush():
+        for stream in _streams.values():
+            stream.pattern = silence()
+            default_clock.unsubscribe(stream)
+        _streams.clear()
 
     # Start the interactive shell
     ipshell = InteractiveShellEmbed(banner1=f"Vortex {__version__}")
