@@ -1,34 +1,51 @@
 import tkinter as tk
+import tkinter.font
 from tkinter import ttk
 
-
-DEFAULT_THEME_NAME = "clam"
+from py_vortex.stream import vortex_dsl
 
 
 class App(tk.Tk):
-    def __init__(self):
+    def __init__(self, vortex_module):
         super().__init__()
+
+        self._vortex_module = vortex_module
 
         # Root window
         self.title("Vortex")
-        self.geometry("400x300")
         self.style = ttk.Style(self)
-
-        # Select default theme (if available)
-        theme_names = self.style.theme_names()
-        print(theme_names)
-        if DEFAULT_THEME_NAME in theme_names:
-            self.style.theme_use(DEFAULT_THEME_NAME)
 
         scrollbar = tk.Scrollbar(self)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        document = tk.Text(self, yscrollcommand=scrollbar.set)
-        document.pack(fill=tk.BOTH)
+        self.document = tk.Text(self, yscrollcommand=scrollbar.set, padx=5, pady=5)
+        self.document.pack(expand=True, fill=tk.BOTH)
 
-        scrollbar.config(command=document.yview)
+        font = tkinter.font.Font(family="monospace", size=14)
+        self.document.configure(
+            font=font,
+            blockcursor=True,
+            insertbackground="white",
+            bg="black",
+            fg="white",
+        )
+
+        scrollbar.config(command=self.document.yview)
+
+        self.document.bind("<Control-Return>", self.evaluate_block)
+        # self.bind_all("<Escape>", lambda e: self.destroy())
+
+        self.document.focus()
+
+    def evaluate_block(self, event=None):
+        print("TODO: Evaluate code")
+        code = "hush()"
+        print(f"Eval: '{code}'")
+        exec(code, vars(self._vortex_module))
+        return "break"
 
 
 def start_gui():
-    app = App()
-    app.mainloop()
+    with vortex_dsl() as module:
+        app = App(vortex_module=module)
+        app.mainloop()
