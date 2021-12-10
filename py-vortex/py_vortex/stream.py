@@ -1,13 +1,16 @@
+import logging
 import math
-
-# import sys
-import time
 import threading
+import importlib
+import time
+import contextlib
 
 import liblo
 import link
 
 from py_vortex import *
+
+_logger = logging.getLogger(__name__)
 
 
 class LinkClock:
@@ -41,7 +44,7 @@ class LinkClock:
     def unsubscribe(self, subscriber):
         """Unsubscribe from tick notifications"""
         with self._mutex:
-            self._subscribers.delete(subscriber)
+            self._subscribers.remove(subscriber)
 
     def start(self):
         """Start the clock"""
@@ -69,14 +72,14 @@ class LinkClock:
         self._notify_thread.start()
 
     def _notify_thread_target(self):
-        print("Link enabled")
+        _logger.info("Link enabled")
         self._link.enabled = True
         self._link.startStopSyncEnabled = True
 
         start = self._link.clock().micros()
         mill = 1000000
         start_beat = self._link.captureSessionState().beatAtTime(start, 4)
-        print("start: " + str(start_beat))
+        _logger.info("Start beat: %f", start_beat)
 
         ticks = 0
 
@@ -117,7 +120,7 @@ class LinkClock:
             # sys.stdout.flush()
 
         self._link.enabled = False
-        print("Link disabled")
+        _logger.info("Link disabled")
         return
 
 
@@ -169,7 +172,7 @@ class SuperDirtStream:
         cycle_from, cycle_to = cycle
         es = self.pattern.onsets_only().query(TimeSpan(cycle_from, cycle_to))
         if len(es):
-            print("\n" + str([e.value for e in es]))
+            _logger.debug("%s", [e.value for e in es])
 
         for e in es:
             cycle_on = e.whole.begin
@@ -195,7 +198,7 @@ class SuperDirtStream:
             for key, val in v.items():
                 msg.append(key)
                 msg.append(val)
-            print(*msg)
+            _logger.info("%s", msg)
 
             # liblo.send(superdirt, "/dirt/play", *msg)
             bundle = liblo.Bundle(ts, liblo.Message("/dirt/play", *msg))

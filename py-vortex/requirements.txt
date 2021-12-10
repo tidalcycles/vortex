@@ -4,4 +4,4 @@ pyliblo3 >= 0.11.3
 # Made the below because macos didn't have 0.12.0, but now linux diesn't seem to have it either??
 #pyliblo3 >= 0.12.0; sys_platform != 'darwin'
 #pyliblo3 == 0.11.3; sys_platform == 'darwin'
-
+ipython >= 7.30.0
