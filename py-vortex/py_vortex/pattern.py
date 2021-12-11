@@ -4,7 +4,6 @@ import sys
 from fractions import Fraction
 from math import floor
 
-from utils import *
 
 class Time(Fraction):
     """Fraction is immutable so new instead of init"""
@@ -54,16 +53,13 @@ class TimeSpan(object):
         return TimeSpan(f(self.begin), f(self.end))
 
     def sect(self, other):
-        """ Intersection of two timespans """
-        return TimeSpan(max(self.begin, other.begin), min(self.end, other.end))
-
-    def maybe_sect(a, b):
-        """ Like sect, but returns None if they don't intersect """
-        s = a.sect(b)
-        if s.end <= s.begin:
-            return None
+        """ Intersection of two timespans
+            Raises an error if TimeSpans do not intersect
+        """
+        if self.begin >= other.end or self.end <= other.begin:
+            raise ValueError(f'TimeSpan {self} and TimeSpan {other} do not intersect')
         else:
-            return s
+            return TimeSpan(max(self.begin, other.begin), min(self.end, other.end))
 
     def __repr__(self) -> str:
         return ("TimeSpan(" + self.begin.__repr__() + ", "
