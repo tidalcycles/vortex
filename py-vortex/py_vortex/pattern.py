@@ -53,11 +53,16 @@ class TimeSpan(object):
         return TimeSpan(f(self.begin), f(self.end))
 
     def sect(self, other):
-        """ Intersection of two timespans """
-        if self.begin >= other.end or self.end <= other.begin:
-            return None
-        else:
-            return TimeSpan(max(self.begin, other.begin), min(self.end, other.end))
+        """ Intersection of two timespans
+            NOTE: Intersection TimeSpan can be reversed !
+            Use maybe_sect if you do not want that behavior
+        """
+        return TimeSpan(max(self.begin, other.begin), min(self.end, other.end))
+
+    def maybe_sect(self, other):
+        """" Makes sure to return None if TimeSpans do not intersect """
+        sector = self.sect(other)
+        return None if sector.begin >= sector.end else sector
 
     def __repr__(self) -> str:
         return ("TimeSpan(" + self.begin.__repr__() + ", "
