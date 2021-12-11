@@ -1,4 +1,6 @@
 
+from functools import partialmethod
+import sys
 from fractions import Fraction
 from math import floor
 
@@ -465,23 +467,26 @@ def guess_value_class(val):
         return Control
     return Pattern
 
+module_obj = sys.modules[__name__]
 
-@partial_function
-def fast(val, pat):
-    return pat.fast(val)
+# Hack to make module-level function versions of pattern methods.
 
-@partial_function
-def slow(val, pat):
-    return pat.slow(val)
+def func_maker(name):
+    def func(*args):
+        args = list(args)
+        pat = args.pop()
+        method = getattr(pat, name)
+        try:
+            return method(*args)
+        except (TypeError) as e:
+            return partialmethod(method, *args)
 
-@partial_function
-def early(val, pat):
-    return pat.early(val)
+        return method(arg)
+    return func
 
-@partial_function
-def late(val, pat):
-    return pat.late(val)
-    
+for name in ["fast", "slow", "early", "late"]:
+    setattr(module_obj, name, func_maker(name))
+
 def silence():
     return Pattern.silence()
 
