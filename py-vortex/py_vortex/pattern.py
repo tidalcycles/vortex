@@ -62,7 +62,10 @@ class TimeSpan(object):
     def maybe_sect(self, other):
         """" Makes sure to return None if TimeSpans do not intersect """
         sector = self.sect(other)
-        return None if sector.begin >= sector.end else sector
+        if sector.begin >= sector.end:
+            raise ValueError
+        else:
+            return sector
 
     def __repr__(self) -> str:
         return ("TimeSpan(" + self.begin.__repr__() + ", "
