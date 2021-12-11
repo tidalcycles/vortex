@@ -9,3 +9,13 @@ Once in your virtual environment, do:
 `pip install -r requirements` <br>
 `pip install -e .` <br>
 
+To run tests:
+`cd test`
+`pip install -r requirements`
+`cd ..`
+`pytest`
+
+To run a single test
+`pytest -k "regex"`
+
+pytest will look for any test that match regex in their function name
