@@ -17,7 +17,8 @@ class Time(Fraction):
 
     def next_sam(self):
         """Returns the start of the next cycle."""
-        return self.sam() + 1
+        # Operators still return Fraction objects..
+        return Time(self.sam() + 1)
 
     def whole_cycle(self):
         """Returns a TimeSpan representing the begin and end of the Time value's cycle"""
@@ -33,20 +34,23 @@ class TimeSpan(object):
 
     def span_cycles(self) -> list:
         """ Splits a timespan at cycle boundaries """
+        spans = []
+        begin = self.begin
+        end = self.end
+        end_sam = end.sam()
 
-        # TODO - a loop rather than recursion might be more efficient in
-        # python?
-        if self.end <= self.begin:
-            # no cycles in the timespan..
-            return []
-        elif self.begin.sam() == self.end.sam():
-            # Timespan is all within one cycle
-            return [self]
-        else:
-            nextB = self.begin.next_sam()
-            spans = TimeSpan(nextB, self.end).span_cycles()
-            spans.insert(0, TimeSpan(self.begin, nextB))
-            return spans
+        while end > begin:
+            # If begin and end are in the same cycle, we're done.
+            if begin.sam() == end_sam:
+                spans.append(TimeSpan(begin, self.end))
+                break
+            # add a timespan up to the next sam
+            next_begin = begin.next_sam()
+            spans.append(TimeSpan(begin, next_begin))
+
+            # continue with the next cycle
+            begin = next_begin
+        return spans
 
     def with_time(self, f):
         """ Applies given function to both the begin and end value of the timespan"""
