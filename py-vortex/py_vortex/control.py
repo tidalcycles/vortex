@@ -1,6 +1,4 @@
-
-from pattern import *
-
+from .pattern import S, F
 # Create functions for making control patterns (patterns of dictionaries)
 controls = [
     (S, "S", ["s", "vowel"]),

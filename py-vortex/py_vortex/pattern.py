@@ -4,7 +4,6 @@ import sys
 from fractions import Fraction
 from math import floor
 
-from utils import *
 
 class Time(Fraction):
     """Fraction is immutable so new instead of init"""
@@ -64,7 +63,7 @@ class TimeSpan(object):
         """Like 'sect', but raises an exception if the timespans don't intersect."""
         result = self.sect(other)
         if result == None:
-            raise ValueError
+            raise ValueError(f'TimeSpan {self} and TimeSpan {other} do not intersect')
         return result
 
     def __repr__(self) -> str:

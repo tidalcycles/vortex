@@ -3,16 +3,13 @@ Experiment: porting Tidalcycles to Python 3.x.
 """
 
 from __future__ import annotations
-
 import logging
 
-from pattern import *
-from utils import *
-from control import *
 
 def pattern_pretty_printing(pattern: Pattern, query_span: TimeSpan) -> None:
     """ Better formatting for logging.debuging Tidal Patterns """
     for event in pattern.query(query_span):
+
         logging.debug(event)
 
 if __name__ == "__main__":
@@ -22,34 +19,34 @@ if __name__ == "__main__":
     c = S.fastcat([a, b])
     d = S.stack([a, b])
 
-    # logging.debuging the pattern
+    # printing the pattern
     logging.debug("\n== TEST PATTERN ==\n")
     logging.debug('Like: "hello world" (over two cycles)')
     pattern_pretty_printing(
         pattern=c,
         query_span=TimeSpan(Time(0), Time(2)))
 
-    # logging.debuging the pattern with fast
+    # printing the pattern with fast
     logging.debug("\n== SAME BUT FASTER==\n")
     logging.debug('Like: fast 4 "hello world"')
     pattern_pretty_printing(
         pattern=c._fast(2),
         query_span=TimeSpan(Time(0), Time(1)))
 
-    # logging.debuging the pattern with patterned fast
+    # printing the pattern with patterned fast
     logging.debug("\n== PATTERNS OF FAST OF PATTERNS==\n")
     logging.debug('Like: fast "2 4" "hello world"')
     pattern_pretty_printing(
         pattern=c.fast(S.fastcat([F.pure(2), F.pure(4)])),
         query_span=TimeSpan(Time(0), Time(1)))
 
-    # logging.debuging the pattern with stack
+    # printing the pattern with stack
     logging.debug("\n== STACK ==\n")
     pattern_pretty_printing(
         pattern=d,
         query_span=TimeSpan(Time(0), Time(1)))
 
-    # logging.debuging the pattern with late
+    # printing the pattern with late
     logging.debug("\n== LATE ==\n")
     pattern_pretty_printing(
         pattern=c.late(0.5),
