@@ -82,7 +82,3 @@ def test_event_value():
 def test_has_onset():
     e = pyt.Event(pyt.TimeSpan(0.5, 1.5), pyt.TimeSpan(0.5, 1), "hello")
     assert e.hasOnset
-
-# Pattern Class tests
-def test_split_queries():
-    Pattern.splitQueries(TimeSpan(0.5, 1.5))
