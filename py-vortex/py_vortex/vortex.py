@@ -47,13 +47,13 @@ class Time(Fraction):
         logging.debug(f"SAM: {self}")
         return floor(self)
 
-    def nextSam(self):
+    def next_sam(self):
         logging.debug(f"NEXT SAM: {self}")
         return self.sam() + 1
 
-    def wholeCycle(self):
-        logging.debug(f"in wholeCycle {self.sam()} {self.nextSam()}")
-        return TimeSpan(self.sam(), self.nextSam())
+    def whole_cycle(self):
+        logging.debug(f"in wholeCycle {self.sam()} {self.next_sam()}")
+        return TimeSpan(self.sam(), self.next_sam())
 
 
 class TimeSpan(object):
@@ -77,7 +77,7 @@ class TimeSpan(object):
             # Timespan is all within one cycle
             return [self]
         else:
-            nextB = self.begin.nextSam()
+            nextB = self.begin.next_sam()
             spans = TimeSpan(nextB, self.end).span_cycles()
             spans.insert(0, TimeSpan(self.begin, nextB))
             return spans
@@ -404,7 +404,7 @@ class Pattern:
             raise ValueError
         
         def query(span):
-            return [Event(Time(subspan.begin).wholeCycle(), subspan, v)
+            return [Event(Time(subspan.begin).whole_cycle(), subspan, v)
                     for subspan in span.span_cycles()
             ]
         return cls(query)
