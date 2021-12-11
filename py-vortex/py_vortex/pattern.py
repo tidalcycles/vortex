@@ -17,7 +17,7 @@ class Time(Fraction):
 
     def next_sam(self):
         """Returns the start of the next cycle."""
-        # Operators still return Fraction objects..
+        # Operators still return Fraction objects, so recast to Time for now.
         return Time(self.sam() + 1)
 
     def whole_cycle(self):
