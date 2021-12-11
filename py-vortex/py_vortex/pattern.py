@@ -53,13 +53,18 @@ class TimeSpan(object):
         return TimeSpan(f(self.begin), f(self.end))
 
     def sect(self, other):
-        """ Intersection of two timespans
-            Raises an error if TimeSpans do not intersect
-        """
+        """Intersection of two timespans, returns None if they don't intersect."""
         if self.begin >= other.end or self.end <= other.begin:
-            raise ValueError(f'TimeSpan {self} and TimeSpan {other} do not intersect')
+            return None
         else:
             return TimeSpan(max(self.begin, other.begin), min(self.end, other.end))
+
+    def sect_e(self, other):
+        """Like 'sect', but raises an exception if the timespans don't intersect."""
+        result = self.sect(other)
+        if result == None:
+            raise ValueError(f'TimeSpan {self} and TimeSpan {other} do not intersect')
+        return result
 
     def __repr__(self) -> str:
         return ("TimeSpan(" + self.begin.__repr__() + ", "
@@ -178,7 +183,7 @@ class Pattern:
             event_funcs = pat_func.query(span)
             event_vals = patv.query(span)
             def apply(event_funcs, event_vals):
-                s = event_funcs.part.maybe_sect(event_vals.part)
+                s = event_funcs.part.sect(event_vals.part)
                 if s == None:
                     return None
                 return Event(whole_func(event_funcs.whole, event_vals.whole), s, event_funcs.value(event_vals.value))
@@ -193,7 +198,7 @@ class Pattern:
         def whole_func(a, b):
             if a == None or b == None:
                 return None
-            return a.sect(b)
+            return a.sect_e(b)
 
         return self._app_whole(whole_func, pat_val)
 
@@ -243,7 +248,7 @@ class Pattern:
         """Like >>, but matching values from left replace those on the right"""
         return self.fmap(lambda x: lambda y: {**y, **x}).app(other)
     
-    def _bind_whole(self, choose_whole, f):
+    def _bind_whole(self, choose_whole, func):
         pat_val = self
         def query(span):
             def withWhole(a, b):
@@ -251,41 +256,41 @@ class Pattern:
                              b.value
                             )
             def match(a):
-                return [withWhole(a, b) for b in f(a.value).query(a.part)]
+                return [withWhole(a, b) for b in func(a.value).query(a.part)]
 
             return concat([match(ev) for ev in pat_val.query(span)])
         return self.__class__(query)
 
-    def bind(self, f):
+    def bind(self, func):
         def whole_func(a, b):
             if a == None or b == None:
                 return None
-            return a.sect(b)
-        return self._bind_whole(whole_func, f)
+            return a.sect_e(b)
+        return self._bind_whole(whole_func, func)
 
     def join(self):
         """Flattens a pattern of patterns into a pattern, where wholes are
         the intersection of matched inner and outer events."""
         return self.bind(id)
     
-    def inner_bind(self, f):
+    def inner_bind(self, func):
         def whole_func(a, b):
             if a == None or b == None:
                 return None
             return a
-        return self._bind_whole(whole_func, f)
+        return self._bind_whole(whole_func, func)
 
     def inner_join(self):
         """Flattens a pattern of patterns into a pattern, where wholes are
         taken from inner events."""
         return self.inner_bind(id)
     
-    def outer_bind(self, f):
+    def outer_bind(self, func):
         def whole_func(a, b):
             if a == None or b == None:
                 return None
             return b
-        return self._bind_whole(whole_func, f)
+        return self._bind_whole(whole_func, func)
 
     def outer_join(self):
         """Flattens a pattern of patterns into a pattern, where wholes are
