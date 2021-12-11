@@ -38,8 +38,10 @@ def test_sect():
     assert sector.begin == pyt.TimeSpan(3, 4).begin
     assert sector.end == pyt.TimeSpan(3, 4).end
     a = pyt.TimeSpan(1, 2)
-    sector = a.sect(pyt.TimeSpan(3, 6))
-    assert sector is None
+    try:
+        sector = a.sect(pyt.TimeSpan(3, 6))
+    except ValueError as v:
+        assert str(v) == "TimeSpan TimeSpan(Time(1, 1), Time(2, 1)) and TimeSpan TimeSpan(Time(3, 1), Time(6, 1)) do not intersect"
 
 def test_with_time():
     a = pyt.TimeSpan(1, 4)
