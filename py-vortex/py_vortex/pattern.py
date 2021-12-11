@@ -60,7 +60,7 @@ class TimeSpan(object):
         return TimeSpan(max(self.begin, other.begin), min(self.end, other.end))
 
     def maybe_sect(self, other):
-        """" Makes sure to return None if TimeSpans do not intersect """
+        """" Makes sure to raise an Error if TimeSpans do not intersect """
         sector = self.sect(other)
         if sector.begin >= sector.end:
             raise ValueError
