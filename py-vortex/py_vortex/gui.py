@@ -18,7 +18,13 @@ FONTS_DIR = os.path.join(RES_DIR, "fonts")
 
 DEFAULT_FONT_FAMILY = "Iosevka Term"
 DEFAULT_CODE = r"""# this is an example code
-p(1, s("gabba"))
+p("test",
+    s(stack([pure("gabba").fast(4), pure("cp").fast(3)]))
+        >> speed(sequence([pure(2), pure(3)]))
+        >> room(pure(0.5))
+        >> size(pure(0.8))
+    )
+)
 
 """.replace(
     "\n", "\r\n"
