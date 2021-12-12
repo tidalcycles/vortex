@@ -24,6 +24,7 @@ setup(
         "console_scripts": ["vortex=py_vortex.console.vortex:run"],
     },
     include_package_data=True,
+    package_data={package_name: ["res/*"]},
     install_requires=get_requirements(),
     classifiers=[
         "Programming Language :: Python :: 3.9",

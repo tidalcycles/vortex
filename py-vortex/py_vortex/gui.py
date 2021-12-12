@@ -1,11 +1,28 @@
+import glob
+import logging
+import os
 import sys
 
+import pkg_resources
 from PyQt5.Qsci import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 from py_vortex import vortex_dsl
+
+_logger = logging.getLogger(__name__)
+
+RES_DIR = pkg_resources.resource_filename("py_vortex", "res")
+FONTS_DIR = os.path.join(RES_DIR, "fonts")
+
+DEFAULT_FONT_FAMILY = "Iosevka Term"
+DEFAULT_CODE = r"""# this is an example code
+p(1, s("gabba"))
+
+""".replace(
+    "\n", "\r\n"
+)
 
 
 class VortexMainWindow(QMainWindow):
@@ -27,11 +44,16 @@ class VortexMainWindow(QMainWindow):
 
         self._editorFont = QFont()
         self._editorFont.setPointSize(16)
-        self._editorFont.setFamily("monospace")
+        self._editorFont.setFamily(DEFAULT_FONT_FAMILY)
 
         # Create and configure Editor
         self._editor = QsciScintilla()
-        self._editor.setUtf8(True)  # Set encoding to UTF-8
+        self._editor.setText(DEFAULT_CODE)
+        self._editor.setUtf8(True)
+        self._editor.setIndentationsUseTabs(False)
+        self._editor.setAutoIndent(True)
+        self._editor.setTabIndents(True)
+        self._editor.setTabWidth(4)
         self._editor.setIndentationGuides(True)
         self._editor.setCaretLineVisible(True)
         self._editor.setCaretLineBackgroundColor(QColor("#1fff0000"))
@@ -63,10 +85,20 @@ class VortexMainWindow(QMainWindow):
         exec(code, vars(self._dsl_module))
 
 
+def load_fonts():
+    font_files = glob.glob(os.path.join(FONTS_DIR, "*"))
+    for font_file in font_files:
+        font = QFontDatabase.addApplicationFont(font_file)
+        if font != -1:
+            _logger.warn("Failed to load font %s", font_file)
+
+
 def start_gui():
     app = QApplication(sys.argv)
     QApplication.setStyle(QStyleFactory.create("Fusion"))
 
+    load_fonts()
+
     with vortex_dsl() as module:
-        myGUI = VortexMainWindow(dsl_module=module)
+        window = VortexMainWindow(dsl_module=module)
         app.exec_()
