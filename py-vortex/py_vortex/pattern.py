@@ -2,18 +2,19 @@
 from functools import partialmethod
 import sys
 from fractions import Fraction
-from math import floor
+import math
 from .utils import *
 
 class Time(Fraction):
-    """Fraction is immutable so new instead of init"""
+    """Subclass of Fraction, with added methods for deadling with cycle boundaries"""
+    # Fraction is immutable so new instead of init
     def __new__(cls, *args, **kwargs):
         self = super(Time, cls).__new__(cls, *args, **kwargs)
         return self
 
     def sam(self):
         """Returns the start of the cycle."""
-        return Time(floor(self))
+        return Time(math.floor(self))
 
     def next_sam(self):
         """Returns the start of the next cycle."""
@@ -56,19 +57,22 @@ class TimeSpan(object):
         """ Applies given function to both the begin and end value of the timespan"""
         return TimeSpan(f(self.begin), f(self.end))
 
-    def sect(self, other):
+    def intersection(self, other):
         """Intersection of two timespans, returns None if they don't intersect."""
         if self.begin >= other.end or self.end <= other.begin:
             return None
         else:
             return TimeSpan(max(self.begin, other.begin), min(self.end, other.end))
 
-    def sect_e(self, other):
+    def intersection_e(self, other):
         """Like 'sect', but raises an exception if the timespans don't intersect."""
-        result = self.sect(other)
+        result = self.intersection(other)
         if result == None:
             raise ValueError(f'TimeSpan {self} and TimeSpan {other} do not intersect')
         return result
+
+    def midpoint(self):
+        self.begin + ((self.end-self.begin)/2)
 
     def __repr__(self) -> str:
         return ("TimeSpan(" + self.begin.__repr__() + ", "
@@ -187,7 +191,7 @@ class Pattern:
             event_funcs = pat_func.query(span)
             event_vals = patv.query(span)
             def apply(event_funcs, event_vals):
-                s = event_funcs.part.sect(event_vals.part)
+                s = event_funcs.part.intersection(event_vals.part)
                 if s == None:
                     return None
                 return Event(whole_func(event_funcs.whole, event_vals.whole), s, event_funcs.value(event_vals.value))
@@ -202,7 +206,7 @@ class Pattern:
         def whole_func(a, b):
             if a == None or b == None:
                 return None
-            return a.sect_e(b)
+            return a.intersection_e(b)
 
         return self._app_whole(whole_func, pat_val)
 
@@ -269,7 +273,7 @@ class Pattern:
         def whole_func(a, b):
             if a == None or b == None:
                 return None
-            return a.sect_e(b)
+            return a.intersection_e(b)
         return self._bind_whole(whole_func, func)
 
     def join(self):
@@ -338,19 +342,60 @@ class Pattern:
         cls(lambda _: [])
 
     @classmethod
+    def signal(cls, func, add=None, mult=None):
+        def query(span):
+            def func_adj(time):
+                result = func(time)
+                if add != None:
+                    result = result + add
+                if mult != None:
+                    result = result * mult
+                return result
+            return Event(None, span, func_adj(span.midpoint))
+        return(cls(query))
+
+    @classmethod
+    def sine2(cls, add=None, mult=None):
+        # TODO - add to / constrain to rational / float patterns?
+        def func(time):
+            result = math.sine(math.pi * 2 * time)
+        return cls.signal(func, add, mult)
+    
+    @classmethod
+    def sine(cls):
+        return cls.sine2(1, 0.5)
+    
+    @classmethod
+    def cosine2(cls, add=None, mult=None):
+        return cls.sine2(add, mult).early(0.25)
+
+    @classmethod
+    def cosine(cls, add=None, mult=None):
+        return cls.sine().early(0.25)
+
+    @classmethod
     def checkType(cls, value) -> bool:
         return True
     
     @classmethod
-    def pure(cls, v):
+    def pure(cls, value):
         """ Returns a pattern that repeats the given value once per cycle """
-        if not cls.checkType(v):
+        if not cls.checkType(value):
             raise ValueError
         
         def query(span):
-            return [Event(Time(subspan.begin).whole_cycle(), subspan, v)
+            return [Event(Time(subspan.begin).whole_cycle(), subspan, value)
                     for subspan in span.span_cycles()
             ]
+        return cls(query)
+
+    @classmethod
+    def steady(cls, value):
+        if not cls.checkType(value):
+            raise ValueError
+
+        def query(span):
+            return [Event(None, span, value)]
         return cls(query)
     
     @classmethod
@@ -361,7 +406,7 @@ class Pattern:
 
         """
         def query(span):
-            pat = pats[floor(span.begin) % len(pats)]
+            pat = pats[math.floor(span.begin) % len(pats)]
             return pat.query(span)
         return cls(query).split_queries()
 
@@ -497,6 +542,9 @@ def silence():
 
 def pure(v):
     return guess_value_class(v).pure(v)
+
+def steady(v):
+    return guess_value_class(v).steady(v)
 
 def slowcat(pats) -> Pattern:
     if len(pats) == 0:

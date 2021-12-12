@@ -3,6 +3,7 @@ from .pattern import S, F, I, Control
 # Create functions for making control patterns (patterns of dictionaries)
 
 generic_params = [
+    (S, "s", "sound"),
     (S, "toArg", "for internal sound routing"),
     # (F, "from", "for internal sound routing"),  <- TODO - 'from' is a reserved word in python..
     (F, "to", "for internal sound routing"),
@@ -174,3 +175,5 @@ def make_control(cls, name):
 
 for cls, name, desc in generic_params:
     make_control(cls, name)
+
+sound = s
