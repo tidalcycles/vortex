@@ -165,12 +165,12 @@ generic_params = [
 
 controls = []
 
+module_obj = sys.modules[__name__]
+
 # This had to go in its own function, for weird scoping reasons..
 def make_control(cls, name):
     setattr(cls, name, lambda pat: Control(pat.fmap(lambda v: {name: v}).query))
-
-module_obj = sys.modules[__name__]
+    setattr(module_obj,name,getattr(cls,name))
 
 for cls, name, desc in generic_params:
     make_control(cls, name)
-    setattr(module_obj,name,getattr(cls,name))
