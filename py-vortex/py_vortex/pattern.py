@@ -339,7 +339,7 @@ class Pattern:
 
     @classmethod
     def silence(cls):
-        cls(lambda _: [])
+        return cls(lambda _: [])
 
     @classmethod
     def signal(cls, func, add=None, mult=None):
@@ -563,15 +563,24 @@ def stack(pats) -> Pattern:
         return Pattern.silence()
     return pats[0].__class__.stack(pats)
 
-def _sequence(pats):
-    if len(pats) == 0:
-        return Pattern.silence()
-    return pats[0].__class__._sequence(pats)
+def _sequence(xs):
+    if len(xs) == 0:
+        return Pattern.silence()        
+    if isinstance(xs[0], Pattern):
+        cls = xs[0].__class__
+    else:
+        cls = guess_value_class(xs[0])
+    return cls._sequence(pats)
 
 def sequence(xs):
     if len(xs) == 0:
         return Pattern.silence()
-    return xs[0].__class__.sequence(xs)
+    if isinstance(xs[0], Pattern):
+        cls = xs[0].__class__
+    else:
+        cls = guess_value_class(xs[0])
+
+    return cls.sequence(xs)
 
 def polyrhythm(xs, steps=None):
     if len(xs) == 0:
