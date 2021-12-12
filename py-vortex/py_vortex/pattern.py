@@ -3,7 +3,7 @@ from functools import partialmethod
 import sys
 from fractions import Fraction
 from math import floor
-from utils import *
+from .utils import *
 
 class Time(Fraction):
     """Fraction is immutable so new instead of init"""
