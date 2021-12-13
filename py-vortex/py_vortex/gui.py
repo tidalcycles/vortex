@@ -9,7 +9,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
-from py_vortex import vortex_dsl
+from py_vortex import vortex_dsl, __version__
 
 _logger = logging.getLogger(__name__)
 
@@ -18,13 +18,20 @@ FONTS_DIR = os.path.join(RES_DIR, "fonts")
 
 DEFAULT_FONT_FAMILY = "Iosevka Term"
 DEFAULT_CODE = r"""# this is an example code
-p("test",
-    s(stack([pure("gabba").fast(4), pure("cp").fast(3)]))
-        >> speed(sequence([pure(2), pure(3)]))
-        >> room(pure(0.5))
-        >> size(pure(0.8))
-    )
+
+# some block
+
+##
+# another block
+#
+
+p("test", s(stack([pure("gabba").fast(4), pure("cp").fast(3)]))
+    >> speed(sequence([pure(2), pure(3)]))
+    >> room(pure(0.5))
+    >> size(pure(0.8))
 )
+
+hush()
 
 """.replace(
     "\n", "\r\n"
@@ -38,8 +45,9 @@ class VortexMainWindow(QMainWindow):
         self._dsl_module = dsl_module
 
         # Define the geometry of the main window
-        self.setGeometry(300, 300, 800, 400)
-        self.setWindowTitle("Vortex")
+        # self.setGeometry(400, 100, 800, 600)
+        self.setFixedSize(800, 600)
+        self.setWindowTitle(f"Vortex {__version__}")
 
         # Create frame and layout
         self._frame = QFrame(self)
@@ -64,6 +72,9 @@ class VortexMainWindow(QMainWindow):
         self._editor.setCaretLineVisible(True)
         self._editor.setCaretLineBackgroundColor(QColor("#1fff0000"))
         self._editor.setCaretWidth(3)
+        self._editor.setMarginType(0, QsciScintilla.NumberMargin)
+        self._editor.setMarginWidth(0, "000")
+        self._editor.setMarginsForegroundColor(QColor("#ff888888"))
 
         # Create Python Lexer
         self._lexer = QsciLexerPython(self._editor)
@@ -85,10 +96,30 @@ class VortexMainWindow(QMainWindow):
         self.show()
 
     def evaluate_block(self):
-        print("TODO: Evaluate code")
-        code = "hush()"
-        print(f"Eval: '{code}'")
-        exec(code, vars(self._dsl_module))
+        code = self.get_current_block()
+        if code:
+            _logger.info(f"Eval: '{code}'")
+            exec(code, vars(self._dsl_module))
+
+    def get_current_block(self):
+        text = self._editor.text()
+        lines = text.split("\n")
+        line, _ = self._editor.getCursorPosition()
+        if not lines[line].strip():
+            return ""
+        start_line = line
+        for i in reversed(range(0, line)):
+            if not lines[i].strip():
+                start_line = i + 1
+                break
+        end_line = line
+        for i in range(line, len(lines)):
+            if not lines[i].strip():
+                end_line = i
+                break
+        _logger.debug("Block between lines %d and %d", start_line, end_line)
+        block = "\n".join(lines[start_line : end_line + 1])
+        return block
 
 
 def load_fonts():
