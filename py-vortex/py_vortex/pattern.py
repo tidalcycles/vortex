@@ -440,17 +440,18 @@ class Pattern:
         return cls(query)
 
     @classmethod
-    def _sequence(cls,xs):
-        if type(xs) == list:
-            return (cls.fastcat([cls.sequence(x) for x in xs]), len(xs))
-        elif isinstance(xs, Pattern):
-            return (xs,1)
+    def _sequence(cls,x):
+        if type(x) == list:
+            return (cls.fastcat([cls.sequence(x) for x in x]), len(x))
+        elif isinstance(x, Pattern):
+            return (x,1)
         else:
-            return (cls.pure(xs), 1)
+            element_cls = guess_value_class(x)
+            return (element_cls.pure(x), 1)
 
     @classmethod
-    def sequence(cls, xs):
-        return cls._sequence(xs)[0]
+    def sequence(cls, x):
+        return cls._sequence(x)[0]
 
     @classmethod
     def polyrhythm(cls, xs, steps=None):
