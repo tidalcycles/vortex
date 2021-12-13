@@ -487,48 +487,48 @@ class Pattern:
     def pm(cls, xs):
         return cls.polymeter(xs)
 
-class S(Pattern):
-    @classmethod
-    def checkType(cls, value) -> bool:
-        return isinstance(value, str)
+# class S(Pattern):
+#     @classmethod
+#     def checkType(cls, value) -> bool:
+#         return isinstance(value, str)
 
 
-class F(Pattern):
-    @classmethod
-    def checkType(cls, value) -> bool:
-        return isinstance(value, float) or isinstance(value, int)
+# class F(Pattern):
+#     @classmethod
+#     def checkType(cls, value) -> bool:
+#         return isinstance(value, float) or isinstance(value, int)
 
 
-class I(Pattern):
-    @classmethod
-    def checkType(cls, value) -> bool:
-        return isinstance(value, int)
+# class I(Pattern):
+#     @classmethod
+#     def checkType(cls, value) -> bool:
+#         return isinstance(value, int)
 
 
-class T(Pattern):
-    @classmethod
-    def checkType(cls, value) -> bool:
-        return isinstance(value, Fraction)
+# class T(Pattern):
+#     @classmethod
+#     def checkType(cls, value) -> bool:
+#         return isinstance(value, Fraction)
 
-class Control(Pattern):
-    @classmethod
-    def checkType(cls, value) -> bool:
-        return isinstance(value, dict)
+# class Control(Pattern):
+#     @classmethod
+#     def checkType(cls, value) -> bool:
+#         return isinstance(value, dict)
 
 # Hippie type inference..
     
-def guess_value_class(val):
-    if isinstance(val, int):
-        return I
-    if isinstance(val, str):
-        return S
-    if isinstance(val, float):
-        return F
-    if isinstance(val, Fraction):
-        return T
-    if isinstance(val, dict):
-        return Control
-    return Pattern
+# def guess_value_class(val):
+#     if isinstance(val, int):
+#         return I
+#     if isinstance(val, str):
+#         return S
+#     if isinstance(val, float):
+#         return F
+#     if isinstance(val, Fraction):
+#         return T
+#     if isinstance(val, dict):
+#         return Control
+#     return Pattern
 
 module_obj = sys.modules[__name__]
 
@@ -554,10 +554,12 @@ def silence():
     return Pattern.silence()
 
 def pure(v):
-    return guess_value_class(v).pure(v)
+    #return guess_value_class(v).pure(v)
+    return Pattern.pure(v)
 
 def steady(v):
-    return guess_value_class(v).steady(v)
+#    return guess_value_class(v).steady(v)
+    return Pattern.steady(v)
 
 def slowcat(pats) -> Pattern:
     if len(pats) == 0:
@@ -579,40 +581,43 @@ def stack(pats) -> Pattern:
 def _sequence(xs):
     if len(xs) == 0:
         return Pattern.silence()        
-    if isinstance(xs[0], Pattern):
-        cls = xs[0].__class__
-    else:
-        cls = guess_value_class(xs[0])
-    return cls._sequence(pats)
+    # if isinstance(xs[0], Pattern):
+    #     cls = xs[0].__class__
+    # else:
+    #     cls = guess_value_class(xs[0])
+    # return cls._sequence(pats)
+    return Pattern._sequence(pats)
 
 def sequence(xs):
     if len(xs) == 0:
         return Pattern.silence()
-    if isinstance(xs[0], Pattern):
-        cls = xs[0].__class__
-    else:
-        cls = guess_value_class(xs[0])
-
-    return cls.sequence(xs)
+    # if isinstance(xs[0], Pattern):
+    #     cls = xs[0].__class__
+    # else:
+    #     cls = guess_value_class(xs[0])
+    # return cls.sequence(xs)
+    return Pattern.sequence(xs)
 
 def polyrhythm(xs, steps=None):
     if len(xs) == 0:
         return Pattern.silence()
-    if isinstance(xs[0], Pattern):
-        cls = xs[0].__class__
-    else:
-        cls = guess_value_class(xs[0])
-    return cls.polyrhythm(xs, steps)
+    # if isinstance(xs[0], Pattern):
+    #     cls = xs[0].__class__
+    # else:
+    #     cls = guess_value_class(xs[0])
+    # return cls.polyrhythm(xs, steps)
+    return Pattern.polyrhythm(xs, steps)
 
 pr = polyrhythm
 
 def polymeter(xs):
     if len(xs) == 0:
         return Pattern.silence()
-    if isinstance(xs[0], Pattern):
-        cls = xs[0].__class__
-    else:
-        cls = guess_value_class(xs[0])
-    return cls.polymeter(xs)
+    # if isinstance(xs[0], Pattern):
+    #     cls = xs[0].__class__
+    # else:
+    #     cls = guess_value_class(xs[0])
+    # return cls.polymeter(xs)
+    return Pattern.polymeter(xs)
 
 pm = polyrhythm
