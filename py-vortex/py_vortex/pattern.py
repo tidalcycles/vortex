@@ -1,37 +1,41 @@
 
+from decimal import ExtendedContext
 from functools import partialmethod
 import sys
 from fractions import Fraction
 import math
 from .utils import *
 
-class Time(Fraction):
-    """Subclass of Fraction, with added methods for deadling with cycle boundaries"""
-    # Fraction is immutable so new instead of init
-    def __new__(cls, *args, **kwargs):
-        self = super(Time, cls).__new__(cls, *args, **kwargs)
-        return self
+#class Time(Fraction):
+#    """Subclass of Fraction, with added methods for deadling with cycle boundaries"""
+#    # Fraction is immutable so new instead of init
+#    def __new__(cls, *args, **kwargs):
+#        self = super(Time, cls).__new__(cls, *args, **kwargs)
+#        return self
 
-    def sam(self):
-        """Returns the start of the cycle."""
-        return Time(math.floor(self))
+"""Returns the start of the cycle."""
+Fraction.sam = lambda self: Fraction(math.floor(self))
 
-    def next_sam(self):
-        """Returns the start of the next cycle."""
-        # Operators still return Fraction objects, so recast to Time for now.
-        return Time(self.sam() + 1)
+"""Returns the start of the next cycle."""
+Fraction.next_sam = lambda self: self.sam() + 1
 
-    def whole_cycle(self):
-        """Returns a TimeSpan representing the begin and end of the Time value's cycle"""
-        return TimeSpan(self.sam(), self.next_sam())
-
+"""Returns a TimeSpan representing the begin and end of the Time value's cycle"""
+Fraction.whole_cycle = lambda self: TimeSpan(self.sam(), self.next_sam())
 
 class TimeSpan(object):
 
     """ TimeSpan is (Time, Time) """
-    def __init__(self, begin: Time, end: Time):
-        self.begin = Time(begin)
-        self.end = Time(end)
+    def __init__(self, begin: Fraction, end: Fraction):
+
+        # Is this needed?
+        if not isinstance(begin, Fraction):
+            begin = Fraction(begin)
+
+        if not isinstance(end, Fraction):
+            end = Fraction(end)
+
+        self.begin = begin
+        self.end = end
 
     def span_cycles(self) -> list:
         """ Splits a timespan at cycle boundaries """
@@ -59,10 +63,20 @@ class TimeSpan(object):
 
     def intersection(self, other):
         """Intersection of two timespans, returns None if they don't intersect."""
-        if self.begin >= other.end or self.end <= other.begin:
+        intersect_begin = max(self.begin, other.begin)
+        intersect_end = min(self.end, other.end)
+
+        if intersect_begin > intersect_end:
             return None
-        else:
-            return TimeSpan(max(self.begin, other.begin), min(self.end, other.end))
+        if intersect_begin == intersect_end:
+            # Zero-width (point) intersection - doesn't intersect if it's at the end of a
+            # non-zero-width timespan.
+            if intersect_begin == self.end and self.begin < self.end:
+                return None
+            if intersect_begin == other.end and other.begin < other.end:
+                return None 
+
+        return TimeSpan(intersect_begin, intersect_end)
 
     def intersection_e(self, other):
         """Like 'sect', but raises an exception if the timespans don't intersect."""
@@ -72,7 +86,7 @@ class TimeSpan(object):
         return result
 
     def midpoint(self):
-        self.begin + ((self.end-self.begin)/2)
+        return self.begin + ((self.end-self.begin)/2)
 
     def __repr__(self) -> str:
         return ("TimeSpan(" + self.begin.__repr__() + ", "
@@ -175,7 +189,6 @@ class Pattern:
         """Returns a new pattern that will only return events where the start
         of the 'whole' timespan matches the start of the 'part'
         timespan, i.e. the events that include their 'onset'.
-
         """
         return self.__class__(lambda span: list(filter(Event.has_onset, self.query(span))))
     
@@ -335,7 +348,7 @@ class Pattern:
         return self.early(0-offset)
 
     def first_cycle(self):
-        return self.query(TimeSpan(Time(0), Time(1)))
+        return self.query(TimeSpan(Fraction(0), Fraction(1)))
 
     @classmethod
     def silence(cls):
@@ -358,7 +371,7 @@ class Pattern:
     def sine2(cls, add=None, mult=None):
         # TODO - add to / constrain to rational / float patterns?
         def func(time):
-            result = math.sine(math.pi * 2 * time)
+            result = math.sin(math.pi * 2 * time)
         return cls.signal(func, add, mult)
     
     @classmethod
@@ -384,7 +397,7 @@ class Pattern:
             raise ValueError
         
         def query(span):
-            return [Event(Time(subspan.begin).whole_cycle(), subspan, value)
+            return [Event(Fraction(subspan.begin).whole_cycle(), subspan, value)
                     for subspan in span.span_cycles()
             ]
         return cls(query)
@@ -453,7 +466,7 @@ class Pattern:
             if steps == seq[1]:
                 pats.append(seq[0])
             else:
-                pats.append(seq[0]._fast(Time(steps)/Time(seq[1])))
+                pats.append(seq[0]._fast(Fraction(steps)/Fraction(seq[1])))
         return cls.stack(pats)
 
     # alias
@@ -495,7 +508,7 @@ class I(Pattern):
 class T(Pattern):
     @classmethod
     def checkType(cls, value) -> bool:
-        return isinstance(value, Time)
+        return isinstance(value, Fraction)
 
 class Control(Pattern):
     @classmethod
@@ -511,7 +524,7 @@ def guess_value_class(val):
         return S
     if isinstance(val, float):
         return F
-    if isinstance(val, Time):
+    if isinstance(val, Fraction):
         return T
     if isinstance(val, dict):
         return Control
