@@ -2,6 +2,7 @@ import glob
 import logging
 import os
 import sys
+import time
 
 import pkg_resources
 from PyQt5.Qsci import *
@@ -9,12 +10,13 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
-from py_vortex import vortex_dsl, __version__
+from py_vortex import __version__, vortex_dsl
 
 _logger = logging.getLogger(__name__)
 
 RES_DIR = pkg_resources.resource_filename("py_vortex", "res")
 FONTS_DIR = os.path.join(RES_DIR, "fonts")
+HIGHLIGHT_INDICATOR_ID = 0
 
 DEFAULT_FONT_FAMILY = "Iosevka Term"
 DEFAULT_CODE = r"""# this is an example code
@@ -36,6 +38,34 @@ hush()
 """.replace(
     "\n", "\r\n"
 )
+
+
+class HighlightLines(QRunnable):
+    def __init__(self, editor, range, interval=0.1):
+        super().__init__()
+        self.editor = editor
+        self.range = range
+        self.interval = interval
+
+    def run(self):
+        start, end = self.range
+        editor = self.editor
+
+        line, index = editor.getCursorPosition()
+        editor.setSelection(start, 0, end, 0)
+        editor.setSelectionBackgroundColor(QColor("#ff00ff00"))
+        editor.setSelectionForegroundColor(QColor("#ff000000"))
+
+        _logger.info("Wait")
+        time.sleep(self.interval)
+
+        # TODO: Should clear from 0 to end of document, just in case...
+        # editor.clearIndicatorRange(start, 0, end, 0, HIGHLIGHT_INDICATOR_ID)
+        # editor.setCursorPosition(line, index)
+        editor.resetSelectionBackgroundColor()
+        editor.resetSelectionForegroundColor()
+
+        _logger.info("Done")
 
 
 class VortexMainWindow(QMainWindow):
@@ -81,6 +111,10 @@ class VortexMainWindow(QMainWindow):
         self._lexer.setFont(self._editorFont)
         self._editor.setLexer(self._lexer)
 
+        self._editor.indicatorDefine(
+            QsciScintilla.FullBoxIndicator, HIGHLIGHT_INDICATOR_ID
+        )
+
         # Commands and shortcuts
         commands = self._editor.standardCommands()
         command = commands.boundTo(Qt.ControlModifier | Qt.Key_Return)
@@ -96,10 +130,11 @@ class VortexMainWindow(QMainWindow):
         self.show()
 
     def evaluate_block(self):
-        code = self.get_current_block()
+        code, (start, end) = self.get_current_block()
         if code:
             _logger.info(f"Eval: '{code}'")
             exec(code, vars(self._dsl_module))
+        #self.highlight_block(start, end)
 
     def get_current_block(self):
         text = self._editor.text()
@@ -119,7 +154,12 @@ class VortexMainWindow(QMainWindow):
                 break
         _logger.debug("Block between lines %d and %d", start_line, end_line)
         block = "\n".join(lines[start_line : end_line + 1])
-        return block
+        return block, (start_line, end_line)
+
+    def highlight_block(self, start_line, end_line):
+        pool = QThreadPool.globalInstance()
+        runnable = HighlightLines(self._editor, (start_line, end_line))
+        pool.start(runnable)
 
 
 def load_fonts():
