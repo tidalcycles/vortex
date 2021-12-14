@@ -325,7 +325,8 @@ class Pattern:
         return fastEvents
 
     def every(self, n, func):
-        return self.slowcat([func(self)] + ([self] * (n-1)))
+        pats = [func(self)] + ([self] * (n-1))
+        return self.slowcat(*pats)
 
     def fast(self, pat_factor):
         """ Speeds up a pattern using the given pattern of factors"""
@@ -412,50 +413,54 @@ class Pattern:
         return cls(query)
     
     @classmethod
-    def slowcat(cls, pats):
+    def slowcat(cls, *pats):
         """Concatenation: combines a list of patterns, switching between them
         successively, one per cycle.
         (currently behaves slightly differently from Tidal)
 
         """
+        pats = [reify(pat) for pat in pats]
         def query(span):
             pat = pats[math.floor(span.begin) % len(pats)]
             return pat.query(span)
         return cls(query).split_queries()
 
     @classmethod
-    def fastcat(cls,pats):
+    def fastcat(cls, *pats):
         """Concatenation: as with slowcat, but squashes a cycle from each
         pattern into one cycle"""
-        return cls.slowcat(pats)._fast(len(pats))
+        return cls.slowcat(*pats)._fast(len(pats))
 
     # alias
     cat = fastcat
 
     @classmethod
-    def stack(cls, pats):
+    def stack(cls, *pats):
         """ Pile up patterns """
+        pats = [reify(pat) for pat in pats]
         def query(span):
             return concat([pat.query(span) for pat in pats])
         return cls(query)
 
     @classmethod
-    def _sequence(cls,x):
-        if type(x) == list:
-            return (cls.fastcat([cls.sequence(x) for x in x]), len(x))
-        elif isinstance(x, Pattern):
+    def _sequence_count(cls, x):
+        if type(x) == list or type(x) == tuple:
+            if len(x) == 1:
+                return cls._sequence_count(x[0])
+            else:
+                return (cls.fastcat(*[cls.sequence(x) for x in x]), len(x))
+        if isinstance(x, Pattern):
             return (x,1)
         else:
-            element_cls = guess_value_class(x)
-            return (element_cls.pure(x), 1)
+            return (Pattern.pure(x), 1)
 
     @classmethod
-    def sequence(cls, x):
-        return cls._sequence(x)[0]
+    def sequence(cls, *args):
+        return cls._sequence_count(args)[0]
 
     @classmethod
-    def polyrhythm(cls, xs, steps=None):
-        seqs = [cls._sequence(x) for x in xs]
+    def polyrhythm(cls, *args, steps=None):
+        seqs = [cls._sequence_count(x) for x in args]
         if len(seqs) == 0:
             return cls.silence
         if not steps:
@@ -468,7 +473,7 @@ class Pattern:
                 pats.append(seq[0])
             else:
                 pats.append(seq[0]._fast(Fraction(steps)/Fraction(seq[1])))
-        return cls.stack(pats)
+        return cls.stack(*pats)
 
     # alias
     @classmethod
@@ -485,53 +490,15 @@ class Pattern:
         return cls.stack(seqs)
 
     @classmethod
-    def pm(cls, xs):
-        return cls.polymeter(xs)
-
-# class S(Pattern):
-#     @classmethod
-#     def checkType(cls, value) -> bool:
-#         return isinstance(value, str)
-
-
-# class F(Pattern):
-#     @classmethod
-#     def checkType(cls, value) -> bool:
-#         return isinstance(value, float) or isinstance(value, int)
-
-
-# class I(Pattern):
-#     @classmethod
-#     def checkType(cls, value) -> bool:
-#         return isinstance(value, int)
-
-
-# class T(Pattern):
-#     @classmethod
-#     def checkType(cls, value) -> bool:
-#         return isinstance(value, Fraction)
-
-# class Control(Pattern):
-#     @classmethod
-#     def checkType(cls, value) -> bool:
-#         return isinstance(value, dict)
-
-# Hippie type inference..
-    
-# def guess_value_class(val):
-#     if isinstance(val, int):
-#         return I
-#     if isinstance(val, str):
-#         return S
-#     if isinstance(val, float):
-#         return F
-#     if isinstance(val, Fraction):
-#         return T
-#     if isinstance(val, dict):
-#         return Control
-#     return Pattern
+    def pm(cls, *args):
+        return cls.polymeter(*args)
 
 module_obj = sys.modules[__name__]
+
+def reify(x):
+    if not isinstance(x, Pattern):
+        return Pattern.pure(x)
+    return x
 
 # Hack to make module-level function versions of pattern methods.
 
@@ -555,70 +522,31 @@ def silence():
     return Pattern.silence()
 
 def pure(v):
-    #return guess_value_class(v).pure(v)
     return Pattern.pure(v)
 
 def steady(v):
-#    return guess_value_class(v).steady(v)
     return Pattern.steady(v)
 
-def slowcat(pats) -> Pattern:
-    if len(pats) == 0:
-        return Pattern.silence()
-    return pats[0].__class__.slowcat(pats)
+def slowcat(*args) -> Pattern:
+    return Pattern.slowcat(*args)
 
-def fastcat(pats) -> Pattern:
-    if len(pats) == 0:
-        return Pattern.silence()
-    return pats[0].__class__.fastcat(pats)
+def fastcat(*args) -> Pattern:
+    return Pattern.fastcat(*args)
 
 cat = fastcat
 
-def stack(pats) -> Pattern:
-    if len(pats) == 0:
-        return Pattern.silence()
-    return pats[0].__class__.stack(pats)
+def stack(*args) -> Pattern:
+    return Pattern.stack(*args)
 
-def _sequence(xs):
-    if len(xs) == 0:
-        return Pattern.silence()        
-    # if isinstance(xs[0], Pattern):
-    #     cls = xs[0].__class__
-    # else:
-    #     cls = guess_value_class(xs[0])
-    # return cls._sequence(pats)
-    return Pattern._sequence(pats)
+def sequence(*args):
+    return Pattern.sequence(*args)
 
-def sequence(xs):
-    if len(xs) == 0:
-        return Pattern.silence()
-    # if isinstance(xs[0], Pattern):
-    #     cls = xs[0].__class__
-    # else:
-    #     cls = guess_value_class(xs[0])
-    # return cls.sequence(xs)
-    return Pattern.sequence(xs)
-
-def polyrhythm(xs, steps=None):
-    if len(xs) == 0:
-        return Pattern.silence()
-    # if isinstance(xs[0], Pattern):
-    #     cls = xs[0].__class__
-    # else:
-    #     cls = guess_value_class(xs[0])
-    # return cls.polyrhythm(xs, steps)
-    return Pattern.polyrhythm(xs, steps)
+def polyrhythm(*args, steps=None):
+    return Pattern.polyrhythm(*args, steps=steps)
 
 pr = polyrhythm
 
-def polymeter(xs):
-    if len(xs) == 0:
-        return Pattern.silence()
-    # if isinstance(xs[0], Pattern):
-    #     cls = xs[0].__class__
-    # else:
-    #     cls = guess_value_class(xs[0])
-    # return cls.polymeter(xs)
-    return Pattern.polymeter(xs)
+def polymeter(*args):
+    return Pattern.polymeter(*args)
 
 pm = polyrhythm
