@@ -4,7 +4,7 @@ Inspired by TidalCycles
 
 ## Installation
 
-### Installing the Vortex module
+### Installing the Vortex module
 
 To install module, first install pyenv (or conda if you prefer). Once in your
 virtual environment, do:
@@ -28,14 +28,14 @@ To run a single test:
 
 `pytest` will look for any test that match regex in their function name.
 
-### Platform specific instructions
+### Platform specific instructions
 #### Linux
 
 On Linux, you might need to install `liblo-dev`:
 * `Debian/Ubuntu` (`apt`): `sudo apt install liblo-dev`
 * `Arch` and arch-based: `sudo pacman -S liblo` or check the `Aur`.
 
-#### MacOS
+#### MacOS
 
 On MacOS, there are a few packages you need to install manually. You can use
 the [brew](https://brew.sh/) to get them:
