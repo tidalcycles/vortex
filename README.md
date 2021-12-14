@@ -41,9 +41,13 @@ On Linux, you might need to install `liblo-dev`:
 
 #### MacOS
 
-On MacOS, there are a few packages you need to install manually. Check your installatoin beforehand because you might already have everything you need. Run these commands only if a component appear to be missing. You can use [brew](https://brew.sh/) to get them:
+On MacOS, there are a few packages you need to install manually. Check your installation beforehand because you might already have everything you need. Run these commands only if a component appear to be missing. You can use [brew](https://brew.sh/) to get them:
 * `brew install liblo`
 * `pip install pyqt5 --upgrade`
 * `pip install pyqt5-sip --upgrade`
 * `pip install sip --upgrade`
 
+## Usage
+
+* Run `vortex --cli` for an [IPython](https://ipython.org/) based REPL.
+* Run `vortex` for the QtScintilla experimental GUI window.
