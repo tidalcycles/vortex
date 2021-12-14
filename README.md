@@ -1,5 +1,8 @@
 # Vortex: Algorithmic pattern experiments in Python
-Inspired by TidalCycles
+
+Inspired by [TidalCycles](https://tidalcycles.org) and 
+[Tidal Remake](https://github.com/yaxu/remake). Tidalcycles experimental port
+for Python 3+.
 
 
 ## Installation
