@@ -1,51 +1,181 @@
-import tkinter as tk
-import tkinter.font
-from tkinter import ttk
+import glob
+import logging
+import os
+import sys
+import time
 
-from py_vortex.stream import vortex_dsl
+import pkg_resources
+from PyQt5.Qsci import *
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+
+from py_vortex import __version__, vortex_dsl
+
+_logger = logging.getLogger(__name__)
+
+RES_DIR = pkg_resources.resource_filename("py_vortex", "res")
+FONTS_DIR = os.path.join(RES_DIR, "fonts")
+HIGHLIGHT_INDICATOR_ID = 0
+
+DEFAULT_FONT_FAMILY = "Iosevka Term"
+DEFAULT_CODE = r"""# this is an example code
+
+# some block
+
+##
+# another block
+#
+
+p("test", s(stack([pure("gabba").fast(4), pure("cp").fast(3)]))
+    >> speed(sequence([pure(2), pure(3)]))
+    >> room(pure(0.5))
+    >> size(pure(0.8))
+)
+
+hush()
+
+""".replace(
+    "\n", "\r\n"
+)
 
 
-class App(tk.Tk):
-    def __init__(self, vortex_module):
+class HighlightLines(QRunnable):
+    def __init__(self, editor, range, interval=0.1):
         super().__init__()
+        self.editor = editor
+        self.range = range
+        self.interval = interval
 
-        self._vortex_module = vortex_module
+    def run(self):
+        start, end = self.range
+        editor = self.editor
 
-        # Root window
-        self.title("Vortex")
-        self.style = ttk.Style(self)
+        line, index = editor.getCursorPosition()
+        editor.setSelection(start, 0, end, 0)
+        editor.setSelectionBackgroundColor(QColor("#ff00ff00"))
+        editor.setSelectionForegroundColor(QColor("#ff000000"))
 
-        scrollbar = tk.Scrollbar(self)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        _logger.info("Wait")
+        time.sleep(self.interval)
 
-        self.document = tk.Text(self, yscrollcommand=scrollbar.set, padx=5, pady=5)
-        self.document.pack(expand=True, fill=tk.BOTH)
+        # TODO: Should clear from 0 to end of document, just in case...
+        # editor.clearIndicatorRange(start, 0, end, 0, HIGHLIGHT_INDICATOR_ID)
+        # editor.setCursorPosition(line, index)
+        editor.resetSelectionBackgroundColor()
+        editor.resetSelectionForegroundColor()
 
-        font = tkinter.font.Font(family="monospace", size=14)
-        self.document.configure(
-            font=font,
-            blockcursor=True,
-            insertbackground="white",
-            bg="black",
-            fg="white",
+        _logger.info("Done")
+
+
+class VortexMainWindow(QMainWindow):
+    def __init__(self, dsl_module):
+        super(VortexMainWindow, self).__init__()
+
+        self._dsl_module = dsl_module
+
+        # Define the geometry of the main window
+        # self.setGeometry(400, 100, 800, 600)
+        self.setFixedSize(800, 600)
+        self.setWindowTitle(f"Vortex {__version__}")
+
+        # Create frame and layout
+        self._frame = QFrame(self)
+        self._frame.setStyleSheet("QWidget { background-color: #ffeaeaea }")
+        self._layout = QVBoxLayout()
+        self._frame.setLayout(self._layout)
+        self.setCentralWidget(self._frame)
+
+        self._editorFont = QFont()
+        self._editorFont.setPointSize(16)
+        self._editorFont.setFamily(DEFAULT_FONT_FAMILY)
+
+        # Create and configure Editor
+        self._editor = QsciScintilla()
+        self._editor.setText(DEFAULT_CODE)
+        self._editor.setUtf8(True)
+        self._editor.setIndentationsUseTabs(False)
+        self._editor.setAutoIndent(True)
+        self._editor.setTabIndents(True)
+        self._editor.setTabWidth(4)
+        self._editor.setIndentationGuides(True)
+        self._editor.setCaretLineVisible(True)
+        self._editor.setCaretLineBackgroundColor(QColor("#1fff0000"))
+        self._editor.setCaretWidth(3)
+        self._editor.setMarginType(0, QsciScintilla.NumberMargin)
+        self._editor.setMarginWidth(0, "000")
+        self._editor.setMarginsForegroundColor(QColor("#ff888888"))
+
+        # Create Python Lexer
+        self._lexer = QsciLexerPython(self._editor)
+        self._lexer.setFont(self._editorFont)
+        self._editor.setLexer(self._lexer)
+
+        self._editor.indicatorDefine(
+            QsciScintilla.FullBoxIndicator, HIGHLIGHT_INDICATOR_ID
         )
 
-        scrollbar.config(command=self.document.yview)
+        # Commands and shortcuts
+        commands = self._editor.standardCommands()
+        command = commands.boundTo(Qt.ControlModifier | Qt.Key_Return)
+        # Clear the default
+        if command is not None:
+            command.setKey(0)
+        shortcut = QShortcut(Qt.ControlModifier | Qt.Key_Return, self._editor)
+        shortcut.activated.connect(self.evaluate_block)
 
-        self.document.bind("<Control-Return>", self.evaluate_block)
-        # self.bind_all("<Escape>", lambda e: self.destroy())
+        # Add editor to layout
+        self._layout.addWidget(self._editor)
 
-        self.document.focus()
+        self.show()
 
-    def evaluate_block(self, event=None):
-        print("TODO: Evaluate code")
-        code = "hush()"
-        print(f"Eval: '{code}'")
-        exec(code, vars(self._vortex_module))
-        return "break"
+    def evaluate_block(self):
+        code, (start, end) = self.get_current_block()
+        if code:
+            _logger.info(f"Eval: '{code}'")
+            exec(code, vars(self._dsl_module))
+        #self.highlight_block(start, end)
+
+    def get_current_block(self):
+        text = self._editor.text()
+        lines = text.split("\n")
+        line, _ = self._editor.getCursorPosition()
+        if not lines[line].strip():
+            return ""
+        start_line = line
+        for i in reversed(range(0, line)):
+            if not lines[i].strip():
+                start_line = i + 1
+                break
+        end_line = line
+        for i in range(line, len(lines)):
+            if not lines[i].strip():
+                end_line = i
+                break
+        _logger.debug("Block between lines %d and %d", start_line, end_line)
+        block = "\n".join(lines[start_line : end_line + 1])
+        return block, (start_line, end_line)
+
+    def highlight_block(self, start_line, end_line):
+        pool = QThreadPool.globalInstance()
+        runnable = HighlightLines(self._editor, (start_line, end_line))
+        pool.start(runnable)
+
+
+def load_fonts():
+    font_files = glob.glob(os.path.join(FONTS_DIR, "*"))
+    for font_file in font_files:
+        font = QFontDatabase.addApplicationFont(font_file)
+        if font != -1:
+            _logger.warn("Failed to load font %s", font_file)
 
 
 def start_gui():
+    app = QApplication(sys.argv)
+    QApplication.setStyle(QStyleFactory.create("Fusion"))
+
+    load_fonts()
+
     with vortex_dsl() as module:
-        app = App(vortex_module=module)
-        app.mainloop()
+        window = VortexMainWindow(dsl_module=module)
+        app.exec_()
