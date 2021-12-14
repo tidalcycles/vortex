@@ -9,14 +9,15 @@ for Python 3+.
 
 ### Installing the Vortex module
 
-To install module, first install pyenv (or conda if you prefer). Once in your
-virtual environment, do:
+To install module, first install [pyenv](https://github.com/pyenv/pyenv) (or [conda](https://docs.conda.io/en/latest/) if you prefer). Once in your virtual environment, do:
 
 ```
 cd py-vortex
 pip install -r requirements.txt
 pip install -e .
 ```
+
+### Testing the module
 
 To run tests:
 ```
@@ -40,8 +41,7 @@ On Linux, you might need to install `liblo-dev`:
 
 #### MacOS
 
-On MacOS, there are a few packages you need to install manually. You can use
-the [brew](https://brew.sh/) to get them:
+On MacOS, there are a few packages you need to install manually. Check your installatoin beforehand because you might already have everything you need. Run these commands only if a component appear to be missing. You can use [brew](https://brew.sh/) to get them:
 * `brew install liblo`
 * `pip install pyqt5 --upgrade`
 * `pip install pyqt5-sip --upgrade`
