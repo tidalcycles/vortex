@@ -170,7 +170,7 @@ module_obj = sys.modules[__name__]
 
 # This had to go in its own function, for weird scoping reasons..
 def make_control(name):
-    setattr(Pattern, name, lambda pat: Control(pat.fmap(lambda v: {name: v}).query))
+    setattr(Pattern, name, lambda pat: Pattern(pat.fmap(lambda v: {name: v}).query))
     setattr(module_obj,name,getattr(Pattern,name))
 
 for t, name, desc in generic_params:
