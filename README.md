@@ -4,7 +4,7 @@ Inspired by [TidalCycles](https://tidalcycles.org) and 
 [Tidal Remake](https://github.com/yaxu/remake). Tidalcycles experimental port
 for Python 3+.
 
-**This is free software, but currently free as in _free puppies_. It is moving fast and not yet ready for use.
+**This is free software, but currently free as in _free puppies_. It is moving fast and only really useful for playing with, not serious work.
 **
 
 ## Installation
