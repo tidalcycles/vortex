@@ -1,6 +1,6 @@
 import pytest
 import py_vortex as pyt
-
+from fractions import Fraction
 
 @pytest.fixture
 def multi_list():
@@ -19,14 +19,14 @@ def test_remove_none(multi_list):
 
 #Time Class tests
 def test_sam():
-    a = pyt.Time(3, 2).sam()
+    a = Fraction(3, 2).sam()
     assert a == 1
-    a = pyt.Time(3, 2).next_sam()
+    a = Fraction(3, 2).next_sam()
     assert a == 2
 
 
 def test_whole_cycle():
-    a = pyt.Time(3, 2).whole_cycle()
+    a = Fraction(3, 2).whole_cycle()
     assert a.begin == 1
     assert a.end == 2
 
@@ -55,10 +55,10 @@ def test_span_cycles():
     sc = a.span_cycles()
     print(sc)
     assert sc[0].begin == a.begin
-    assert sc[0].end == pyt.Time(1)
-    assert sc[1].begin == pyt.Time(1)
-    assert sc[1].end == pyt.Time(2)
-    assert sc[2].begin == pyt.Time(2)
+    assert sc[0].end == Fraction(1)
+    assert sc[1].begin == Fraction(1)
+    assert sc[1].end == Fraction(2)
+    assert sc[2].begin == Fraction(2)
     assert sc[2].end == a.end
 
 # Event Class tests
