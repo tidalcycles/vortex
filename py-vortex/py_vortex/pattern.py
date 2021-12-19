@@ -1,17 +1,10 @@
 
 from decimal import ExtendedContext
-from functools import partialmethod
+from functools import partial, partialmethod
 import sys
 from fractions import Fraction
 import math
 from .utils import *
-
-#class Time(Fraction):
-#    """Subclass of Fraction, with added methods for deadling with cycle boundaries"""
-#    # Fraction is immutable so new instead of init
-#    def __new__(cls, *args, **kwargs):
-#        self = super(Time, cls).__new__(cls, *args, **kwargs)
-#        return self
 
 """Returns the start of the cycle."""
 Fraction.sam = lambda self: Fraction(math.floor(self))
@@ -324,9 +317,12 @@ class Pattern:
         fastEvents = fastQuery.with_event_time(lambda t: t/factor)
         return fastEvents
 
+    def append(self, other):
+        return fastcat(self,other)
+
     def every(self, n, func):
         pats = [func(self)] + ([self] * (n-1))
-        return self.slowcat(*pats)
+        return slowcat(*pats)
 
     def fast(self, pat_factor):
         """ Speeds up a pattern using the given pattern of factors"""
@@ -351,118 +347,99 @@ class Pattern:
     def first_cycle(self):
         return self.query(TimeSpan(Fraction(0), Fraction(1)))
 
-    @classmethod
-    def silence(cls):
-        return cls(lambda _: [])
+# Signals
 
-    @classmethod
-    def signal(cls, func, add=None, mult=None):
-        def query(span):
-            def func_adj(time):
-                result = func(time)
-                if add != None:
-                    result = result + add
-                if mult != None:
-                    result = result * mult
-                return result
-            return Event(None, span, func_adj(span.midpoint))
-        return(cls(query))
+def silence():
+    return Pattern(lambda _: [])
 
-    @classmethod
-    def sine2(cls, add=None, mult=None):
-        # TODO - add to / constrain to rational / float patterns?
-        def func(time):
-            result = math.sin(math.pi * 2 * time)
-        return cls.signal(func, add, mult)
+def signal(func):
+    def query(span):
+        return Event(None, span, func(span.midpoint))
+    return(Pattern(query))
+
+def sine2():
+    return signal(lambda time: math.sin(math.pi * 2 * time))
+def sine():
+    return signal(lambda time: (math.sin(math.pi * 2 * time) + 1) / 2)
     
-    @classmethod
-    def sine(cls):
-        return cls.sine2(1, 0.5)
+def cosine2():
+    return sine2().early(0.25)
+def cosine():
+    return sine().early(0.25)
+
+def saw2():
+    return signal(lambda time: (time % 1) * 2)
+def saw():
+    return signal(lambda time: time % 1)
+
+def isaw2():
+    return signal(lambda time: (1 - (time % 1)) * 2)
+def isaw():
+    return signal(lambda time: 1 - (time % 1))
+
+def tri2():
+    return fastcat(isaw2, saw2)
+def tri():
+    return fastcat(isaw, saw)
+
+def pure(value):
+    """ Returns a pattern that repeats the given value once per cycle """
+    def query(span):
+        return [Event(Fraction(subspan.begin).whole_cycle(), subspan, value)
+                for subspan in span.span_cycles()
+        ]
+    return Pattern(query)
+
+def steady(value):
+    def query(span):
+        return [Event(None, span, value)]
+    return Pattern(query)
     
-    @classmethod
-    def cosine2(cls, add=None, mult=None):
-        return cls.sine2(add, mult).early(0.25)
+def slowcat(*pats):
+    """
+    Concatenation: combines a list of patterns, switching between them
+    successively, one per cycle.
+    (currently behaves slightly differently from Tidal)
+    """
+    pats = [reify(pat) for pat in pats]
+    def query(span):
+        pat = pats[math.floor(span.begin) % len(pats)]
+        return pat.query(span)
+    return Pattern(query).split_queries()
 
-    @classmethod
-    def cosine(cls, add=None, mult=None):
-        return cls.sine().early(0.25)
+def fastcat(*pats):
+    """Concatenation: as with slowcat, but squashes a cycle from each
+    pattern into one cycle"""
+    return slowcat(*pats)._fast(len(pats))
 
-    @classmethod
-    def checkType(cls, value) -> bool:
-        return True
-    
-    @classmethod
-    def pure(cls, value):
-        """ Returns a pattern that repeats the given value once per cycle """
-        if not cls.checkType(value):
-            raise ValueError
-        
-        def query(span):
-            return [Event(Fraction(subspan.begin).whole_cycle(), subspan, value)
-                    for subspan in span.span_cycles()
-            ]
-        return cls(query)
+# alias
+cat = fastcat
 
-    @classmethod
-    def steady(cls, value):
-        if not cls.checkType(value):
-            raise ValueError
+def stack(*pats):
+    """ Pile up patterns """
+    pats = [reify(pat) for pat in pats]
+    def query(span):
+        return concat([pat.query(span) for pat in pats])
+    return Pattern(query)
 
-        def query(span):
-            return [Event(None, span, value)]
-        return cls(query)
-    
-    @classmethod
-    def slowcat(cls, *pats):
-        """Concatenation: combines a list of patterns, switching between them
-        successively, one per cycle.
-        (currently behaves slightly differently from Tidal)
-
-        """
-        pats = [reify(pat) for pat in pats]
-        def query(span):
-            pat = pats[math.floor(span.begin) % len(pats)]
-            return pat.query(span)
-        return cls(query).split_queries()
-
-    @classmethod
-    def fastcat(cls, *pats):
-        """Concatenation: as with slowcat, but squashes a cycle from each
-        pattern into one cycle"""
-        return cls.slowcat(*pats)._fast(len(pats))
-
-    # alias
-    cat = fastcat
-
-    @classmethod
-    def stack(cls, *pats):
-        """ Pile up patterns """
-        pats = [reify(pat) for pat in pats]
-        def query(span):
-            return concat([pat.query(span) for pat in pats])
-        return cls(query)
-
-    @classmethod
-    def _sequence_count(cls, x):
-        if type(x) == list or type(x) == tuple:
-            if len(x) == 1:
-                return cls._sequence_count(x[0])
-            else:
-                return (cls.fastcat(*[cls.sequence(x) for x in x]), len(x))
-        if isinstance(x, Pattern):
-            return (x,1)
+def _sequence_count(x):
+    if type(x) == list or type(x) == tuple:
+        if len(x) == 1:
+            return _sequence_count(x[0])
         else:
-            return (Pattern.pure(x), 1)
+            return (fastcat(*[sequence(x) for x in x]), len(x))
+    if isinstance(x, Pattern):
+        return (x,1)
+    else:
+        return (pure(x), 1)
 
-    @classmethod
-    def sequence(cls, *args):
-        return cls._sequence_count(args)[0]
+def sequence(*args):
+    return _sequence_count(args)[0]
 
-    @classmethod
-    def polyrhythm(cls, *args, steps=None):
-        seqs = [cls._sequence_count(x) for x in args]
+def polyrhythm(*args, steps=None):
+        seqs = [_sequence_count(x) for x in args]
         if len(seqs) == 0:
-            return cls.silence
+            return silence()
         if not steps:
             steps = seqs[0][1]
         pats = []
@@ -473,80 +450,51 @@ class Pattern:
                 pats.append(seq[0])
             else:
                 pats.append(seq[0]._fast(Fraction(steps)/Fraction(seq[1])))
-        return cls.stack(*pats)
+        return stack(*pats)
 
-    # alias
-    @classmethod
-    def pr(cls, xs, steps=None):
-        return cls.polyrhythm(xs, steps)
+# alias
+pr = polyrhythm
 
-    @classmethod
-    def polymeter(cls, xs):
-        seqs = [cls.sequence(x) for x in xs]
+def polymeter(*xs):
+    seqs = [sequence(x) for x in xs]
 
-        if len(seqs) == 0:
-            return cls.silence
+    if len(seqs) == 0:
+        return silence()
 
-        return cls.stack(seqs)
+    return stack(seqs)
 
-    @classmethod
-    def pm(cls, *args):
-        return cls.polymeter(*args)
-
-module_obj = sys.modules[__name__]
+# alias
+pm = polymeter
 
 def reify(x):
     if not isinstance(x, Pattern):
-        return Pattern.pure(x)
+        return pure(x)
     return x
 
 # Hack to make module-level function versions of pattern methods.
 
-def func_maker(name):
-    def func(*args):
-        args = list(args)
-        pat = args.pop()
-        method = getattr(pat, name)
+module_obj = sys.modules[__name__]
+
+def partial_decorator(f):
+    def wrapper(*args):
         try:
-            return method(*args)
-        except (TypeError) as e:
-            return partialmethod(method, *args)
+            return f(*args)
+        except (TypeError, AttributeError) as e:
+            return partial(f, *args)
+    return wrapper
 
-        return method(arg)
-    return func
+@partial_decorator
+def fast(arg, pat):
+    return pat.fast(arg)
 
-for name in ["fast", "slow", "early", "late"]:
-    setattr(module_obj, name, func_maker(name))
+@partial_decorator
+def slow(arg, pat):
+    return pat.slow(arg)
 
-def silence():
-    return Pattern.silence()
+@partial_decorator
+def early(arg, pat):
+    return pat.early(arg)
 
-def pure(v):
-    return Pattern.pure(v)
-
-def steady(v):
-    return Pattern.steady(v)
-
-def slowcat(*args) -> Pattern:
-    return Pattern.slowcat(*args)
-
-def fastcat(*args) -> Pattern:
-    return Pattern.fastcat(*args)
-
-cat = fastcat
-
-def stack(*args) -> Pattern:
-    return Pattern.stack(*args)
-
-def sequence(*args):
-    return Pattern.sequence(*args)
-
-def polyrhythm(*args, steps=None):
-    return Pattern.polyrhythm(*args, steps=steps)
-
-pr = polyrhythm
-
-def polymeter(*args):
-    return Pattern.polymeter(*args)
-
-pm = polyrhythm
+@partial_decorator
+def late(arg, pat):
+    return pat.late(arg)
