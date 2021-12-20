@@ -16,6 +16,6 @@ def p(key, pattern):
 
 def hush():
     for stream in _streams.values():
-        stream.pattern = silence()
+        stream.pattern = silence
         _default_clock.unsubscribe(stream)
     _streams.clear()
