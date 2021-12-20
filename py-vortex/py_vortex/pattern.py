@@ -150,14 +150,14 @@ class Pattern:
     def with_query_time(self, func):
         """ Returns a new pattern, with the function applied to both the begin
         and end of the the query timespan. """
-        return self.__class__(lambda span: self.query(span.with_time(func)))
+        return Pattern(lambda span: self.query(span.with_time(func)))
 
     def with_event_span(self, func):
         """ Returns a new pattern, with the function applied to each event
         timespan. """
         def query(span):
             return [event.with_span(func) for event in self.query(span)]
-        return self.__class__(query)
+        return Pattern(query)
 
     def with_event_time(self, func):
         """ Returns a new pattern, with the function applied to both the begin
@@ -172,7 +172,7 @@ class Pattern:
         """
         def query(span):
             return [event.with_value(func) for event in self.query(span)]
-        return self.__class__(query)
+        return Pattern(query)
 
     # alias
     fmap = with_value
@@ -182,7 +182,7 @@ class Pattern:
         of the 'whole' timespan matches the start of the 'part'
         timespan, i.e. the events that include their 'onset'.
         """
-        return self.__class__(lambda span: list(filter(Event.has_onset, self.query(span))))
+        return Pattern(lambda span: list(filter(Event.has_onset, self.query(span))))
     
     def _app_whole(self, whole_func, patv):
         """
@@ -203,7 +203,7 @@ class Pattern:
                            for event_func in event_funcs
                           ]
                          )
-        return self.__class__(query)
+        return Pattern(query)
 
     def app(self, pat_val):
         """ Tidal's <*> """
@@ -241,11 +241,11 @@ class Pattern:
         return self.__add__(other)
     
     def __sub__(self, other):
+        other = reify(other)
         return self.fmap(lambda x: lambda y: x - y).app(other)
 
     def __rsub__(self, other):
-        if not (other.__class__ == Pattern):
-            return self - self.__class__(other)
+        other = reify(other)
         raise ValueError # or return NotImplemented?
 
     def __rshift__(self, other):
@@ -271,7 +271,7 @@ class Pattern:
                 return [withWhole(a, b) for b in func(a.value).query(a.part)]
 
             return concat([match(ev) for ev in pat_val.query(span)])
-        return self.__class__(query)
+        return Pattern(query)
 
     def bind(self, func):
         def whole_func(a, b):
