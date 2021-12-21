@@ -133,15 +133,18 @@ class VortexMainWindow(QMainWindow):
         code, (start, end) = self.get_current_block()
         if code:
             _logger.info(f"Eval: '{code}'")
-            exec(code, vars(self._dsl_module))
-        #self.highlight_block(start, end)
+            try:
+                exec(code, vars(self._dsl_module))
+            except Exception as err:
+                print("Error:", err)
+        # self.highlight_block(start, end)
 
     def get_current_block(self):
         text = self._editor.text()
         lines = text.split("\n")
         line, _ = self._editor.getCursorPosition()
         if not lines[line].strip():
-            return ""
+            return "", (line, line)
         start_line = line
         for i in reversed(range(0, line)):
             if not lines[i].strip():
