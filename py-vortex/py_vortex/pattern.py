@@ -176,13 +176,19 @@ class Pattern:
 
     # alias
     fmap = with_value
+    
+    def _filter_events(self, event_test):
+        return Pattern(lambda span: list(filter(event_test, self.query(span))))
+
+    def _filter_values(self, value_test):
+        return Pattern(lambda span: list(filter(lambda event: value_test(event.value), self.query(span))))
 
     def onsets_only(self):
         """Returns a new pattern that will only return events where the start
         of the 'whole' timespan matches the start of the 'part'
         timespan, i.e. the events that include their 'onset'.
         """
-        return Pattern(lambda span: list(filter(Event.has_onset, self.query(span))))
+        return(self._filter_events(Event.has_onset))
 
 #applyPatToPatLeft :: Pattern (a -> b) -> Pattern a -> Pattern b
 #applyPatToPatLeft pf px = Pattern q
@@ -349,6 +355,14 @@ class Pattern:
         """ Equivalent of Tidal's ~> operator """
         return self._early(0-offset)
     late = _patternify(_late)
+
+    def when(self, binary_pat, func):
+        binary_pat = sequence(binary_pat)
+        true_pat = binary_pat._filter_values(id)
+        false_pat = binary_pat._filter_values(lambda val: not val)
+        with_pat = true_pat.fmap(lambda _: lambda y: y).app_right(func(self))
+        without_pat = false_pat.fmap(lambda _: lambda y: y).app_right(self)
+        return stack(with_pat, without_pat)
 
     def every(self, n, func):
         pats = [func(self)] + ([self] * (n-1))
