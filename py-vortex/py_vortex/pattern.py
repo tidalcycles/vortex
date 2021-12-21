@@ -176,15 +176,30 @@ class Pattern:
 
     # alias
     fmap = with_value
+    
+    def _filter_events(self, event_test):
+        return Pattern(lambda span: list(filter(event_test, self.query(span))))
+
+    def _filter_values(self, value_test):
+        return Pattern(lambda span: list(filter(lambda event: value_test(event.value), self.query(span))))
 
     def onsets_only(self):
         """Returns a new pattern that will only return events where the start
         of the 'whole' timespan matches the start of the 'part'
         timespan, i.e. the events that include their 'onset'.
         """
-        return Pattern(lambda span: list(filter(Event.has_onset, self.query(span))))
-    
-    def _app_whole(self, whole_func, patv):
+        return(self._filter_events(Event.has_onset))
+
+#applyPatToPatLeft :: Pattern (a -> b) -> Pattern a -> Pattern b
+#applyPatToPatLeft pf px = Pattern q
+#    where q st = catMaybes $ concatMap match $ query pf st
+#            where
+#              match ef = map (withFX ef) (query px $ st {arc = wholeOrPart ef})
+#              withFX ef ex = do let whole' = whole ef
+#                                part' <- subArc (part ef) (part ex)
+#                                return (Event (combineContexts [context ef, context ex]) whole' part' (value ef $ value ex))
+
+    def _app_whole(self, whole_func, pat_val):
         """
         Assumes self is a pattern of functions, and given a function to
         resolve wholes, applies a given pattern of values to that
@@ -193,7 +208,7 @@ class Pattern:
         pat_func = self
         def query(span):
             event_funcs = pat_func.query(span)
-            event_vals = patv.query(span)
+            event_vals = pat_val.query(span)
             def apply(event_funcs, event_vals):
                 s = event_funcs.part.intersection(event_vals.part)
                 if s == None:
@@ -205,7 +220,8 @@ class Pattern:
                          )
         return Pattern(query)
 
-    def app(self, pat_val):
+    # A bit more complicated than this..
+    def app_both(self, pat_val):
         """ Tidal's <*> """
         def whole_func(span_a, span_B):
             if span_a == None or span_B == None:
@@ -215,38 +231,47 @@ class Pattern:
         return self._app_whole(whole_func, pat_val)
 
     def app_left(self, pat_val):
-        """ Tidal's <* """
-        def whole_func(a, b):
-            if a == None or b == None:
-                return None
-            return a
-
-        return self._app_whole(whole_func, pat_val)
+        pat_func = self
+        def query(span):
+            events = []
+            for event_func in pat_func.query(span):
+                event_vals = pat_val.query(event_func.part)
+                for event_val in event_vals:
+                    new_whole = event_func.whole
+                    new_part = event_func.part.intersection_e(event_val.part)
+                    new_value = event_func.value(event_val.value)
+                    events.append(Event(new_whole, new_part, new_value))
+            return events
+        return Pattern(query)
 
     def app_right(self, pat_val):
-        """ Tidal's *> """
-        def whole_func(a, b):
-            if a == None or b == None:
-                return None
-            return b
-
-        return self._app_whole(whole_func, pat_val)
+        pat_func = self
+        def query(span):
+            events = []
+            for event_val in pat_val.query(span):
+                event_funcs = pat_func.query(event_val.part)
+                for event_func in event_funcs:
+                    new_whole = event_val.whole
+                    new_part = event_func.part.intersection_e(event_val.part)
+                    new_value = event_func.value(event_val.value)
+                    events.append(Event(new_whole, new_part, new_value))
+            return events
+        return Pattern(query)
 
     def __add__(self, other):
-        other = reify(other)
-        return self.fmap(lambda x: lambda y: x + y).app(other)
+        return self.fmap(lambda x: lambda y: x + y).app_left(reify(other))
 
     def __radd__(self, other):
-        other = reify(other)
         return self.__add__(other)
     
     def __sub__(self, other):
-        other = reify(other)
-        return self.fmap(lambda x: lambda y: x - y).app(other)
+        return self.fmap(lambda x: lambda y: x - y).app_left(reify(other))
 
     def __rsub__(self, other):
-        other = reify(other)
         raise ValueError # or return NotImplemented?
+
+    def union(self, other):
+        return self.fmap(lambda x: lambda y: {**x, **y}).app_left(other)
 
     def __rshift__(self, other):
         """Overrides the >> operator to support combining patterns of
@@ -254,11 +279,11 @@ class Pattern:
         two patterns of dictionaries, with values from right replacing
         any with the same name from the left
         """
-        return self.fmap(lambda x: lambda y: {**x, **y}).app(other)
+        return self.union(other)
 
     def __lshift__(self, other):
         """Like >>, but matching values from left replace those on the right"""
-        return self.fmap(lambda x: lambda y: {**y, **x}).app(other)
+        return self.fmap(lambda x: lambda y: {**y, **x}).app_left(other)
     
     def _bind_whole(self, choose_whole, func):
         pat_val = self
@@ -287,8 +312,6 @@ class Pattern:
 
     def inner_bind(self, func):
         def whole_func(a, b):
-            if a == None or b == None:
-                return None
             return a
         return self._bind_whole(whole_func, func)
 
@@ -299,8 +322,6 @@ class Pattern:
     
     def outer_bind(self, func):
         def whole_func(a, b):
-            if a == None or b == None:
-                return None
             return b
         return self._bind_whole(whole_func, func)
 
@@ -308,39 +329,53 @@ class Pattern:
         """Flattens a pattern of patterns into a pattern, where wholes are
         taken from outer events."""
         return self.outer_bind(id)
-    
+
+    def _patternify(method):
+        def patterned(self, *args):
+            pat_arg = sequence(*args)
+            return pat_arg.fmap(lambda arg: method(self,arg)).outer_join()
+        return patterned
+
     def _fast(self, factor):
         """ Speeds up a pattern by the given factor"""
         fastQuery = self.with_query_time(lambda t: t*factor)
         fastEvents = fastQuery.with_event_time(lambda t: t/factor)
         return fastEvents
-    
-    def fast(self, pat_factor):
-        """ Speeds up a pattern using the given pattern of factors"""
-        if not isinstance(pat_factor, Pattern):
-            # Not patterned, run normally
-            return self._fast(pat_factor)
-        return pat_factor.fmap(lambda factor: self._fast(factor)).outer_join()
+    fast = _patternify(_fast)
 
-    def append(self, other):
-        return fastcat(self,other)
+    def _slow(self, factor):
+        """ Slow slows down a pattern """
+        return self._fast(1/factor)
+    slow = _patternify(_slow)
+
+    def _early(self, offset):
+        """ Equivalent of Tidal's <~ operator """
+        offset = Fraction(offset)
+        return self.with_query_time(lambda t: t+offset).with_event_time(lambda t: t-offset)
+    early = _patternify(_early)
+
+    def _late(self, offset):
+        """ Equivalent of Tidal's ~> operator """
+        return self._early(0-offset)
+    late = _patternify(_late)
+
+    def when(self, binary_pat, func):
+        binary_pat = sequence(binary_pat)
+        true_pat = binary_pat._filter_values(id)
+        false_pat = binary_pat._filter_values(lambda val: not val)
+        with_pat = true_pat.fmap(lambda _: lambda y: y).app_right(func(self))
+        without_pat = false_pat.fmap(lambda _: lambda y: y).app_right(self)
+        return stack(with_pat, without_pat)
+
+    def off(self, time_pat, func):
+        return stack(self, self.early(time_pat))
 
     def every(self, n, func):
         pats = [func(self)] + ([self] * (n-1))
         return slowcat(*pats)
     
-    def slow(self, factor):
-        """ Slow slows down a pattern """
-        return self._fast(1/factor)
-
-    def early(self, offset):
-        """ Equivalent of Tidal's <~ operator """
-        return self.with_query_time(
-                lambda t: t+offset).with_event_time(lambda t: t-offset)
-
-    def late(self, offset):
-        """ Equivalent of Tidal's ~> operator """
-        return self.early(0-offset)
+    def append(self, other):
+        return fastcat(self,other)
 
     def rev(self):
         def query(span):
@@ -467,26 +502,26 @@ silence = Pattern(lambda _: [])
 
 def signal(func):
     def query(span):
-        return Event(None, span, func(span.midpoint))
+        return [Event(None, span, func(span.midpoint()))]
     return(Pattern(query))
 
-sine2   = signal(lambda time: math.sin(math.pi * 2 * time))
-sine    = signal(lambda time: (math.sin(math.pi * 2 * time) + 1) / 2)
+sine2   = signal(lambda t: math.sin(math.pi * 2 * t))
+sine    = signal(lambda t: (math.sin(math.pi * 2 * t) + 1) / 2)
     
 cosine2 = sine2.early(0.25)
 cosine  = sine.early(0.25)
 
-saw2    = signal(lambda time: (time % 1) * 2)
-saw     = signal(lambda time: time % 1)
+saw2    = signal(lambda t: (t % 1) * 2)
+saw     = signal(lambda t: t % 1)
 
-isaw2   = signal(lambda time: (1 - (time % 1)) * 2)
-isaw    = signal(lambda time: 1 - (time % 1))
+isaw2   = signal(lambda t: (1 - (t % 1)) * 2)
+isaw    = signal(lambda t: 1 - (t % 1))
 
 tri2    = fastcat(isaw2, saw2)
 tri     = fastcat(isaw, saw)
 
-square2 = signal(lambda time: (math.floor((time*2) % 2) * 2) - 1)
-square  = signal(lambda time: math.floor((time*2) % 2))
+square2 = signal(lambda t: (math.floor((t*2) % 2) * 2) - 1)
+square  = signal(lambda t: math.floor((t*2) % 2))
 
 # Hack to make module-level function versions of pattern methods.
 
@@ -519,6 +554,10 @@ def late(arg, pat):
 @partial_decorator
 def jux(arg, pat):
     return pat.jux(arg)
+
+@partial_decorator
+def union(pat_a, pat_b):
+    return pat_b.union(pat_a)
 
 def rev(pat):
     return pat.rev()
