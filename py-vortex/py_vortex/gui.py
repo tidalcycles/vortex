@@ -18,7 +18,7 @@ RES_DIR = pkg_resources.resource_filename("py_vortex", "res")
 FONTS_DIR = os.path.join(RES_DIR, "fonts")
 HIGHLIGHT_INDICATOR_ID = 0
 
-DEFAULT_FONT_FAMILY = "Iosevka Term"
+DEFAULT_FONT_FAMILY = "Fira Code"
 DEFAULT_CODE = r"""# this is an example code
 
 # some block
@@ -76,7 +76,7 @@ class VortexMainWindow(QMainWindow):
 
         # Define the geometry of the main window
         # self.setGeometry(400, 100, 800, 600)
-        self.setFixedSize(800, 600)
+        self.setFixedSize(1024, 768)
         self.setWindowTitle(f"Vortex {__version__}")
 
         # Create frame and layout

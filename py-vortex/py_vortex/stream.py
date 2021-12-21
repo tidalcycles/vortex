@@ -4,10 +4,10 @@ import threading
 import importlib
 import time
 import contextlib
+from fractions import Fraction
 
 import liblo
 import link
-
 from py_vortex import *
 
 _logger = logging.getLogger(__name__)
@@ -196,6 +196,8 @@ class SuperDirtStream:
 
             msg = []
             for key, val in v.items():
+                if isinstance(val, Fraction):
+                    val = float(val)
                 msg.append(key)
                 msg.append(val)
             _logger.info("%s", msg)
