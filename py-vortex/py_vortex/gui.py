@@ -144,7 +144,7 @@ class VortexMainWindow(QMainWindow):
         lines = text.split("\n")
         line, _ = self._editor.getCursorPosition()
         if not lines[line].strip():
-            return ""
+            return "", (line, line)
         start_line = line
         for i in reversed(range(0, line)):
             if not lines[i].strip():
