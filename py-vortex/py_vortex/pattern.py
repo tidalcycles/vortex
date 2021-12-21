@@ -347,8 +347,8 @@ class Pattern:
 
     def _early(self, offset):
         """ Equivalent of Tidal's <~ operator """
-        return self.with_query_time(
-                lambda t: t+offset).with_event_time(lambda t: t-offset)
+        offset = Fraction(offset)
+        return self.with_query_time(lambda t: t+offset).with_event_time(lambda t: t-offset)
     early = _patternify(_early)
 
     def _late(self, offset):
@@ -363,6 +363,9 @@ class Pattern:
         with_pat = true_pat.fmap(lambda _: lambda y: y).app_right(func(self))
         without_pat = false_pat.fmap(lambda _: lambda y: y).app_right(self)
         return stack(with_pat, without_pat)
+
+    def off(self, time_pat, func):
+        return stack(self, self.early(time_pat))
 
     def every(self, n, func):
         pats = [func(self)] + ([self] * (n-1))
