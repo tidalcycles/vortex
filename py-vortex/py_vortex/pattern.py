@@ -270,13 +270,16 @@ class Pattern:
     def __rsub__(self, other):
         raise ValueError # or return NotImplemented?
 
+    def union(self, other):
+        return self.fmap(lambda x: lambda y: {**x, **y}).app_left(other)
+
     def __rshift__(self, other):
         """Overrides the >> operator to support combining patterns of
         dictionaries (AKA 'control patterns'). Produces the union of
         two patterns of dictionaries, with values from right replacing
         any with the same name from the left
         """
-        return self.fmap(lambda x: lambda y: {**x, **y}).app_left(other)
+        return self.union(other)
 
     def __lshift__(self, other):
         """Like >>, but matching values from left replace those on the right"""
@@ -551,6 +554,10 @@ def late(arg, pat):
 @partial_decorator
 def jux(arg, pat):
     return pat.jux(arg)
+
+@partial_decorator
+def union(pat_a, pat_b):
+    return pat_b.union(pat_a)
 
 def rev(pat):
     return pat.rev()
