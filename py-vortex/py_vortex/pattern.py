@@ -461,7 +461,7 @@ def _sequence_count(x):
 def sequence(*args):
     return _sequence_count(args)[0]
 
-def polyrhythm(*args, steps=None):
+def polymeter(*args, steps=None):
         seqs = [_sequence_count(x) for x in args]
         if len(seqs) == 0:
             return silence()
@@ -478,9 +478,9 @@ def polyrhythm(*args, steps=None):
         return stack(*pats)
 
 # alias
-pr = polyrhythm
+pm = polymeter
 
-def polymeter(*xs):
+def polyrhythm(*xs):
     seqs = [sequence(x) for x in xs]
 
     if len(seqs) == 0:
@@ -489,7 +489,7 @@ def polymeter(*xs):
     return stack(seqs)
 
 # alias
-pm = polymeter
+pr = polyrhythm
 
 def reify(x):
     if not isinstance(x, Pattern):
