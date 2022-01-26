@@ -76,7 +76,7 @@ class VortexMainWindow(QMainWindow):
 
         # Define the geometry of the main window
         # self.setGeometry(400, 100, 800, 600)
-        self.setFixedSize(1024, 768)
+        self.setFixedSize(1280, 800)
         self.setWindowTitle(f"Vortex {__version__}")
 
         # Create frame and layout
@@ -135,9 +135,9 @@ class VortexMainWindow(QMainWindow):
             _logger.info(f"Eval: '{code}'")
             try:
                 exec(code, vars(self._dsl_module))
-            except Exception as err:
-                print("Error:", err)
-        # self.highlight_block(start, end)
+            except (TypeError, AttributeError) as e:
+                _logger.info("error: %s", str(e))                
+        #self.highlight_block(start, end)
 
     def get_current_block(self):
         text = self._editor.text()

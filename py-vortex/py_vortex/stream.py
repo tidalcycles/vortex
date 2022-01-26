@@ -109,8 +109,11 @@ class LinkClock:
             cycle_from = s.beatAtTime(logical_now, 0) / bpc
             cycle_to = s.beatAtTime(logical_next, 0) / bpc
 
-            for sub in self._subscribers:
-                sub.notify_tick((cycle_from, cycle_to), s, cps, bpc, mill, now)
+            try:
+                for sub in self._subscribers:
+                    sub.notify_tick((cycle_from, cycle_to), s, cps, bpc, mill, now)
+            except:
+                pass
 
             # sys.stdout.write(
             #     "cps %.2f | playing %s | cycle %.2f\r"
