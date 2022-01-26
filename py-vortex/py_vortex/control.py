@@ -101,6 +101,8 @@ generic_params = [
     ("f", "stutterdepth", ""),
     ("f", "stuttertime", ""),
     ("f", "sustain", ""),
+    ("f", "timescale", ""),
+    ("f", "timescalewin", ""),
     ("f", "tomdecay", ""),
     ("s", "unit", "used in conjunction with `speed`, accepts values of \"r\" (rate, default behavior), \"c\" (cycles), or \"s\" (seconds). Using `unit \"c\"` means `speed` will be interpreted in units of cycles, e.g. `speed \"1\"` means samples will be stretched to fill a cycle. Using `unit \"s\"` means the playback speed will be adjusted so that the duration is the number of seconds specified by `speed`."),
     ("f", "velocity", ""),
