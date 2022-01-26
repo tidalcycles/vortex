@@ -368,7 +368,7 @@ class Pattern:
         return stack(with_pat, without_pat)
 
     def off(self, time_pat, func):
-        return stack(self, self.early(time_pat))
+        return stack(self, func(self.early(time_pat)))
 
     def every(self, n, func):
         pats = [func(self)] + ([self] * (n-1))
