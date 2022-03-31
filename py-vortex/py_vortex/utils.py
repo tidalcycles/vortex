@@ -61,3 +61,43 @@ def show_fraction(frac):
         result = "(%d/%d)" % (frac.numerator, frac.denominator)
     return result
 
+def insert_str(string : str, loc : int, to_insert = " "):
+    """
+    Inserts substring (usually whitespace) into the string at position loc
+    """
+    if not isinstance(loc, int):
+        raise ValueError('loc is not an int.  did you mean to use str_slice_replace?')
+    return string[:loc] + to_insert + string[loc:]
+
+def str_slice_replace(string, slices, replacements, offset = 0):
+    """
+    replace a slice of a string with replacement string.
+    or replace a list of slices with a list of replacement strings 
+    list must be sorted from left to right.
+    offset is used if the string's first character does 
+    not correspond to index 0.
+    """
+    if isinstance(slices, list):
+        if len(slices) > 0:
+            for i in reversed(range(len(slices))):
+                print(f'string; {string}')
+                head = string[:(slices[i].start - offset)] 
+                print(f'string head: {head}')
+                tail = string[(slices[i].stop - offset):]
+                print(f'string tail: {tail}')
+                if isinstance(replacements, list):
+                    string = head + replacements[i] + tail
+                    print(f'string head + mid +  tail: {string}')
+                elif isinstance(replacements, str):
+                    string = head + replacements + tail
+                else:
+                    raise ValueError('\"replacements\" is not a list or string')
+        elif len(slices) == 0:
+            return string
+    elif isinstance(slices, slice):
+        if not isinstance(replacements, str):
+            raise ValueError('a single slice supplied but replacements is not a string.')
+        else:
+            string = string[:(slices.start - offset)] + replacements + string[(slices.stop - offset):]
+    return string
+
