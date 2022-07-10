@@ -20,7 +20,7 @@ setup(
     url="http://tidalcycles.org",
     packages=find_packages(),
     entry_points={
-        "console_scripts": ["vortex=vortex.console.vortex:run"],
+        "console_scripts": ["vortex=vortex.cli:run"],
     },
     include_package_data=True,
     package_data={package_name: ["res/*"]},
