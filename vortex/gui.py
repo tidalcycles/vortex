@@ -10,11 +10,11 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
-from py_vortex import __version__, vortex_dsl
+from vortex import __version__, vortex_dsl
 
 _logger = logging.getLogger(__name__)
 
-RES_DIR = pkg_resources.resource_filename("py_vortex", "res")
+RES_DIR = pkg_resources.resource_filename("vortex", "res")
 FONTS_DIR = os.path.join(RES_DIR, "fonts")
 HIGHLIGHT_INDICATOR_ID = 0
 

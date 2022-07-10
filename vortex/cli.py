@@ -6,9 +6,9 @@ import argparse
 import logging
 import sys
 
-from py_vortex import __version__
-from py_vortex.repl import start_repl
-from py_vortex.gui import start_gui
+from vortex import __version__
+from vortex.repl import start_repl
+from vortex.gui import start_gui
 
 _logger = logging.getLogger(__name__)
 
