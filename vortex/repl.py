@@ -1,7 +1,7 @@
 from IPython.terminal.embed import InteractiveShellEmbed
 
-from py_vortex import *
-from py_vortex import __version__
+from vortex import *
+from vortex import __version__
 
 
 def start_repl(*kwargs):

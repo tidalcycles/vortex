@@ -1,5 +1,5 @@
-from py_vortex import *
-from py_vortex.stream import LinkClock, SuperDirtStream
+from vortex import *
+from vortex.stream import LinkClock, SuperDirtStream
 
 _default_clock = LinkClock(bpm=120)
 _streams = {}

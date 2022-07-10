@@ -1,5 +1,5 @@
 import pytest
-import py_vortex as pyt
+import vortex as pyt
 from fractions import Fraction
 
 @pytest.fixture

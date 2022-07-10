@@ -37,7 +37,7 @@ def vortex_dsl():
 
     """
     # Import DSL module and get variables
-    mod = importlib.import_module("py_vortex.boot")
+    mod = importlib.import_module("vortex.boot")
     locals = vars(mod)
 
     # Start clock

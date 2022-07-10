@@ -8,7 +8,7 @@ from fractions import Fraction
 
 import liblo
 import link
-from py_vortex import *
+from vortex import *
 
 _logger = logging.getLogger(__name__)
 
