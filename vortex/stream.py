@@ -189,7 +189,8 @@ class SuperDirtStream:
             # + it would be better to send link time to supercollider..
             link_secs = now / mill
             liblo_diff = liblo.time() - link_secs
-            ts = (link_on / mill) + liblo_diff + self.latency
+            nudge = e.value.get("nudge", 0)
+            ts = (link_on / mill) + liblo_diff + self.latency + nudge
 
             # print("liblo time %f link_time %f link_on %f cycle_on %f liblo_diff %f ts %f" % (liblo.time(), link_secs, link_on, cycle_on, liblo_diff, ts))
             v = e.value
