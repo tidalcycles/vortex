@@ -1,6 +1,6 @@
 
 from decimal import ExtendedContext
-from functools import partial, partialmethod
+from functools import partial, partialmethod, total_ordering
 import sys
 from fractions import Fraction
 from typing import Callable
@@ -16,6 +16,7 @@ Fraction.next_sam = lambda self: self.sam() + 1
 """Returns a TimeSpan representing the begin and end of the Time value's cycle"""
 Fraction.whole_cycle = lambda self: TimeSpan(self.sam(), self.next_sam())
 
+@total_ordering
 class TimeSpan(object):
 
     """ TimeSpan is (Time, Time) """
@@ -86,7 +87,16 @@ class TimeSpan(object):
         return ("(" + show_fraction(self.begin) + ", "
                 +  show_fraction(self.end) + ")")
 
+    def __eq__(self, other) -> bool:
+        if isinstance(other, TimeSpan):
+            return self.begin == other.begin and self.end == other.end
+        return False
 
+    def __le__(self, other) -> bool:
+        return self.begin <= other.begin and self.end <= other.end
+
+
+@total_ordering
 class Event:
 
     """
@@ -125,6 +135,15 @@ class Event:
                 + self.part.__repr__()
                 + ", "
                 + self.value.__repr__() + ")")
+
+    def __eq__(self, other) -> bool:
+        if isinstance(other, Event):
+            return self.whole == other.whole and self.part == other.part and self.value == other.value
+        return False
+
+    def __le__(self, other) -> bool:
+        return self.whole <= other.whole and self.part <= other.part and self.value <= other.value
+
 
 class Pattern:
     """
