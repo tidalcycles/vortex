@@ -67,8 +67,6 @@ grammar = Grammar(
     # TODO:  get groups e.g. "bd bd . hh hh hh" working
     # group = ws? (sequence / element) (ws period ws (sequence / element))+ ws?
 
-    rest = tilde
-
     ##  [bd sd@3 [bd, sd ] ] with no outer modifier.
     bracketed = square_bracketed / angle_bracketed / curly_bracketed
 
@@ -92,6 +90,8 @@ grammar = Grammar(
     # single word definition (e.g bd, drum_sound, sample#2)
     word = word_char+
     word_char =  ~"\w" / minus / hashtag / period / "^" / underscore
+
+    rest = tilde
 
     # TODO: add numeric element definition?
 
@@ -129,7 +129,8 @@ grammar = Grammar(
     scalar = number / fraction
     fraction = lparen ws? number ws? "/" ws? number ws? rparen
     # NOTE:  consider whether "1." should be valid as opposed to "1.0"  ; "1." is not valid in haskell.
-    number = (integer period pos_integer)  / integer
+    number = float / integer
+    float = integer period pos_integer
     integer = minus? pos_integer
     pos_integer = !minus ~"[0-9]+"
 
