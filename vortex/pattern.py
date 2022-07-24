@@ -588,4 +588,7 @@ def rev(pat):
 ## Combinators
 
 def run(n):
-    return sequence(list(range(0,n)))
+    return sequence(list(range(n)))
+
+def scan(n):
+    return slowcat(*[run(k) for k in range(1, n+1)])
