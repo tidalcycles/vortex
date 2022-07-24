@@ -1,5 +1,6 @@
 import pytest
-from vortex.mini import grammar
+from vortex import pure, fastcat
+from vortex.mini import grammar, mini
 
 
 @pytest.mark.parametrize(
@@ -96,3 +97,14 @@ from vortex.mini import grammar
 def test_parse(benchmark, test_input, expected):
     # FIXME: Assert expected output
     assert benchmark(grammar.parse, test_input)
+
+
+@pytest.mark.parametrize(
+    "test_input,expected",
+    [
+        ("bd", pure("bd")),
+        ("bd sd", fastcat(pure("bd"), pure("sd"))),
+    ],
+)
+def test_eval(test_input, expected):
+    assert mini(test_input).first_cycle() == expected.first_cycle()
