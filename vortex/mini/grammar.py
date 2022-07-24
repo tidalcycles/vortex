@@ -55,18 +55,16 @@ grammar = Grammar(
     # e.g., [ bd, [cp cp]]
     stack = ws? lsquare (sequence / (ws? element ws?)) (comma (sequence / (ws? element ws?)))+ rsquare ws?
 
-
     # a white-space separated collection of 2 or more elements like "bd bd" or "[bd bd] [bd bd]"
     # underscores (continuation symbol) can be part of a sequence but cannot be the first element.
     sequence = ws? element (ws (element / underscore ))+ ws?
 
     # an element is a piece of the pattern like "[bd, bd]" , "[bd bd]@2", "bd@2", "[bd bd]" or "bd".
     # does not include things like "bd bd" or "[bd bd]@2" or "bd!2 bd!2" which are each a 'sequence', a collection of elements.
-    element  =   stack / modified / bracketed / sample_select  / word / rest
+    element = stack / modified / bracketed / sample_select / word / rest
 
     # TODO:  get groups e.g. "bd bd . hh hh hh" working
     # group = ws? (sequence / element) (ws period ws (sequence / element))+ ws?
-
 
     rest = tilde
 
@@ -97,7 +95,6 @@ grammar = Grammar(
     # TODO: add numeric element definition?
 
 
-
     #modifier = basic_modifier
     modifier = bjorklund / basic_modifier
 
@@ -109,7 +106,6 @@ grammar = Grammar(
     bjorklund = bjork_three_arg / bjork_two_arg
     bjork_three_arg = lparen ws? (sequence / element / number) ws? comma ws? (sequence / element / number) ws? comma ws? (sequence / element / number) ws? rparen ws? basic_modifier?
     bjork_two_arg = lparen ws? (sequence / element / number) ws?  comma ws? (sequence / element / number) ws? rparen ws? basic_modifier?
-
 
     basic_modifier = weight / replicate / fast / slow / fixed_step
 
@@ -127,7 +123,6 @@ grammar = Grammar(
 
     # e.g., /5
     fixed_step = percent_sign scalar
-
 
     # scalars are 3.00001 , (16/15), -35, -343.555, (-10000/15)
     scalar = number / fraction
