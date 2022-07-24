@@ -15,7 +15,6 @@ Released under the GNU Public License version 3.
 To install module, first install [pyenv](https://github.com/pyenv/pyenv) (or [conda](https://docs.conda.io/en/latest/) if you prefer). Once in your virtual environment, do:
 
 ```
-cd py-vortex
 pip install -r requirements.txt
 pip install -e .
 ```
@@ -24,9 +23,7 @@ pip install -e .
 
 To run tests:
 ```
-cd test
 pip install -r test-requirements.txt
-cd ..
 pytest
 ```
 

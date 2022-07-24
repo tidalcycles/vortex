@@ -4,8 +4,7 @@ from setuptools import find_packages, setup
 
 _base_dir = os.path.dirname(__file__)
 
-package_name = "py-vortex".replace("_", "-").lower()
-
+package_name = "vortex"
 
 def get_requirements():
     with open(os.path.join(_base_dir, "requirements.txt")) as fp:
@@ -21,7 +20,7 @@ setup(
     url="http://tidalcycles.org",
     packages=find_packages(),
     entry_points={
-        "console_scripts": ["vortex=py_vortex.console.vortex:run"],
+        "console_scripts": ["vortex=vortex.cli:run"],
     },
     include_package_data=True,
     package_data={package_name: ["res/*"]},

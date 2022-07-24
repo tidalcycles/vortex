@@ -4,7 +4,7 @@ Experiment: porting Tidalcycles to Python 3.x.
 
 from __future__ import annotations
 import logging
-from py_vortex.pattern import *
+from vortex.pattern import *
 
 def pattern_pretty_printing(pattern: Pattern, query_span: TimeSpan) -> None:
     """ Better formatting for logging.debuging Tidal Patterns """
