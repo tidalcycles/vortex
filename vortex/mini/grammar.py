@@ -49,19 +49,20 @@ from parsimonious import Grammar
 
 grammar = Grammar(
     r"""
-    start = sequence / (ws? element ws?)
-
-    # contains at least two sequences (or words), comma separated, and surrounded by square brackets
-    # e.g., [ bd, [cp cp]]
-    stack = ws? lsquare (sequence / (ws? element ws?)) (comma (sequence / (ws? element ws?)))+ rsquare ws?
+    start = ws? (sequence / element) ws?
 
     # a white-space separated collection of 2 or more elements like "bd bd" or "[bd bd] [bd bd]"
     # underscores (continuation symbol) can be part of a sequence but cannot be the first element.
-    sequence = ws? element (ws (element / underscore ))+ ws?
+    sequence = element (ws+ (element / underscore))+
 
     # an element is a piece of the pattern like "[bd, bd]" , "[bd bd]@2", "bd@2", "[bd bd]" or "bd".
     # does not include things like "bd bd" or "[bd bd]@2" or "bd!2 bd!2" which are each a 'sequence', a collection of elements.
     element = stack / modified / bracketed / sample_select / word / rest
+
+    # contains at least two sequences (or words), comma separated, and surrounded by square brackets
+    # e.g., [ bd, [cp cp]]
+    stack = lsquare ws? stack_elem (ws? comma ws? stack_elem)+ ws? rsquare
+    stack_elem = sequence / element
 
     # TODO:  get groups e.g. "bd bd . hh hh hh" working
     # group = ws? (sequence / element) (ws period ws (sequence / element))+ ws?
@@ -71,14 +72,14 @@ grammar = Grammar(
     ##  [bd sd@3 [bd, sd ] ] with no outer modifier.
     bracketed = square_bracketed / angle_bracketed / curly_bracketed
 
-    square_bracketed = ws? lsquare bracket_contents rsquare ws?
+    square_bracketed = lsquare ws? bracketed_elem ws? rsquare
 
-    angle_bracketed = langle bracket_contents rangle
+    angle_bracketed = langle ws? bracketed_elem ws? rangle
 
-    curly_bracketed = lcurly bracket_contents rcurly
+    curly_bracketed = lcurly ws? bracketed_elem ws? rcurly
 
     # valid things that can go inside brackets.
-    bracket_contents = ws? ( sequence / element ) ws?
+    bracketed_elem = sequence / element
 
     # a pair containing a modifiable element e.g. "[bd bd]" and a modifier e.g. "@3"
     modified = modifiable modifier
