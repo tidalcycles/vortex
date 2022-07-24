@@ -60,4 +60,3 @@ def show_fraction(frac):
     else:
         result = "(%d/%d)" % (frac.numerator, frac.denominator)
     return result
-
