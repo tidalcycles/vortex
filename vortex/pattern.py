@@ -405,7 +405,8 @@ class Pattern:
         return self.query(TimeSpan(Fraction(0), Fraction(1)))
 
     def __repr__(self):
-        return str(self.first_cycle())
+        return f"Pattern({self.first_cycle()} ...)"
+
 
 def pure(value):
     """ Returns a pattern that repeats the given value once per cycle """
