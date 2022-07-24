@@ -93,6 +93,6 @@ from vortex.mini import grammar
         ),  # fails because number elements aren't handled yet.
     ],
 )
-def test_parse(test_input, expected):
+def test_parse(benchmark, test_input, expected):
     # FIXME: Assert expected output
-    assert grammar.parse(test_input)
+    assert benchmark(grammar.parse, test_input)
