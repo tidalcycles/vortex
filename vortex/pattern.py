@@ -426,6 +426,9 @@ class Pattern:
     def __repr__(self):
         return f"Pattern({self.first_cycle()} ...)"
 
+    def __eq__(self, other):
+        raise NotImplementedError("Patterns cannot be compared. Evaluate them with `.first_cycle()` or similar")
+
 
 def pure(value):
     """ Returns a pattern that repeats the given value once per cycle """
