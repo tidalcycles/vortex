@@ -423,6 +423,17 @@ class Pattern:
     def first_cycle(self):
         return self.query(TimeSpan(Fraction(0), Fraction(1)))
 
+    def superimpose(self, func):
+        """
+        Play a modified version of a pattern at the same time as the original pattern,
+        resulting in two patterns being played at the same time.
+
+        >>> s("bd sn [cp ht] hh").superimpose(lambda p: p.fast(2))
+        >>> s("bd sn cp hh").superimpose(lambda p: p.speed(2).rotL(0.125))
+
+        """
+        return stack(self, func(self))
+
     def __repr__(self):
         return f"Pattern({self.first_cycle()} ...)"
 
