@@ -421,7 +421,7 @@ class Pattern:
         return stack(left,func(right))
 
     def first_cycle(self):
-        return self.query(TimeSpan(Fraction(0), Fraction(1)))
+        return sorted(self.query(TimeSpan(Fraction(0), Fraction(1))))
 
     def superimpose(self, func):
         """
