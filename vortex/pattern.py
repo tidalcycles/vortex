@@ -434,6 +434,23 @@ class Pattern:
         """
         return stack(self, func(self))
 
+    def layer(self, *list_funcs):
+        """
+        Layer up multiple functions on one pattern.
+
+        For example, the following will play two versions of the pattern at the
+        same time, one reversed and one at twice the speed:
+
+        >>> s("arpy [~ arpy:4]").layer(rev, lambda p: p.fast(2)])
+
+        If you want to include the original version of the pattern in the
+        layering, use the `id` function:
+
+        >>> s("arpy [~ arpy:4]").layer(id, rev, lambda p: p.fast(2)])
+
+        """
+        return stack(*[func(self) for func in list_funcs])
+
     def __repr__(self):
         return f"Pattern({self.first_cycle()} ...)"
 
