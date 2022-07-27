@@ -1,6 +1,5 @@
-
 from decimal import ExtendedContext
-from functools import partial, partialmethod, total_ordering
+from functools import partial, partialmethod, total_ordering, reduce
 import sys
 from fractions import Fraction
 from typing import Callable
@@ -472,7 +471,7 @@ class Pattern:
         """Squeeze pattern within the specified time span"""
         begin = Fraction(begin)
         end = Fraction(end)
-        if begin > end or end >= 1 or begin >= 1 or begin < 0 or end < 0:
+        if begin > end or end > 1 or begin > 1 or begin < 0 or end < 0:
             return silence
         return self.fastgap(Fraction(1, end - begin)).late(begin)
 
@@ -675,4 +674,23 @@ def run(n):
     return sequence(list(range(n)))
 
 def scan(n):
-    return slowcat(*[run(k) for k in range(1, n+1)])
+    return slowcat(*[run(k) for k in range(1, n + 1)])
+
+
+def timecat(*time_pat_tuples):
+    """
+    Like `fastcat` except that you provide proportionate sizes of the
+    patterns to each other for when they're concatenated into one cycle.
+
+    The larger the value in the list, the larger relative size the pattern
+    takes in the final loop. If all values are equal then this is equivalent
+    to `fastcat`.
+
+    >>> timecat((1, s("bd*4")), (1, s("hh27*8")))
+
+    """
+    total = sum(time for time, _ in time_pat_tuples)
+    arranged = reduce(
+        lambda accum, pair: (accum, accum + pair[0], pair[1]), time_pat_tuples, 0
+    )
+    return stack(*[pat.compress(s / total, e / total) for s, e, pat in arranged])

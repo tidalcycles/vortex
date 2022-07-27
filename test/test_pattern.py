@@ -71,6 +71,11 @@ def test_compress():
     ]
 
 
+def test_compress_invalid_span():
+    assert pure("bd").fast(4).compress(1, 2).first_cycle() == []
+    assert pure("bd").fast(4).compress(-1, 0).first_cycle() == []
+
+
 def test_compress_floats():
     assert fastcat(pure("bd"), pure("sd")).compress(1 / 4, 3 / 4).first_cycle() == [
         Event(TimeSpan(1 / 4, 1 / 2), TimeSpan(1 / 4, 1 / 2), "bd"),
