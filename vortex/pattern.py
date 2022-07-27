@@ -429,7 +429,7 @@ class Pattern:
         resulting in two patterns being played at the same time.
 
         >>> s("bd sn [cp ht] hh").superimpose(lambda p: p.fast(2))
-        >>> s("bd sn cp hh").superimpose(lambda p: p.speed(2).rotL(0.125))
+        >>> s("bd sn cp hh").superimpose(lambda p: p.speed(2).early(0.125))
 
         """
         return stack(self, func(self))
@@ -450,6 +450,29 @@ class Pattern:
 
         """
         return stack(*[func(self) for func in list_funcs])
+
+    def iter(self, n):
+        """
+        Divides a pattern into a given number of subdivisions, plays the
+        subdivisions in order, but increments the starting subdivision each
+        cycle.
+
+        The pattern wraps to the first subdivision after the last subdivision is
+        played.
+
+        >>> s("bd hh sn cp").iter(4)
+
+        """
+        return slowcat(*[self.early(Fraction(i, n)) for i in range(n)])
+
+    def reviter(self, n):
+        """
+        Same as `iter` but in the other direction.
+
+        >>> s("bd hh sn cp").reviter(4)
+
+        """
+        return slowcat(*[self.late(Fraction(i, n)) for i in range(n)])
 
     def __repr__(self):
         return f"Pattern({self.first_cycle()} ...)"

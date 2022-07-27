@@ -1,4 +1,5 @@
-from vortex.pattern import TimeSpan, Fraction, pure, stack, fastcat, rev
+from vortex.pattern import (Fraction, TimeSpan, fastcat, pure, rev, slowcat,
+                            stack)
 
 
 def assert_equal_patterns(input, expected, span=None):
@@ -20,4 +21,29 @@ def test_layer():
     assert_equal_patterns(
         basepat.layer(rev, lambda p: p.fast(2)),
         stack(basepat.rev(), basepat.fast(2)),
+    )
+
+
+def test_iter():
+    assert_equal_patterns(
+        fastcat(pure("bd"), pure("hh"), pure("sn"), pure("cp")).iter(4),
+        slowcat(
+            fastcat(pure("bd"), pure("hh"), pure("sn"), pure("cp")),
+            fastcat(pure("hh"), pure("sn"), pure("cp"), pure("bd")),
+            fastcat(pure("sn"), pure("cp"), pure("bd"), pure("hh")),
+            fastcat(pure("cp"), pure("bd"), pure("hh"), pure("sn")),
+        ),
+        span=TimeSpan(0, 4),
+    )
+
+def test_reviter():
+    assert_equal_patterns(
+        fastcat(pure("bd"), pure("hh"), pure("sn"), pure("cp")).reviter(4),
+        slowcat(
+            fastcat(pure("bd"), pure("hh"), pure("sn"), pure("cp")),
+            fastcat(pure("cp"), pure("bd"), pure("hh"), pure("sn")),
+            fastcat(pure("sn"), pure("cp"), pure("bd"), pure("hh")),
+            fastcat(pure("hh"), pure("sn"), pure("cp"), pure("bd")),
+        ),
+        span=TimeSpan(0, 4),
     )
