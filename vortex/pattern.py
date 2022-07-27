@@ -1,5 +1,5 @@
 from decimal import ExtendedContext
-from functools import partial, partialmethod, total_ordering, reduce
+from functools import partial, partialmethod, total_ordering
 import sys
 from fractions import Fraction
 from typing import Callable
@@ -689,8 +689,10 @@ def timecat(*time_pat_tuples):
     >>> timecat((1, s("bd*4")), (1, s("hh27*8")))
 
     """
-    total = sum(time for time, _ in time_pat_tuples)
-    arranged = reduce(
-        lambda accum, pair: (accum, accum + pair[0], pair[1]), time_pat_tuples, 0
-    )
-    return stack(*[pat.compress(s / total, e / total) for s, e, pat in arranged])
+    total = sum(Fraction(time) for time, _ in time_pat_tuples)
+    arranged = []
+    accum = Fraction(0)
+    for time, pat in time_pat_tuples:
+        arranged.append((accum, accum + Fraction(time), pat))
+        accum += time
+    return stack(*[pat.compress(Fraction(s, total), Fraction(e, total)) for s, e, pat in arranged])

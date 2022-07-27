@@ -1,4 +1,14 @@
-from vortex.pattern import Event, TimeSpan, Fraction, fastcat, pure, rev, slowcat, stack
+from vortex.pattern import (
+    Event,
+    TimeSpan,
+    Fraction,
+    fastcat,
+    pure,
+    rev,
+    slowcat,
+    stack,
+    timecat,
+)
 
 
 def assert_equal_patterns(input, expected, span=None):
@@ -80,4 +90,21 @@ def test_compress_floats():
     assert fastcat(pure("bd"), pure("sd")).compress(1 / 4, 3 / 4).first_cycle() == [
         Event(TimeSpan(1 / 4, 1 / 2), TimeSpan(1 / 4, 1 / 2), "bd"),
         Event(TimeSpan(1 / 2, 3 / 4), TimeSpan(1 / 2, 3 / 4), "sd"),
+    ]
+
+
+def test_timecat():
+    assert timecat((3, pure("bd").fast(4)), (1, pure("hh").fast(8))).first_cycle() == [
+        Event(TimeSpan(0, (3 / 16)), TimeSpan(0, (3 / 16)), "bd"),
+        Event(TimeSpan((3 / 16), 3 / 8), TimeSpan((3 / 16), 3 / 8), "bd"),
+        Event(TimeSpan(3 / 8, (9 / 16)), TimeSpan(3 / 8, (9 / 16)), "bd"),
+        Event(TimeSpan((9 / 16), 3 / 4), TimeSpan((9 / 16), 3 / 4), "bd"),
+        Event(TimeSpan(3 / 4, (25 / 32)), TimeSpan(3 / 4, (25 / 32)), "hh"),
+        Event(TimeSpan((25 / 32), (13 / 16)), TimeSpan((25 / 32), (13 / 16)), "hh"),
+        Event(TimeSpan((13 / 16), (27 / 32)), TimeSpan((13 / 16), (27 / 32)), "hh"),
+        Event(TimeSpan((27 / 32), 7 / 8), TimeSpan((27 / 32), 7 / 8), "hh"),
+        Event(TimeSpan(7 / 8, (29 / 32)), TimeSpan(7 / 8, (29 / 32)), "hh"),
+        Event(TimeSpan((29 / 32), (15 / 16)), TimeSpan((29 / 32), (15 / 16)), "hh"),
+        Event(TimeSpan((15 / 16), (31 / 32)), TimeSpan((15 / 16), (31 / 32)), "hh"),
+        Event(TimeSpan((31 / 32), 1), TimeSpan((31 / 32), 1), "hh"),
     ]
