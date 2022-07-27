@@ -576,7 +576,7 @@ def sequence(*args):
 def polymeter(*args, steps=None):
         seqs = [_sequence_count(x) for x in args]
         if len(seqs) == 0:
-            return silence()
+            return silence
         if not steps:
             steps = seqs[0][1]
         pats = []
@@ -596,7 +596,7 @@ def polyrhythm(*xs):
     seqs = [sequence(x) for x in xs]
 
     if len(seqs) == 0:
-        return silence()
+        return silence
 
     return stack(seqs)
 
