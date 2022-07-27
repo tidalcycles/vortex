@@ -47,3 +47,10 @@ def test_reviter():
         ),
         span=TimeSpan(0, 4),
     )
+
+
+def test_overlay():
+    assert_equal_patterns(
+        pure("bd").fast(2).overlay(pure("sd")),
+        stack(pure("bd").fast(2), pure("sd"))
+    )

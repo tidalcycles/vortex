@@ -474,6 +474,10 @@ class Pattern:
         """
         return slowcat(*[self.late(Fraction(i, n)) for i in range(n)])
 
+    def overlay(self, pat):
+        """Combine itself with another pattern"""
+        return Pattern(lambda span: concat([self.query(span), pat.query(span)]))
+
     def __repr__(self):
         return f"Pattern({self.first_cycle()} ...)"
 
