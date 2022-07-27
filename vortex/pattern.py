@@ -16,6 +16,9 @@ Fraction.next_sam = lambda self: self.sam() + 1
 """Returns a TimeSpan representing the begin and end of the Time value's cycle"""
 Fraction.whole_cycle = lambda self: TimeSpan(self.sam(), self.next_sam())
 
+"""Returns the position of a time value relative to the start of its cycle."""
+Fraction.cycle_pos = lambda self: self - self.sam()
+
 @total_ordering
 class TimeSpan(object):
 
@@ -477,6 +480,45 @@ class Pattern:
     def overlay(self, pat):
         """Combine itself with another pattern"""
         return Pattern(lambda span: concat([self.query(span), pat.query(span)]))
+
+    def compress(self, begin, end):
+        """Squeeze pattern within the specified time span"""
+        begin = Fraction(begin)
+        end = Fraction(end)
+        if begin > end or end >= 1 or begin >= 1 or begin < 0 or end < 0:
+            return silence
+        return self.fastgap(Fraction(1, end - begin)).late(begin)
+
+    def fastgap(self, factor):
+        """
+        Similar to `fast` but maintains its cyclic alignment.
+
+        For example, `p.fastgap(2)` would squash the events in pattern `p` into
+        the first half of each cycle (and the second halves would be empty).
+
+        The factor should be at least 1.
+
+        """
+        if factor <= 0:
+            return silence
+
+        factor_ = max(1, factor)
+
+        def munge_query(t):
+            return t.sam() + min(1, factor_ * t.cycle_pos())
+
+        def event_span_func(span):
+            begin = span.begin.sam() + Fraction(span.begin - span.begin.sam(), factor_)
+            end = span.begin.sam() + Fraction(span.end - span.begin.sam(), factor_)
+            return TimeSpan(begin, end)
+
+        def query(span):
+            new_span = TimeSpan(munge_query(span.begin), munge_query(span.end))
+            if new_span.begin == span.begin.next_sam():
+                return []
+            return [e.with_span(event_span_func) for e in self.query(new_span)]
+
+        return Pattern(query).split_queries()
 
     def __repr__(self):
         return f"Pattern({self.first_cycle()} ...)"
