@@ -24,16 +24,8 @@ class TimeSpan(object):
 
     """ TimeSpan is (Time, Time) """
     def __init__(self, begin: Fraction, end: Fraction):
-
-        # Is this needed?
-        if not isinstance(begin, Fraction):
-            begin = Fraction(begin)
-
-        if not isinstance(end, Fraction):
-            end = Fraction(end)
-
-        self.begin = begin
-        self.end = end
+        self.begin = Fraction(begin)
+        self.end = Fraction(end)
 
     def span_cycles(self) -> list:
         """ Splits a timespan at cycle boundaries """
