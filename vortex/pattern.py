@@ -79,8 +79,7 @@ class TimeSpan(object):
         return self.begin + ((self.end-self.begin)/2)
 
     def __repr__(self) -> str:
-        return ("(" + show_fraction(self.begin) + ", "
-                +  show_fraction(self.end) + ")")
+        return f"({show_fraction(self.begin)}, {show_fraction(self.end)})"
 
     def __eq__(self, other) -> bool:
         if isinstance(other, TimeSpan):
@@ -123,13 +122,9 @@ class Event:
         """ Test whether the event contains the onset, i.e that
         the beginning of the part is the same as that of the whole timespan."""
         return self.whole and self.whole.begin == self.part.begin
-    
+
     def __repr__(self) -> str:
-        return ("Event(" + self.whole.__repr__()
-                + ", "
-                + self.part.__repr__()
-                + ", "
-                + self.value.__repr__() + ")")
+        return f"Event({repr(self.whole)}, {repr(self.part)}, {repr(self.value)})"
 
     def __eq__(self, other) -> bool:
         if isinstance(other, Event):
