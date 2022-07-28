@@ -4,7 +4,9 @@ from vortex.pattern import (
     Fraction,
     TimeSpan,
     fastcat,
+    irand,
     pure,
+    rand,
     rev,
     slowcat,
     stack,
@@ -188,4 +190,22 @@ def test_striate():
             TimeSpan(Fraction(7, 8), Fraction(1, 1)),
             {"s": "sd", "begin": 0.75, "end": 1.0},
         ),
+    ]
+
+
+def test_rand():
+    assert rand.segment(4).first_cycle() == [
+        Event(TimeSpan(0, 1 / 4), TimeSpan(0, 1 / 4), 0.3147844299674034),
+        Event(TimeSpan(1 / 4, 1 / 2), TimeSpan(1 / 4, 1 / 2), 0.6004995740950108),
+        Event(TimeSpan(1 / 2, 3 / 4), TimeSpan(1 / 2, 3 / 4), 0.1394200474023819),
+        Event(TimeSpan(3 / 4, 1), TimeSpan(3 / 4, 1), 0.3935417253524065),
+    ]
+
+
+def test_irand():
+    assert irand(8).segment(4).first_cycle() == [
+        Event(TimeSpan(0, 1 / 4), TimeSpan(0, 1 / 4), 2),
+        Event(TimeSpan(1 / 4, 1 / 2), TimeSpan(1 / 4, 1 / 2), 4),
+        Event(TimeSpan(1 / 2, 3 / 4), TimeSpan(1 / 2, 3 / 4), 1),
+        Event(TimeSpan(3 / 4, 1), TimeSpan(3 / 4, 1), 3),
     ]

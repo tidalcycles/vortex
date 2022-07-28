@@ -624,6 +624,17 @@ class Pattern:
         samp_ranges = [dict(begin=i / n, end=(i + 1) / n) for i in range(n)]
         return fastcat(*[merge_sample(r) for r in samp_ranges])
 
+    def segment(self, n):
+        """
+        Samples the pattern at a rate of `n` events per cycle.
+
+        Useful for turning a continuous pattern into a discrete one.
+
+        >>> rand.segment(4)
+
+        """
+        return pure(id).fast(n).app_left(self)
+
     def __repr__(self):
         events = [str(e) for e in self.first_cycle()]
         events_str = ",\n ".join(events).replace("\n", "\n ")
@@ -745,6 +756,33 @@ def reify(x):
     return x
 
 
+# Randomness
+
+
+def xorwise(x: int) -> int:
+    """Xorshift RNG
+
+    cf. George Marsaglia (2003). "Xorshift RNGs". Journal of Statistical Software 8:14.
+    https://www.jstatsoft.org/article/view/v008i14
+
+    """
+    a = (x << 13) ^ x
+    b = (a >> 17) ^ a
+    return (b << 5) ^ b
+
+
+def time_to_int_seed(a: float | Fraction) -> int:
+    return xorwise(math.trunc((a / 300) * 536870912))
+
+
+def int_seed_to_rand(a: int) -> Fraction:
+    return (a % 536870912) / 536870912
+
+
+def time_to_rand(a):
+    return int_seed_to_rand(time_to_int_seed(a))
+
+
 # Signals
 
 silence = Pattern(lambda _: [])
@@ -774,6 +812,9 @@ tri = fastcat(isaw, saw)
 
 square2 = signal(lambda t: (math.floor((t * 2) % 2) * 2) - 1)
 square = signal(lambda t: math.floor((t * 2) % 2))
+
+rand = signal(time_to_rand)
+irand = lambda n: signal(lambda t: math.floor(time_to_rand(t) * n))
 
 # Hack to make module-level function versions of pattern methods.
 
