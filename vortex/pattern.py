@@ -570,7 +570,7 @@ class Pattern:
         begin = Fraction(begin)
         end = Fraction(end)
         if begin > end or end > 1 or begin > 1 or begin < 0 or end < 0:
-            return silence
+            return silence()
         return self.fastgap(Fraction(1, end - begin)).late(begin)
 
     def fastgap(self, factor):
@@ -584,7 +584,7 @@ class Pattern:
 
         """
         if factor <= 0:
-            return silence
+            return silence()
 
         factor_ = max(1, factor)
 
@@ -630,7 +630,7 @@ class Pattern:
 
         Useful for turning a continuous pattern into a discrete one.
 
-        >>> rand.segment(4)
+        >>> rand().segment(4)
 
         """
         return pure(id).fast(n).app_left(self)
@@ -719,7 +719,7 @@ def sequence(*args):
 def polymeter(*args, steps=None):
     seqs = [_sequence_count(x) for x in args]
     if len(seqs) == 0:
-        return silence
+        return silence()
     if not steps:
         steps = seqs[0][1]
     pats = []
@@ -741,7 +741,7 @@ def polyrhythm(*xs):
     seqs = [sequence(x) for x in xs]
 
     if len(seqs) == 0:
-        return silence
+        return silence()
 
     return stack(seqs)
 
@@ -785,7 +785,7 @@ def time_to_rand(a):
 
 # Signals
 
-silence = Pattern(lambda _: [])
+silence = lambda: Pattern(lambda _: [])
 
 
 def signal(func):
@@ -795,26 +795,47 @@ def signal(func):
     return Pattern(query)
 
 
-sine2 = signal(lambda t: math.sin(math.pi * 2 * t))
-sine = signal(lambda t: (math.sin(math.pi * 2 * t) + 1) / 2)
+sine2 = lambda: signal(lambda t: math.sin(math.pi * 2 * t))
+sine = lambda: signal(lambda t: (math.sin(math.pi * 2 * t) + 1) / 2)
 
-cosine2 = sine2.early(0.25)
-cosine = sine.early(0.25)
+cosine2 = sine2().early(0.25)
+cosine = sine().early(0.25)
 
-saw2 = signal(lambda t: (t % 1) * 2)
-saw = signal(lambda t: t % 1)
+saw2 = lambda: signal(lambda t: (t % 1) * 2)
+saw = lambda: signal(lambda t: t % 1)
 
-isaw2 = signal(lambda t: (1 - (t % 1)) * 2)
-isaw = signal(lambda t: 1 - (t % 1))
+isaw2 = lambda: signal(lambda t: (1 - (t % 1)) * 2)
+isaw = lambda: signal(lambda t: 1 - (t % 1))
 
-tri2 = fastcat(isaw2, saw2)
-tri = fastcat(isaw, saw)
+tri2 = fastcat(isaw2(), saw2())
+tri = fastcat(isaw(), saw())
 
-square2 = signal(lambda t: (math.floor((t * 2) % 2) * 2) - 1)
-square = signal(lambda t: math.floor((t * 2) % 2))
+square2 = lambda: signal(lambda t: (math.floor((t * 2) % 2) * 2) - 1)
+square = lambda: signal(lambda t: math.floor((t * 2) % 2))
 
-rand = signal(time_to_rand)
-irand = lambda n: signal(lambda t: math.floor(time_to_rand(t) * n))
+
+def rand():
+    """
+    Generate a continuous pattern of pseudo-random numbers between `0` and `1`.
+
+    >>> rand().segment(4)
+
+    """
+    return signal(time_to_rand)
+
+
+def irand(n: int):
+    """
+    Generate a pattern of pseudo-random whole numbers between `0` to `n-1` inclusive.
+
+    e.g this generates a pattern of 8 events per cycle, with values ranging from
+    0 to 15 inclusive.
+
+    >>> irand(16).segment(8)
+
+    """
+    return signal(lambda t: math.floor(time_to_rand(t) * n))
+
 
 # Hack to make module-level function versions of pattern methods.
 
