@@ -6,6 +6,7 @@ _base_dir = os.path.dirname(__file__)
 
 package_name = "vortex"
 
+
 def get_requirements():
     with open(os.path.join(_base_dir, "requirements.txt")) as fp:
         return fp.read().splitlines()

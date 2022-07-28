@@ -7,8 +7,8 @@ import logging
 import sys
 
 from vortex import __version__
-from vortex.repl import start_repl
 from vortex.gui import start_gui
+from vortex.repl import start_repl
 
 _logger = logging.getLogger(__name__)
 

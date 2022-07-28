@@ -1,9 +1,8 @@
-from decimal import ExtendedContext
-from functools import partial, partialmethod, total_ordering
+import math
 import sys
 from fractions import Fraction
-from typing import Callable
-import math
+from functools import partial, total_ordering
+
 from .utils import *
 
 """Returns the start of the cycle."""
@@ -18,16 +17,18 @@ Fraction.whole_cycle = lambda self: TimeSpan(self.sam(), self.next_sam())
 """Returns the position of a time value relative to the start of its cycle."""
 Fraction.cycle_pos = lambda self: self - self.sam()
 
+
 @total_ordering
 class TimeSpan(object):
 
-    """ TimeSpan is (Time, Time) """
+    """TimeSpan is (Time, Time)"""
+
     def __init__(self, begin: Fraction, end: Fraction):
         self.begin = Fraction(begin)
         self.end = Fraction(end)
 
     def span_cycles(self) -> list:
-        """ Splits a timespan at cycle boundaries """
+        """Splits a timespan at cycle boundaries"""
         spans = []
         begin = self.begin
         end = self.end
@@ -47,7 +48,7 @@ class TimeSpan(object):
         return spans
 
     def with_time(self, func_time):
-        """ Applies given function to both the begin and end time value of the timespan"""
+        """Applies given function to both the begin and end time value of the timespan"""
         return TimeSpan(func_time(self.begin), func_time(self.end))
 
     def intersection(self, other):
@@ -63,7 +64,7 @@ class TimeSpan(object):
             if intersect_begin == self.end and self.begin < self.end:
                 return None
             if intersect_begin == other.end and other.begin < other.end:
-                return None 
+                return None
 
         return TimeSpan(intersect_begin, intersect_end)
 
@@ -71,11 +72,11 @@ class TimeSpan(object):
         """Like 'sect', but raises an exception if the timespans don't intersect."""
         result = self.intersection(other)
         if result == None:
-            raise ValueError(f'TimeSpan {self} and TimeSpan {other} do not intersect')
+            raise ValueError(f"TimeSpan {self} and TimeSpan {other} do not intersect")
         return result
 
     def midpoint(self):
-        return self.begin + ((self.end-self.begin)/2)
+        return self.begin + ((self.end - self.begin) / 2)
 
     def __repr__(self) -> str:
         return f"({show_fraction(self.begin)}, {show_fraction(self.end)})"
@@ -109,16 +110,16 @@ class Event:
         self.value = value
 
     def with_span(self, func):
-        """ Returns a new event with the function f applies to the event timespan. """
+        """Returns a new event with the function f applies to the event timespan."""
         whole = None if not self.whole else func(self.whole)
         return Event(whole, func(self.part), self.value)
 
     def with_value(self, func):
-        """ Returns a new event with the function f applies to the event value. """
+        """Returns a new event with the function f applies to the event value."""
         return Event(self.whole, self.part, func(self.value))
 
     def has_onset(self) -> bool:
-        """ Test whether the event contains the onset, i.e that
+        """Test whether the event contains the onset, i.e that
         the beginning of the part is the same as that of the whole timespan."""
         return self.whole and self.whole.begin == self.part.begin
 
@@ -127,11 +128,19 @@ class Event:
 
     def __eq__(self, other) -> bool:
         if isinstance(other, Event):
-            return self.whole == other.whole and self.part == other.part and self.value == other.value
+            return (
+                self.whole == other.whole
+                and self.part == other.part
+                and self.value == other.value
+            )
         return False
 
     def __le__(self, other) -> bool:
-        return self.whole <= other.whole and self.part <= other.part and self.value <= other.value
+        return (
+            self.whole <= other.whole
+            and self.part <= other.part
+            and self.value <= other.value
+        )
 
 
 class Pattern:
@@ -139,36 +148,40 @@ class Pattern:
     Pattern class, representing discrete and continuous events as a
     function of time.
     """
+
     def __init__(self, query):
         self.query = query
 
     def split_queries(self):
-        """ Splits queries at cycle boundaries. This makes some calculations 
-        easier to express, as all events are then constrained to happen within 
-        a cycle. """
+        """Splits queries at cycle boundaries. This makes some calculations
+        easier to express, as all events are then constrained to happen within
+        a cycle."""
+
         def query(span) -> list:
             return concat([self.query(subspan) for subspan in span.span_cycles()])
 
         return Pattern(query)
 
     def with_query_span(self, func):
-        """ Returns a new pattern, with the function applied to the timespan of the query. """
+        """Returns a new pattern, with the function applied to the timespan of the query."""
         return Pattern(lambda span: self.query(func(span)))
 
     def with_query_time(self, func):
-        """ Returns a new pattern, with the function applied to both the begin
-        and end of the the query timespan. """
+        """Returns a new pattern, with the function applied to both the begin
+        and end of the the query timespan."""
         return Pattern(lambda span: self.query(span.with_time(func)))
 
     def with_event_span(self, func):
-        """ Returns a new pattern, with the function applied to each event
-        timespan. """
+        """Returns a new pattern, with the function applied to each event
+        timespan."""
+
         def query(span):
             return [event.with_span(func) for event in self.query(span)]
+
         return Pattern(query)
 
     def with_event_time(self, func):
-        """ Returns a new pattern, with the function applied to both the begin
+        """Returns a new pattern, with the function applied to both the begin
         and end of each event timespan.
         """
         return self.with_event_span(lambda span: span.with_time(func))
@@ -178,34 +191,40 @@ class Pattern:
         each event. It has the alias 'fmap'.
 
         """
+
         def query(span):
             return [event.with_value(func) for event in self.query(span)]
+
         return Pattern(query)
 
     # alias
     fmap = with_value
-    
+
     def _filter_events(self, event_test):
         return Pattern(lambda span: list(filter(event_test, self.query(span))))
 
     def _filter_values(self, value_test):
-        return Pattern(lambda span: list(filter(lambda event: value_test(event.value), self.query(span))))
+        return Pattern(
+            lambda span: list(
+                filter(lambda event: value_test(event.value), self.query(span))
+            )
+        )
 
     def onsets_only(self):
         """Returns a new pattern that will only return events where the start
         of the 'whole' timespan matches the start of the 'part'
         timespan, i.e. the events that include their 'onset'.
         """
-        return(self._filter_events(Event.has_onset))
+        return self._filter_events(Event.has_onset)
 
-#applyPatToPatLeft :: Pattern (a -> b) -> Pattern a -> Pattern b
-#applyPatToPatLeft pf px = Pattern q
-#    where q st = catMaybes $ concatMap match $ query pf st
-#            where
-#              match ef = map (withFX ef) (query px $ st {arc = wholeOrPart ef})
-#              withFX ef ex = do let whole' = whole ef
-#                                part' <- subArc (part ef) (part ex)
-#                                return (Event (combineContexts [context ef, context ex]) whole' part' (value ef $ value ex))
+    # applyPatToPatLeft :: Pattern (a -> b) -> Pattern a -> Pattern b
+    # applyPatToPatLeft pf px = Pattern q
+    #    where q st = catMaybes $ concatMap match $ query pf st
+    #            where
+    #              match ef = map (withFX ef) (query px $ st {arc = wholeOrPart ef})
+    #              withFX ef ex = do let whole' = whole ef
+    #                                part' <- subArc (part ef) (part ex)
+    #                                return (Event (combineContexts [context ef, context ex]) whole' part' (value ef $ value ex))
 
     def _app_whole(self, whole_func, pat_val):
         """
@@ -214,23 +233,36 @@ class Pattern:
         pattern of functions.
         """
         pat_func = self
+
         def query(span):
             event_funcs = pat_func.query(span)
             event_vals = pat_val.query(span)
+
             def apply(event_funcs, event_vals):
                 s = event_funcs.part.intersection(event_vals.part)
                 if s == None:
                     return None
-                return Event(whole_func(event_funcs.whole, event_vals.whole), s, event_funcs.value(event_vals.value))
-            return concat([remove_nones([apply(event_func, event_val) for event_val in event_vals])
-                           for event_func in event_funcs
-                          ]
-                         )
+                return Event(
+                    whole_func(event_funcs.whole, event_vals.whole),
+                    s,
+                    event_funcs.value(event_vals.value),
+                )
+
+            return concat(
+                [
+                    remove_nones(
+                        [apply(event_func, event_val) for event_val in event_vals]
+                    )
+                    for event_func in event_funcs
+                ]
+            )
+
         return Pattern(query)
 
     # A bit more complicated than this..
     def app_both(self, pat_val):
-        """ Tidal's <*> """
+        """Tidal's <*>"""
+
         def whole_func(span_a, span_B):
             if span_a == None or span_B == None:
                 return None
@@ -240,6 +272,7 @@ class Pattern:
 
     def app_left(self, pat_val):
         pat_func = self
+
         def query(span):
             events = []
             for event_func in pat_func.query(span):
@@ -250,10 +283,12 @@ class Pattern:
                     new_value = event_func.value(event_val.value)
                     events.append(Event(new_whole, new_part, new_value))
             return events
+
         return Pattern(query)
 
     def app_right(self, pat_val):
         pat_func = self
+
         def query(span):
             events = []
             for event_val in pat_val.query(span):
@@ -264,6 +299,7 @@ class Pattern:
                     new_value = event_func.value(event_val.value)
                     events.append(Event(new_whole, new_part, new_value))
             return events
+
         return Pattern(query)
 
     def __add__(self, other):
@@ -271,12 +307,12 @@ class Pattern:
 
     def __radd__(self, other):
         return self.__add__(other)
-    
+
     def __sub__(self, other):
         return self.fmap(lambda x: lambda y: x - y).app_left(reify(other))
 
     def __rsub__(self, other):
-        raise ValueError # or return NotImplemented?
+        raise ValueError  # or return NotImplemented?
 
     def union(self, other):
         return self.fmap(lambda x: lambda y: {**x, **y}).app_left(other)
@@ -292,18 +328,19 @@ class Pattern:
     def __lshift__(self, other):
         """Like >>, but matching values from left replace those on the right"""
         return self.fmap(lambda x: lambda y: {**y, **x}).app_left(other)
-    
+
     def _bind_whole(self, choose_whole, func):
         pat_val = self
+
         def query(span):
             def withWhole(a, b):
-                return Event(choose_whole(a.whole, b.whole), b.part,
-                             b.value
-                            )
+                return Event(choose_whole(a.whole, b.whole), b.part, b.value)
+
             def match(a):
                 return [withWhole(a, b) for b in func(a.value).query(a.part)]
 
             return concat([match(ev) for ev in pat_val.query(span)])
+
         return Pattern(query)
 
     def bind(self, func):
@@ -311,6 +348,7 @@ class Pattern:
             if a == None or b == None:
                 return None
             return a.intersection_e(b)
+
         return self._bind_whole(whole_func, func)
 
     def join(self):
@@ -321,16 +359,18 @@ class Pattern:
     def inner_bind(self, func):
         def whole_func(a, b):
             return a
+
         return self._bind_whole(whole_func, func)
 
     def inner_join(self):
         """Flattens a pattern of patterns into a pattern, where wholes are
         taken from inner events."""
         return self.inner_bind(id)
-    
+
     def outer_bind(self, func):
         def whole_func(a, b):
             return b
+
         return self._bind_whole(whole_func, func)
 
     def outer_join(self):
@@ -341,30 +381,37 @@ class Pattern:
     def _patternify(method):
         def patterned(self, *args):
             pat_arg = sequence(*args)
-            return pat_arg.fmap(lambda arg: method(self,arg)).outer_join()
+            return pat_arg.fmap(lambda arg: method(self, arg)).outer_join()
+
         return patterned
 
     def _fast(self, factor):
-        """ Speeds up a pattern by the given factor"""
-        fastQuery = self.with_query_time(lambda t: t*factor)
-        fastEvents = fastQuery.with_event_time(lambda t: t/factor)
+        """Speeds up a pattern by the given factor"""
+        fastQuery = self.with_query_time(lambda t: t * factor)
+        fastEvents = fastQuery.with_event_time(lambda t: t / factor)
         return fastEvents
+
     fast = _patternify(_fast)
 
     def _slow(self, factor):
-        """ Slow slows down a pattern """
-        return self._fast(1/factor)
+        """Slow slows down a pattern"""
+        return self._fast(1 / factor)
+
     slow = _patternify(_slow)
 
     def _early(self, offset):
-        """ Equivalent of Tidal's <~ operator """
+        """Equivalent of Tidal's <~ operator"""
         offset = Fraction(offset)
-        return self.with_query_time(lambda t: t+offset).with_event_time(lambda t: t-offset)
+        return self.with_query_time(lambda t: t + offset).with_event_time(
+            lambda t: t - offset
+        )
+
     early = _patternify(_early)
 
     def _late(self, offset):
-        """ Equivalent of Tidal's ~> operator """
-        return self._early(0-offset)
+        """Equivalent of Tidal's ~> operator"""
+        return self._early(0 - offset)
+
     late = _patternify(_late)
 
     def when(self, binary_pat, func):
@@ -379,35 +426,49 @@ class Pattern:
         return stack(self, func(self.early(time_pat)))
 
     def every(self, n, func):
-        pats = [func(self)] + ([self] * (n-1))
+        pats = [func(self)] + ([self] * (n - 1))
         return slowcat(*pats)
-    
+
     def append(self, other):
-        return fastcat(self,other)
+        return fastcat(self, other)
 
     def rev(self):
         def query(span):
             cycle = span.begin.sam()
             next_cycle = span.begin.next_sam()
+
             def reflect(to_reflect):
-                reflected = to_reflect.with_time(lambda time: cycle + (next_cycle - time))
+                reflected = to_reflect.with_time(
+                    lambda time: cycle + (next_cycle - time)
+                )
                 (reflected.begin, reflected.end) = (reflected.end, reflected.begin)
                 return reflected
+
             events = self.query(reflect(span))
             return [event.with_span(reflect) for event in events]
+
         return Pattern(query).split_queries()
 
     def jux(self, func, by=1):
         by = by / 2
+
         def elem_or(dict, key, default):
             if key in dict:
                 return dict[key]
             return default
-        
-        left  = self.with_value(lambda val: dict(list(val.items()) + [("pan", elem_or(val, "pan", 0.5) - by)]))
-        right = self.with_value(lambda val: dict(list(val.items()) + [("pan", elem_or(val, "pan", 0.5) + by)]))
 
-        return stack(left,func(right))
+        left = self.with_value(
+            lambda val: dict(
+                list(val.items()) + [("pan", elem_or(val, "pan", 0.5) - by)]
+            )
+        )
+        right = self.with_value(
+            lambda val: dict(
+                list(val.items()) + [("pan", elem_or(val, "pan", 0.5) + by)]
+            )
+        )
+
+        return stack(left, func(right))
 
     def first_cycle(self):
         return sorted(self.query(TimeSpan(Fraction(0), Fraction(1))))
@@ -510,21 +571,29 @@ class Pattern:
         return f"Pattern({self.first_cycle()} ...)"
 
     def __eq__(self, other):
-        raise NotImplementedError("Patterns cannot be compared. Evaluate them with `.first_cycle()` or similar")
+        raise NotImplementedError(
+            "Patterns cannot be compared. Evaluate them with `.first_cycle()` or similar"
+        )
 
 
 def pure(value):
-    """ Returns a pattern that repeats the given value once per cycle """
+    """Returns a pattern that repeats the given value once per cycle"""
+
     def query(span):
-        return [Event(Fraction(subspan.begin).whole_cycle(), subspan, value)
-                for subspan in span.span_cycles()
+        return [
+            Event(Fraction(subspan.begin).whole_cycle(), subspan, value)
+            for subspan in span.span_cycles()
         ]
+
     return Pattern(query)
+
 
 def steady(value):
     def query(span):
         return [Event(None, span, value)]
+
     return Pattern(query)
+
 
 def slowcat(*pats):
     """
@@ -533,25 +602,33 @@ def slowcat(*pats):
     (currently behaves slightly differently from Tidal)
     """
     pats = [reify(pat) for pat in pats]
+
     def query(span):
         pat = pats[math.floor(span.begin) % len(pats)]
         return pat.query(span)
+
     return Pattern(query).split_queries()
+
 
 def fastcat(*pats):
     """Concatenation: as with slowcat, but squashes a cycle from each
     pattern into one cycle"""
     return slowcat(*pats)._fast(len(pats))
 
+
 # alias
 cat = fastcat
 
+
 def stack(*pats):
-    """ Pile up patterns """
+    """Pile up patterns"""
     pats = [reify(pat) for pat in pats]
+
     def query(span):
         return concat([pat.query(span) for pat in pats])
+
     return Pattern(query)
+
 
 def _sequence_count(x):
     if type(x) == list or type(x) == tuple:
@@ -560,31 +637,35 @@ def _sequence_count(x):
         else:
             return (fastcat(*[sequence(x) for x in x]), len(x))
     if isinstance(x, Pattern):
-        return (x,1)
+        return (x, 1)
     else:
         return (pure(x), 1)
+
 
 def sequence(*args):
     return _sequence_count(args)[0]
 
+
 def polymeter(*args, steps=None):
-        seqs = [_sequence_count(x) for x in args]
-        if len(seqs) == 0:
-            return silence
-        if not steps:
-            steps = seqs[0][1]
-        pats = []
-        for seq in seqs:
-            if seq[1] == 0:
-                next
-            if steps == seq[1]:
-                pats.append(seq[0])
-            else:
-                pats.append(seq[0]._fast(Fraction(steps)/Fraction(seq[1])))
-        return stack(*pats)
+    seqs = [_sequence_count(x) for x in args]
+    if len(seqs) == 0:
+        return silence
+    if not steps:
+        steps = seqs[0][1]
+    pats = []
+    for seq in seqs:
+        if seq[1] == 0:
+            next
+        if steps == seq[1]:
+            pats.append(seq[0])
+        else:
+            pats.append(seq[0]._fast(Fraction(steps) / Fraction(seq[1])))
+    return stack(*pats)
+
 
 # alias
 pm = polymeter
+
 
 def polyrhythm(*xs):
     seqs = [sequence(x) for x in xs]
@@ -594,44 +675,51 @@ def polyrhythm(*xs):
 
     return stack(seqs)
 
+
 # alias
 pr = polyrhythm
+
 
 def reify(x):
     if not isinstance(x, Pattern):
         return pure(x)
     return x
 
+
 # Signals
 
 silence = Pattern(lambda _: [])
 
+
 def signal(func):
     def query(span):
         return [Event(None, span, func(span.midpoint()))]
-    return(Pattern(query))
 
-sine2   = signal(lambda t: math.sin(math.pi * 2 * t))
-sine    = signal(lambda t: (math.sin(math.pi * 2 * t) + 1) / 2)
-    
+    return Pattern(query)
+
+
+sine2 = signal(lambda t: math.sin(math.pi * 2 * t))
+sine = signal(lambda t: (math.sin(math.pi * 2 * t) + 1) / 2)
+
 cosine2 = sine2.early(0.25)
-cosine  = sine.early(0.25)
+cosine = sine.early(0.25)
 
-saw2    = signal(lambda t: (t % 1) * 2)
-saw     = signal(lambda t: t % 1)
+saw2 = signal(lambda t: (t % 1) * 2)
+saw = signal(lambda t: t % 1)
 
-isaw2   = signal(lambda t: (1 - (t % 1)) * 2)
-isaw    = signal(lambda t: 1 - (t % 1))
+isaw2 = signal(lambda t: (1 - (t % 1)) * 2)
+isaw = signal(lambda t: 1 - (t % 1))
 
-tri2    = fastcat(isaw2, saw2)
-tri     = fastcat(isaw, saw)
+tri2 = fastcat(isaw2, saw2)
+tri = fastcat(isaw, saw)
 
-square2 = signal(lambda t: (math.floor((t*2) % 2) * 2) - 1)
-square  = signal(lambda t: math.floor((t*2) % 2))
+square2 = signal(lambda t: (math.floor((t * 2) % 2) * 2) - 1)
+square = signal(lambda t: math.floor((t * 2) % 2))
 
 # Hack to make module-level function versions of pattern methods.
 
 module_obj = sys.modules[__name__]
+
 
 def partial_decorator(f):
     def wrapper(*args):
@@ -639,39 +727,50 @@ def partial_decorator(f):
             return f(*args)
         except (TypeError, AttributeError) as e:
             return partial(f, *args)
+
     return wrapper
+
 
 @partial_decorator
 def fast(arg, pat):
     return pat.fast(arg)
 
+
 @partial_decorator
 def slow(arg, pat):
     return pat.slow(arg)
+
 
 @partial_decorator
 def early(arg, pat):
     return pat.early(arg)
 
+
 @partial_decorator
 def late(arg, pat):
     return pat.late(arg)
+
 
 @partial_decorator
 def jux(arg, pat):
     return pat.jux(arg)
 
+
 @partial_decorator
 def union(pat_a, pat_b):
     return pat_b.union(pat_a)
 
+
 def rev(pat):
     return pat.rev()
 
+
 ## Combinators
+
 
 def run(n):
     return sequence(list(range(n)))
+
 
 def scan(n):
     return slowcat(*[run(k) for k in range(1, n + 1)])
@@ -695,4 +794,9 @@ def timecat(*time_pat_tuples):
     for time, pat in time_pat_tuples:
         arranged.append((accum, accum + Fraction(time), pat))
         accum += time
-    return stack(*[pat.compress(Fraction(s, total), Fraction(e, total)) for s, e, pat in arranged])
+    return stack(
+        *[
+            pat.compress(Fraction(s, total), Fraction(e, total))
+            for s, e, pat in arranged
+        ]
+    )
