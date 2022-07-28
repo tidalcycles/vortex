@@ -1,7 +1,7 @@
 from vortex.pattern import (
     Event,
-    TimeSpan,
     Fraction,
+    TimeSpan,
     fastcat,
     pure,
     rev,

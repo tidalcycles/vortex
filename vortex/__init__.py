@@ -18,10 +18,10 @@ finally:
     del version, PackageNotFoundError
 
 
-from .utils import *
-from .pattern import *
-from .vortex import *
 from .control import *
+from .pattern import *
+from .utils import *
+from .vortex import *
 
 
 @contextlib.contextmanager

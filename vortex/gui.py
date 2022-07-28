@@ -136,8 +136,8 @@ class VortexMainWindow(QMainWindow):
             try:
                 exec(code, vars(self._dsl_module))
             except (TypeError, AttributeError) as e:
-                _logger.info("error: %s", str(e))                
-        #self.highlight_block(start, end)
+                _logger.info("error: %s", str(e))
+        # self.highlight_block(start, end)
 
     def get_current_block(self):
         text = self._editor.text()
