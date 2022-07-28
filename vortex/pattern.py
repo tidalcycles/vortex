@@ -757,10 +757,13 @@ def reify(x):
 
 
 # Randomness
+RANDOM_CONSTANT = 2**29
+RANDOM_CYCLES_LENGTH = 300
 
 
 def xorwise(x: int) -> int:
-    """Xorshift RNG
+    """
+    Xorshift RNG
 
     cf. George Marsaglia (2003). "Xorshift RNGs". Journal of Statistical Software 8:14.
     https://www.jstatsoft.org/article/view/v008i14
@@ -771,12 +774,17 @@ def xorwise(x: int) -> int:
     return (b << 5) ^ b
 
 
-def time_to_int_seed(a: float | Fraction) -> int:
-    return xorwise(math.trunc((a / 300) * 536870912))
+def time_to_int_seed(a: float) -> int:
+    """
+    Stretch RANDOM_CYCLES_LENGTH cycles over the range of [0, RANDOM_CONSTANT)
+    then apply the xorshift algorithm.
+
+    """
+    return xorwise(math.trunc((a / RANDOM_CYCLES_LENGTH) * RANDOM_CONSTANT))
 
 
-def int_seed_to_rand(a: int) -> Fraction:
-    return (a % 536870912) / 536870912
+def int_seed_to_rand(a: int) -> float:
+    return (a % RANDOM_CONSTANT) / RANDOM_CONSTANT
 
 
 def time_to_rand(a):
