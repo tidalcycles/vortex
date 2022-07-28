@@ -194,7 +194,7 @@ def test_striate():
 
 
 def test_rand():
-    assert rand.segment(4).first_cycle() == [
+    assert rand().segment(4).first_cycle() == [
         Event(TimeSpan(0, 1 / 4), TimeSpan(0, 1 / 4), 0.3147844299674034),
         Event(TimeSpan(1 / 4, 1 / 2), TimeSpan(1 / 4, 1 / 2), 0.6004995740950108),
         Event(TimeSpan(1 / 2, 3 / 4), TimeSpan(1 / 2, 3 / 4), 0.1394200474023819),
