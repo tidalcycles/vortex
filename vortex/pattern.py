@@ -984,3 +984,13 @@ def timecat(*time_pat_tuples):
             for s, e, pat in arranged
         ]
     )
+
+
+def choose_by(pat, *vals):
+    """Randomly picks an element from the given list, based on a 0-1 ranged numerical pattern"""
+    return pat.range(0, len(vals)).fmap(lambda v: vals[math.floor(v)])
+
+
+def choose(*vals):
+    """Randomly picks an element from the given list"""
+    return choose_by(rand(), *vals)

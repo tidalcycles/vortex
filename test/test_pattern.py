@@ -6,6 +6,8 @@ from vortex.pattern import (
     Event,
     Fraction,
     TimeSpan,
+    choose,
+    choose_by,
     fastcat,
     irand,
     perlin,
@@ -239,4 +241,22 @@ def test_perlin_with():
     assert perlin(saw() * 4).segment(2).first_cycle() == [
         Event(TimeSpan(0, 1 / 2), TimeSpan(0, 1 / 2), 0.5177721455693245),
         Event(TimeSpan(1 / 2, 1), TimeSpan(1 / 2, 1), 0.8026083502918482),
+    ]
+
+
+def test_choose_by():
+    assert choose_by(perlin(), *range(8)).segment(4).first_cycle() == [
+        Event(TimeSpan(0, 1 / 4), TimeSpan(0, 1 / 4), 0),
+        Event(TimeSpan(1 / 4, 1 / 2), TimeSpan(1 / 4, 1 / 2), 1),
+        Event(TimeSpan(1 / 2, 3 / 4), TimeSpan(1 / 2, 3 / 4), 3),
+        Event(TimeSpan(3 / 4, 1), TimeSpan(3 / 4, 1), 4),
+    ]
+
+
+def test_choose():
+    assert choose("a", "b", "c").segment(4).first_cycle() == [
+        Event(TimeSpan(0, 1 / 4), TimeSpan(0, 1 / 4), "a"),
+        Event(TimeSpan(1 / 4, 1 / 2), TimeSpan(1 / 4, 1 / 2), "b"),
+        Event(TimeSpan(1 / 2, 3 / 4), TimeSpan(1 / 2, 3 / 4), "a"),
+        Event(TimeSpan(3 / 4, 1), TimeSpan(3 / 4, 1), "b"),
     ]
