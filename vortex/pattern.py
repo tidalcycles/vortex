@@ -832,8 +832,8 @@ def signal(func):
 sine2 = lambda: signal(lambda t: math.sin(math.pi * 2 * t))
 sine = lambda: signal(lambda t: (math.sin(math.pi * 2 * t) + 1) / 2)
 
-cosine2 = sine2().early(0.25)
-cosine = sine().early(0.25)
+cosine2 = lambda: sine2().early(0.25)
+cosine = lambda: sine().early(0.25)
 
 saw2 = lambda: signal(lambda t: (t % 1) * 2)
 saw = lambda: signal(lambda t: t % 1)
@@ -841,8 +841,8 @@ saw = lambda: signal(lambda t: t % 1)
 isaw2 = lambda: signal(lambda t: (1 - (t % 1)) * 2)
 isaw = lambda: signal(lambda t: 1 - (t % 1))
 
-tri2 = fastcat(isaw2(), saw2())
-tri = fastcat(isaw(), saw())
+tri2 = lambda: fastcat(isaw2(), saw2())
+tri = lambda: fastcat(isaw(), saw())
 
 square2 = lambda: signal(lambda t: (math.floor((t * 2) % 2) * 2) - 1)
 square = lambda: signal(lambda t: math.floor((t * 2) % 2))
