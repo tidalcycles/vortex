@@ -240,20 +240,19 @@ class Pattern:
         resolve wholes, applies a given pattern of values to that
         pattern of functions.
         """
-        pat_func = self
 
         def query(span):
-            event_funcs = pat_func.query(span)
+            event_funcs = self.query(span)
             event_vals = pat_val.query(span)
 
-            def apply(event_funcs, event_vals):
-                s = event_funcs.part.intersection(event_vals.part)
+            def apply(event_func, event_val):
+                s = event_func.part.intersection(event_val.part)
                 if s == None:
                     return None
                 return Event(
-                    whole_func(event_funcs.whole, event_vals.whole),
+                    whole_func(event_func.whole, event_val.whole),
                     s,
-                    event_funcs.value(event_vals.value),
+                    event_func.value(event_val.value),
                 )
 
             return concat(
@@ -271,10 +270,10 @@ class Pattern:
     def app_both(self, pat_val):
         """Tidal's <*>"""
 
-        def whole_func(span_a, span_B):
-            if span_a == None or span_B == None:
+        def whole_func(span_a, span_b):
+            if span_a == None or span_b == None:
                 return None
-            return span_a.intersection_e(span_B)
+            return span_a.intersection_e(span_b)
 
         return self._app_whole(whole_func, pat_val)
 
