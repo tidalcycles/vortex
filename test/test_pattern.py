@@ -5,9 +5,11 @@ from vortex.pattern import (
     TimeSpan,
     fastcat,
     irand,
+    perlin,
     pure,
     rand,
     rev,
+    saw,
     slowcat,
     stack,
     timecat,
@@ -208,4 +210,20 @@ def test_irand():
         Event(TimeSpan(1 / 4, 1 / 2), TimeSpan(1 / 4, 1 / 2), 4),
         Event(TimeSpan(1 / 2, 3 / 4), TimeSpan(1 / 2, 3 / 4), 1),
         Event(TimeSpan(3 / 4, 1), TimeSpan(3 / 4, 1), 3),
+    ]
+
+
+def test_perlin():
+    assert perlin().segment(4).first_cycle() == [
+        Event(TimeSpan(0, 1 / 4), TimeSpan(0, 1 / 4), 0.008311405901167745),
+        Event(TimeSpan(1 / 4, 1 / 2), TimeSpan(1 / 4, 1 / 2), 0.1424947878645071),
+        Event(TimeSpan(1 / 2, 3 / 4), TimeSpan(1 / 2, 3 / 4), 0.3752773577048174),
+        Event(TimeSpan(3 / 4, 1), TimeSpan(3 / 4, 1), 0.5094607396681567),
+    ]
+
+
+def test_perlin_with():
+    assert perlin(saw().fmap(lambda v: v * 4)).segment(2).first_cycle() == [
+        Event(TimeSpan(0, 1 / 2), TimeSpan(0, 1 / 2), 0.5177721455693245),
+        Event(TimeSpan(1 / 2, 1), TimeSpan(1 / 2, 1), 0.8026083502918482),
     ]
