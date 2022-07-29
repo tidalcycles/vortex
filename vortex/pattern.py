@@ -306,13 +306,43 @@ class Pattern:
         return self.fmap(lambda x: lambda y: x + y).app_left(reify(other))
 
     def __radd__(self, other):
-        return self.__add__(other)
+        return self.fmap(lambda x: lambda y: y + x).app_left(reify(other))
 
     def __sub__(self, other):
         return self.fmap(lambda x: lambda y: x - y).app_left(reify(other))
 
     def __rsub__(self, other):
-        raise ValueError  # or return NotImplemented?
+        return self.fmap(lambda x: lambda y: y - x).app_left(reify(other))
+
+    def __mul__(self, other):
+        return self.fmap(lambda x: lambda y: x * y).app_left(reify(other))
+
+    def __rmul__(self, other):
+        return self.fmap(lambda x: lambda y: y * x).app_left(reify(other))
+
+    def __truediv__(self, other):
+        return self.fmap(lambda x: lambda y: x / y).app_left(reify(other))
+
+    def __rtruediv__(self, other):
+        return self.fmap(lambda x: lambda y: y / x).app_left(reify(other))
+
+    def __floordiv__(self, other):
+        return self.fmap(lambda x: lambda y: x // y).app_left(reify(other))
+
+    def __rfloordiv__(self, other):
+        return self.fmap(lambda x: lambda y: y // x).app_left(reify(other))
+
+    def __mod__(self, other):
+        return self.fmap(lambda x: lambda y: x % y).app_left(reify(other))
+
+    def __rmod__(self, other):
+        return self.fmap(lambda x: lambda y: y % x).app_left(reify(other))
+
+    def __pow__(self, other):
+        return self.fmap(lambda x: lambda y: x**y).app_left(reify(other))
+
+    def __rpow__(self, other):
+        return self.fmap(lambda x: lambda y: y**x).app_left(reify(other))
 
     def union(self, other):
         return self.fmap(lambda x: lambda y: {**x, **y}).app_left(other)
