@@ -2,6 +2,7 @@ import math
 import sys
 from fractions import Fraction
 from functools import partial, total_ordering
+from pprint import pformat
 
 from .utils import *
 
@@ -79,6 +80,9 @@ class TimeSpan(object):
         return self.begin + ((self.end - self.begin) / 2)
 
     def __repr__(self) -> str:
+        return f"TimeSpan({repr(self.begin)}, {repr(self.end)})"
+
+    def __str__(self) -> str:
         return f"({show_fraction(self.begin)}, {show_fraction(self.end)})"
 
     def __eq__(self, other) -> bool:
@@ -125,6 +129,9 @@ class Event:
 
     def __repr__(self) -> str:
         return f"Event({repr(self.whole)}, {repr(self.part)}, {repr(self.value)})"
+
+    def __str__(self) -> str:
+        return f"({self.whole}, {self.part}, {pformat(self.value)})"
 
     def __eq__(self, other) -> bool:
         if isinstance(other, Event):
@@ -598,7 +605,9 @@ class Pattern:
         return Pattern(query).split_queries()
 
     def __repr__(self):
-        return f"Pattern({self.first_cycle()} ...)"
+        events = [str(e) for e in self.first_cycle()]
+        events_str = ",\n ".join(events).replace("\n", "\n ")
+        return f"~[{events_str}] ...~"
 
     def __eq__(self, other):
         raise NotImplementedError(
