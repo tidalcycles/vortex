@@ -3,6 +3,7 @@ import sys
 from fractions import Fraction
 from functools import partial, total_ordering
 from pprint import pformat
+from typing import Optional
 
 from .utils import *
 
@@ -843,6 +844,35 @@ def irand(n: int):
 
     """
     return signal(lambda t: math.floor(time_to_rand(t) * n))
+
+
+def _perlin_with(p: Pattern) -> Pattern:
+    """
+    1D Perlin noise. Takes a pattern as the RNG's "input" for Perlin noise, instead of
+    automatically using the cycle count.
+
+    """
+    pa = p.fmap(math.floor)
+    pb = p.fmap(lambda v: math.floor(v) + 1)
+    smoother_step = lambda x: 6.0 * x**5 - 15.0 * x**4 + 10.0 * x**3
+    interp = lambda x: lambda a: lambda b: a + smoother_step(x) * (b - a)
+    return (
+        (p - pa)
+        .fmap(interp)
+        .app_both(pa.fmap(time_to_rand))
+        .app_both(pb.fmap(time_to_rand))
+    )
+
+
+def perlin(p: Optional[Pattern] = None) -> Pattern:
+    """
+    1D Perlin (smooth) noise, works like rand but smoothly moves between random
+    values each cycle.
+
+    """
+    if not p:
+        p = signal(id)
+    return _perlin_with(p)
 
 
 # Hack to make module-level function versions of pattern methods.
