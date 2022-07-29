@@ -2,6 +2,7 @@ import math
 import sys
 from fractions import Fraction
 from functools import partial, total_ordering
+from itertools import accumulate
 from pprint import pformat
 from typing import Optional
 
@@ -986,11 +987,42 @@ def timecat(*time_pat_tuples):
     )
 
 
-def choose_by(pat, *vals):
-    """Randomly picks an element from the given list, based on a 0-1 ranged numerical pattern"""
+def chooseby(pat, *vals):
+    """
+    Randomly picks an element from the given list
+
+    Values are samples using the 0-1 ranged numerical pattern `pat`.
+    """
     return pat.range(0, len(vals)).fmap(lambda v: vals[math.floor(v)])
 
 
 def choose(*vals):
     """Randomly picks an element from the given list"""
-    return choose_by(rand(), *vals)
+    return chooseby(rand(), *vals)
+
+
+def wchooseby(pat, *pairs):
+    """
+    Like @choose@, but works on an a list of tuples of values and weights
+
+    Values are samples using the 0-1 ranged numerical pattern `pat`.
+
+    """
+    values, weights = list(zip(*pairs))
+    cweights = list(accumulate(w for _, w in pairs))
+    total = sum(weights)
+
+    def match(r):
+        if r < 0 or r > 1:
+            raise ValueError(
+                "value from random pattern used by `wchooseby` is outside 0-1 range"
+            )
+        indices = [i for i, c in enumerate(cweights) if c >= r * total]
+        return values[indices[0]]
+
+    return pat.fmap(match)
+
+
+def wchoose(*vals):
+    """Like @choose@, but works on an a list of tuples of values and weights"""
+    return wchooseby(rand(), *vals)
