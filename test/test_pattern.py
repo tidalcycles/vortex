@@ -223,7 +223,7 @@ def test_perlin():
 
 
 def test_perlin_with():
-    assert perlin(saw().fmap(lambda v: v * 4)).segment(2).first_cycle() == [
+    assert perlin(saw() * 4).segment(2).first_cycle() == [
         Event(TimeSpan(0, 1 / 2), TimeSpan(0, 1 / 2), 0.5177721455693245),
         Event(TimeSpan(1 / 2, 1), TimeSpan(1 / 2, 1), 0.8026083502918482),
     ]
