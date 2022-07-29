@@ -666,8 +666,8 @@ class Pattern:
         """
         Randomly removes events from pattern.
 
-        By default, chance is 50% (0.5). You can control control the percentage
-        of events that are removed with `val`. With `prand` you can specify a
+        By default, chance is 50% (0.5). You can control the percentage of
+        events that are removed with `val`. With `prand` you can specify a
         different random pattern, must be a numerical 0-1 ranged pattern.
 
         """
@@ -675,6 +675,19 @@ class Pattern:
             prand = rand()
         return self.fmap(lambda a: lambda _: a).app_left(
             prand._filter_values(lambda v: v > val)
+        )
+
+    def undegrade(self, val=0.5, prand=None):
+        """
+        Same as `degrade` but with the percentage describing how many events to
+        keep on average, not remove.
+
+        """
+        if not prand:
+            prand = rand()
+        # return self.degrade(val, prand.fmap(lambda r: 1 - r))
+        return self.fmap(lambda a: lambda _: a).app_left(
+            prand._filter_values(lambda v: v <= val)
         )
 
     def __repr__(self):
