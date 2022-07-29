@@ -1,4 +1,7 @@
+import math
+
 from vortex.control import s
+
 from vortex.pattern import (
     Event,
     Fraction,
@@ -193,6 +196,16 @@ def test_striate():
             {"s": "sd", "begin": 0.75, "end": 1.0},
         ),
     ]
+
+
+def test_range():
+    assert_equal_patterns(saw().range(2, 7), saw() * (7 - 2) + 2)
+
+
+def test_rangex():
+    assert_equal_patterns(
+        saw().rangex(2, 7), saw().range(math.log(2), math.log(7)).fmap(math.exp)
+    )
 
 
 def test_rand():
