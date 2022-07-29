@@ -641,6 +641,26 @@ class Pattern:
         """
         return pure(id).fast(n).app_left(self)
 
+    def range(self, min, max):
+        """
+        Rescales values to the range [min, max]
+
+        Assumes pattern is numerical, containing unipolar values in the range
+        [0, 1].
+
+        """
+        return self * (max - min) + min
+
+    def rangex(self, min, max):
+        """
+        Rescales values to the range [min, max] following an exponential curve
+
+        Assumes pattern is numerical, containing unipolar values in the range
+        [0, 1].
+
+        """
+        return self.range(math.log(min), math.log(max)).fmap(math.exp)
+
     def __repr__(self):
         events = [str(e) for e in self.first_cycle()]
         events_str = ",\n ".join(events).replace("\n", "\n ")
