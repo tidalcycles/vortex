@@ -18,6 +18,41 @@ def assert_equal_patterns(input, expected, span=None):
     assert sorted(input.query(span)) == sorted(expected.query(span))
 
 
+def test_add():
+    assert_equal_patterns(pure(3) + 2, pure(5))
+    assert_equal_patterns(3 + pure(5), pure(8))
+
+
+def test_sub():
+    assert_equal_patterns(pure(3) - 1.5, pure(1.5))
+    assert_equal_patterns(3 - pure(1), pure(2))
+
+
+def test_mul():
+    assert_equal_patterns(pure(3) * 2, pure(6))
+    assert_equal_patterns(10 * pure(3), pure(30))
+
+
+def test_truediv():
+    assert_equal_patterns(pure(3) / 0.5, pure(6))
+    assert_equal_patterns(3 / pure(2), pure(3 / 2))
+
+
+def test_floordiv():
+    assert_equal_patterns(pure(3) // 2, pure(1))
+    assert_equal_patterns(3 // pure(5), pure(0))
+
+
+def test_mod():
+    assert_equal_patterns(pure(7) % 5, pure(2))
+    assert_equal_patterns(3 % pure(2), pure(1))
+
+
+def test_pow():
+    assert_equal_patterns(pure(3) ** 2, pure(9))
+    assert_equal_patterns(2 ** pure(4), pure(16))
+
+
 def test_superimpose():
     assert_equal_patterns(
         pure("bd").superimpose(lambda p: p.fast(3)),
