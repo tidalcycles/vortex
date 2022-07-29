@@ -1,4 +1,5 @@
 import math
+from itertools import groupby
 
 from vortex.control import s
 
@@ -7,7 +8,7 @@ from vortex.pattern import (
     Fraction,
     TimeSpan,
     choose,
-    choose_by,
+    chooseby,
     fastcat,
     irand,
     perlin,
@@ -18,6 +19,8 @@ from vortex.pattern import (
     slowcat,
     stack,
     timecat,
+    wchoose,
+    wchooseby,
 )
 
 
@@ -244,15 +247,6 @@ def test_perlin_with():
     ]
 
 
-def test_choose_by():
-    assert choose_by(perlin(), *range(8)).segment(4).first_cycle() == [
-        Event(TimeSpan(0, 1 / 4), TimeSpan(0, 1 / 4), 0),
-        Event(TimeSpan(1 / 4, 1 / 2), TimeSpan(1 / 4, 1 / 2), 1),
-        Event(TimeSpan(1 / 2, 3 / 4), TimeSpan(1 / 2, 3 / 4), 3),
-        Event(TimeSpan(3 / 4, 1), TimeSpan(3 / 4, 1), 4),
-    ]
-
-
 def test_choose():
     assert choose("a", "b", "c").segment(4).first_cycle() == [
         Event(TimeSpan(0, 1 / 4), TimeSpan(0, 1 / 4), "a"),
@@ -260,3 +254,54 @@ def test_choose():
         Event(TimeSpan(1 / 2, 3 / 4), TimeSpan(1 / 2, 3 / 4), "a"),
         Event(TimeSpan(3 / 4, 1), TimeSpan(3 / 4, 1), "b"),
     ]
+
+
+def test_chooseby():
+    assert chooseby(perlin(), *range(8)).segment(4).first_cycle() == [
+        Event(TimeSpan(0, 1 / 4), TimeSpan(0, 1 / 4), 0),
+        Event(TimeSpan(1 / 4, 1 / 2), TimeSpan(1 / 4, 1 / 2), 1),
+        Event(TimeSpan(1 / 2, 3 / 4), TimeSpan(1 / 2, 3 / 4), 3),
+        Event(TimeSpan(3 / 4, 1), TimeSpan(3 / 4, 1), 4),
+    ]
+
+
+def test_choose_distribution():
+    values = [e.value for e in choose("a", "b", "c", "d").segment(100).first_cycle()]
+    values_groupedby_count = {k: len(list(v)) for k, v in groupby(sorted(values))}
+    # Check recurrence of values with uniform random distribution (each item should be around 25~)
+    assert values_groupedby_count == {"a": 23, "b": 30, "c": 24, "d": 23}
+
+
+def test_wchoose():
+    assert wchoose(("a", 1), ("e", 0.5), ("g", 2), ("c", 1)).segment(
+        4
+    ).first_cycle() == [
+        Event(TimeSpan(0, 1 / 4), TimeSpan(0, 1 / 4), "e"),
+        Event(TimeSpan(1 / 4, 1 / 2), TimeSpan(1 / 4, 1 / 2), "g"),
+        Event(TimeSpan(1 / 2, 3 / 4), TimeSpan(1 / 2, 3 / 4), "a"),
+        Event(TimeSpan(3 / 4, 1), TimeSpan(3 / 4, 1), "g"),
+    ]
+
+
+def test_wchooseby():
+    assert wchooseby(
+        rand().late(100), ("a", 1), ("e", 0.5), ("g", 2), ("c", 1)
+    ).segment(4).first_cycle() == [
+        Event(TimeSpan(0, 1 / 4), TimeSpan(0, 1 / 4), "a"),
+        Event(TimeSpan(1 / 4, 1 / 2), TimeSpan(1 / 4, 1 / 2), "g"),
+        Event(TimeSpan(1 / 2, 3 / 4), TimeSpan(1 / 2, 3 / 4), "c"),
+        Event(TimeSpan(3 / 4, 1), TimeSpan(3 / 4, 1), "a"),
+    ]
+
+
+def test_wchoose_distribution():
+    values = [
+        e.value
+        for e in wchoose(("a", 1), ("e", 0.5), ("g", 2), ("c", 1))
+        .segment(100)
+        .first_cycle()
+    ]
+    values_groupedby_count = {k: len(list(v)) for k, v in groupby(sorted(values))}
+    # Check recurrence of values based on weights and uniform random distribution
+    # a =~ 20, e =~ 10, g =~ 50, c =~ 20
+    assert values_groupedby_count == {"a": 22, "e": 10, "g": 48, "c": 20}
