@@ -145,8 +145,14 @@ class Event:
 
     def __le__(self, other) -> bool:
         return (
-            self.whole <= other.whole
+            self.whole
+            and other.whole
+            and self.whole <= other.whole
+            and self.part
+            and other.part
             and self.part <= other.part
+            and self.value
+            and other.value
             and self.value <= other.value
         )
 
