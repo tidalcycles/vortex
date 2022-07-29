@@ -1,3 +1,4 @@
+from vortex.control import s
 from vortex.pattern import (
     Event,
     Fraction,
@@ -142,4 +143,49 @@ def test_timecat():
         Event(TimeSpan((29 / 32), (15 / 16)), TimeSpan((29 / 32), (15 / 16)), "hh"),
         Event(TimeSpan((15 / 16), (31 / 32)), TimeSpan((15 / 16), (31 / 32)), "hh"),
         Event(TimeSpan((31 / 32), 1), TimeSpan((31 / 32), 1), "hh"),
+    ]
+
+
+def test_striate():
+    assert fastcat(s("bd"), s("sd")).striate(4).first_cycle() == [
+        Event(
+            TimeSpan(Fraction(0, 1), Fraction(1, 1)),
+            TimeSpan(Fraction(0, 1), Fraction(1, 8)),
+            {"s": "bd", "begin": 0.0, "end": 0.25},
+        ),
+        Event(
+            TimeSpan(Fraction(0, 1), Fraction(1, 1)),
+            TimeSpan(Fraction(1, 8), Fraction(1, 4)),
+            {"s": "sd", "begin": 0.0, "end": 0.25},
+        ),
+        Event(
+            TimeSpan(Fraction(0, 1), Fraction(1, 1)),
+            TimeSpan(Fraction(1, 4), Fraction(3, 8)),
+            {"s": "bd", "begin": 0.25, "end": 0.5},
+        ),
+        Event(
+            TimeSpan(Fraction(0, 1), Fraction(1, 1)),
+            TimeSpan(Fraction(3, 8), Fraction(1, 2)),
+            {"s": "sd", "begin": 0.25, "end": 0.5},
+        ),
+        Event(
+            TimeSpan(Fraction(0, 1), Fraction(1, 1)),
+            TimeSpan(Fraction(1, 2), Fraction(5, 8)),
+            {"s": "bd", "begin": 0.5, "end": 0.75},
+        ),
+        Event(
+            TimeSpan(Fraction(0, 1), Fraction(1, 1)),
+            TimeSpan(Fraction(5, 8), Fraction(3, 4)),
+            {"s": "sd", "begin": 0.5, "end": 0.75},
+        ),
+        Event(
+            TimeSpan(Fraction(0, 1), Fraction(1, 1)),
+            TimeSpan(Fraction(3, 4), Fraction(7, 8)),
+            {"s": "bd", "begin": 0.75, "end": 1.0},
+        ),
+        Event(
+            TimeSpan(Fraction(0, 1), Fraction(1, 1)),
+            TimeSpan(Fraction(7, 8), Fraction(1, 1)),
+            {"s": "sd", "begin": 0.75, "end": 1.0},
+        ),
     ]

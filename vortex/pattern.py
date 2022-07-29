@@ -604,6 +604,26 @@ class Pattern:
 
         return Pattern(query).split_queries()
 
+    def striate(self, n_pat):
+        """
+        Cut samples into bits in a similar way to `chop`
+
+        Pattern must be an `s` control pattern, and the resulting pattern will
+        contain `begin` and `end` values to be interpreted by the synth
+        (SuperDirt, Dirt, etc.)
+
+        """
+        return reify(n_pat).fmap(lambda n: self._striate(n)).inner_join()
+
+    def _striate(self, n):
+        def merge_sample(samp_range):
+            return self.fmap(
+                lambda v: {"s": v["s"] if isinstance(v, dict) else v, **samp_range}
+            )
+
+        samp_ranges = [dict(begin=i / n, end=(i + 1) / n) for i in range(n)]
+        return fastcat(*[merge_sample(r) for r in samp_ranges])
+
     def __repr__(self):
         events = [str(e) for e in self.first_cycle()]
         events_str = ",\n ".join(events).replace("\n", "\n ")
