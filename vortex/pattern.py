@@ -662,6 +662,21 @@ class Pattern:
         """
         return self.range(math.log(min), math.log(max)).fmap(math.exp)
 
+    def degrade(self, val=0.5, prand=None):
+        """
+        Randomly removes events from pattern.
+
+        By default, chance is 50% (0.5). You can control control the percentage
+        of events that are removed with `val`. With `prand` you can specify a
+        different random pattern, must be a numerical 0-1 ranged pattern.
+
+        """
+        if not prand:
+            prand = rand()
+        return self.fmap(lambda a: lambda _: a).app_left(
+            prand._filter_values(lambda v: v > val)
+        )
+
     def __repr__(self):
         events = [str(e) for e in self.first_cycle()]
         events_str = ",\n ".join(events).replace("\n", "\n ")

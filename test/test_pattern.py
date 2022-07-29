@@ -305,3 +305,25 @@ def test_wchoose_distribution():
     # Check recurrence of values based on weights and uniform random distribution
     # a =~ 20, e =~ 10, g =~ 50, c =~ 20
     assert values_groupedby_count == {"a": 22, "e": 10, "g": 48, "c": 20}
+
+
+def test_degrade():
+    assert_equal_patterns(
+        pure("sd").fast(8).degrade(), pure("sd").fast(8).degrade(0.5, rand())
+    )
+
+
+def test_degrade_by():
+    assert pure("sd").fast(8).degrade(0.75).first_cycle() == [
+        Event(TimeSpan(1 / 8, 1 / 4), TimeSpan(1 / 8, 1 / 4), "sd"),
+        Event(TimeSpan(1 / 2, 5 / 8), TimeSpan(1 / 2, 5 / 8), "sd"),
+        Event(TimeSpan(3 / 4, 7 / 8), TimeSpan(3 / 4, 7 / 8), "sd"),
+    ]
+
+
+def test_degrade_by_using():
+    assert pure("sd").fast(8).degrade(0.5, rand().late(100)).first_cycle() == [
+        Event(TimeSpan(1 / 8, 1 / 4), TimeSpan(1 / 8, 1 / 4), "sd"),
+        Event(TimeSpan(3 / 8, 1 / 2), TimeSpan(3 / 8, 1 / 2), "sd"),
+        Event(TimeSpan(1 / 2, 5 / 8), TimeSpan(1 / 2, 5 / 8), "sd"),
+    ]
