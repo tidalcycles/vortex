@@ -106,12 +106,6 @@ def test_reviter():
     )
 
 
-def test_overlay():
-    assert_equal_patterns(
-        pure("bd").fast(2).overlay(pure("sd")), stack(pure("bd").fast(2), pure("sd"))
-    )
-
-
 def test_fastgap():
     assert fastcat(pure("bd"), pure("sd")).fastgap(4).first_cycle() == [
         Event(TimeSpan(0, 1 / 8), TimeSpan(0, 1 / 8), "bd"),
