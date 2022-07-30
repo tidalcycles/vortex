@@ -307,20 +307,20 @@ def test_wchoose_distribution():
 
 def test_degrade():
     assert_equal_patterns(
-        pure("sd").fast(8).degrade(), pure("sd").fast(8).degrade(0.5, rand())
+        pure("sd").fast(8).degrade(), pure("sd").fast(8).degrade_by(0.5, rand())
     )
 
 
 def test_degrade_by():
-    assert pure("sd").fast(8).degrade(0.75).first_cycle() == [
+    assert pure("sd").fast(8).degrade_by(0.75).first_cycle() == [
         Event(TimeSpan(1 / 8, 1 / 4), TimeSpan(1 / 8, 1 / 4), "sd"),
         Event(TimeSpan(1 / 2, 5 / 8), TimeSpan(1 / 2, 5 / 8), "sd"),
         Event(TimeSpan(3 / 4, 7 / 8), TimeSpan(3 / 4, 7 / 8), "sd"),
     ]
 
 
-def test_degrade_by_using():
-    assert pure("sd").fast(8).degrade(0.5, rand().late(100)).first_cycle() == [
+def test_degrade_by_diff_rand():
+    assert pure("sd").fast(8).degrade_by(0.5, rand().late(100)).first_cycle() == [
         Event(TimeSpan(1 / 8, 1 / 4), TimeSpan(1 / 8, 1 / 4), "sd"),
         Event(TimeSpan(3 / 8, 1 / 2), TimeSpan(3 / 8, 1 / 2), "sd"),
         Event(TimeSpan(1 / 2, 5 / 8), TimeSpan(1 / 2, 5 / 8), "sd"),
@@ -329,18 +329,18 @@ def test_degrade_by_using():
 
 def test_undegrade():
     assert_equal_patterns(
-        pure("sd").fast(8).undegrade(), pure("sd").fast(8).undegrade(0.5, rand())
+        pure("sd").fast(8).undegrade(), pure("sd").fast(8).undegrade_by(0.5, rand())
     )
 
 
 def test_undegrade_by():
-    assert pure("sd").fast(8).undegrade(0.25).first_cycle() == [
+    assert pure("sd").fast(8).undegrade_by(0.25).first_cycle() == [
         Event(TimeSpan(0, 1 / 8), TimeSpan(0, 1 / 8), "sd")
     ]
 
 
-def test_undegrade_by_using():
-    assert pure("sd").fast(8).undegrade(0.5, rand().late(100)).first_cycle() == [
+def test_undegrade_by_diff_rand():
+    assert pure("sd").fast(8).undegrade_by(0.5, rand().late(100)).first_cycle() == [
         Event(TimeSpan(0, 1 / 8), TimeSpan(0, 1 / 8), "sd"),
         Event(TimeSpan(1 / 4, 3 / 8), TimeSpan(1 / 4, 3 / 8), "sd"),
         Event(TimeSpan(5 / 8, 3 / 4), TimeSpan(5 / 8, 3 / 4), "sd"),

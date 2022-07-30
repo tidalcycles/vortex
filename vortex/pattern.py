@@ -659,32 +659,50 @@ class Pattern:
         """
         return self.range(math.log(min), math.log(max)).fmap(math.exp)
 
-    def degrade(self, val=0.5, prand=None):
+    def degrade(self):
+        """
+        Randomly removes events from pattern, by 50% chance.
+
+        """
+        return self.degrade_by(0.5)
+
+    def degrade_by(self, by, prand=None):
         """
         Randomly removes events from pattern.
 
-        By default, chance is 50% (0.5). You can control the percentage of
-        events that are removed with `val`. With `prand` you can specify a
-        different random pattern, must be a numerical 0-1 ranged pattern.
+        You can control the percentage of events that are removed with `by`.
+        With `prand` you can specify a different random pattern, must be a
+        numerical 0-1 ranged pattern.
 
         """
         if not prand:
             prand = rand()
         return self.fmap(lambda a: lambda _: a).app_left(
-            prand._filter_values(lambda v: v > val)
+            prand._filter_values(lambda v: v > by)
         )
 
-    def undegrade(self, val=0.5, prand=None):
+    def undegrade(self):
         """
-        Same as `degrade` but with the percentage describing how many events to
-        keep on average, not remove.
+        Same as `degrade`, but random values represent percentage of events to
+        keep, not remove, by 50% chance.
+
+        """
+        return self.undegrade_by(0.5)
+
+    def undegrade_by(self, by, prand=None):
+        """
+        Same as `degrade`, but random values represent percentage of events to
+        keep, not remove.
+
+        You can control the percentage of events that are removed with `by`.
+        With `prand` you can specify a different random pattern, must be a
+        numerical 0-1 ranged pattern.
 
         """
         if not prand:
             prand = rand()
-        # return self.degrade(val, prand.fmap(lambda r: 1 - r))
         return self.fmap(lambda a: lambda _: a).app_left(
-            prand._filter_values(lambda v: v <= val)
+            prand._filter_values(lambda v: v <= by)
         )
 
     def sometimes(self, func):
@@ -711,7 +729,7 @@ class Pattern:
         return reify(by_pat).fmap(lambda by: self._sometimes_by(by, func)).inner_join()
 
     def _sometimes_by(self, by, func):
-        return self.degrade(by).overlay(func(self.undegrade(by)))
+        return self.degrade_by(by).overlay(func(self.undegrade_by(by)))
 
     def sometimes_pre(self, func):
         """
@@ -735,7 +753,7 @@ class Pattern:
         )
 
     def _sometimes_pre_by(self, by, func):
-        return self.degrade(by).overlay(func(self).undegrade(by))
+        return self.degrade_by(by).overlay(func(self).undegrade_by(by))
 
     def __repr__(self):
         events = [str(e) for e in self.first_cycle()]
