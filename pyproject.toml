@@ -19,6 +19,9 @@ QScintilla = { version = "^2.13.3", optional = true }
 pytest = "^7.1.2"
 pytest-cov = "^3.0.0"
 pytest-reorder = "^0.1.1"
+pre-commit = "^2.20.0"
+black = "22.6.0"
+isort = "5.10.1"
 
 [tool.poetry.scripts]
 vortex = 'vortex.cli:run'
