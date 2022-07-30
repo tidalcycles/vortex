@@ -565,10 +565,6 @@ class Pattern:
         """
         return slowcat(*[self.late(Fraction(i, n)) for i in range(n)])
 
-    def overlay(self, pat):
-        """Combine itself with another pattern"""
-        return Pattern(lambda span: concat([self.query(span), pat.query(span)]))
-
     def compress(self, begin, end):
         """Squeeze pattern within the specified time span"""
         begin = Fraction(begin)
@@ -729,7 +725,7 @@ class Pattern:
         return reify(by_pat).fmap(lambda by: self._sometimes_by(by, func)).inner_join()
 
     def _sometimes_by(self, by, func):
-        return self.degrade_by(by).overlay(func(self.undegrade_by(by)))
+        return stack(self.degrade_by(by), func(self.undegrade_by(by)))
 
     def sometimes_pre(self, func):
         """
@@ -753,7 +749,7 @@ class Pattern:
         )
 
     def _sometimes_pre_by(self, by, func):
-        return self.degrade_by(by).overlay(func(self).undegrade_by(by))
+        return stack(self.degrade_by(by), func(self).undegrade_by(by))
 
     def __repr__(self):
         events = [str(e) for e in self.first_cycle()]
