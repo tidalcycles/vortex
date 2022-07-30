@@ -152,9 +152,6 @@ class Event:
             and self.part
             and other.part
             and self.part <= other.part
-            and self.value
-            and other.value
-            and self.value <= other.value
         )
 
 
