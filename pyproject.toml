@@ -2,7 +2,8 @@
 name = "vortex"
 version = "0.0.1"
 description = "Python port of TidalCycles"
-authors = ["Tidal Cyclists"]
+authors = ["Tidal Cyclists <vortex@tidalcycles.org>"]
+repository = "https://github.com/tidalcycles/vortex"
 license = "GPL-3.0-or-later"
 
 [tool.poetry.dependencies]
@@ -11,10 +12,19 @@ parsy = "^1.4.0"
 LinkPython = "^0.1.1"
 pyliblo3 = "^0.13.0"
 ipython = "^8.4.0"
-PyQt5 = "^5.15.7"
-QScintilla = "^2.13.3"
+PyQt5 = { version = "^5.15.7", optional = true }
+QScintilla = { version = "^2.13.3", optional = true }
 
 [tool.poetry.dev-dependencies]
+pytest = "^7.1.2"
+pytest-cov = "^3.0.0"
+pytest-reorder = "^0.1.1"
+
+[tool.poetry.scripts]
+vortex = 'vortex.cli:run'
+
+[tool.poetry.extras]
+gui = ["PyQt5", "QScintilla"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
