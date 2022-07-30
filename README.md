@@ -117,6 +117,14 @@ pytest -k "regex"
 You can run `ptw` to start watching file for changes and run tests
 automatically, useful for developing in a test-driven way.
 
+### Publishing
+
+You can bump the package version with `poetry version {version}` where
+`{version}` is one of these: patch, minor, major, prepatch, preminor, premajor,
+prerelease.  This follows the [semantic versioning](https://semver.org/) scheme.
+
+To publish the package, run `poetry publish`.
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at the
