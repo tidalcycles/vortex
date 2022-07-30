@@ -7,7 +7,14 @@ import logging
 import sys
 
 from vortex import __version__
-from vortex.gui import start_gui
+
+no_gui = False
+try:
+    from vortex.gui import start_gui
+except ModuleNotFoundError:
+    no_gui = True
+    pass
+
 from vortex.repl import start_repl
 
 _logger = logging.getLogger(__name__)
@@ -88,6 +95,12 @@ def main(args):
     setup_logging(args.loglevel)
 
     if args.gui:
+        if no_gui:
+            print(
+                "GUI extra package is not installed, please refer to install instructions",
+                file=sys.stderr,
+            )
+            sys.exit(1)
         start_gui()
     else:
         start_repl()
