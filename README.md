@@ -114,6 +114,9 @@ pytest -k "regex"
 
 `pytest` will look for any test that match regex in their function name.
 
+You can run `ptw` to start watching file for changes and run tests
+automatically, useful for developing in a test-driven way.
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at the
