@@ -455,13 +455,35 @@ class Pattern:
 
     late = _patternify(_late)
 
-    def when(self, binary_pat, func):
-        binary_pat = sequence(binary_pat)
-        true_pat = binary_pat._filter_values(id)
-        false_pat = binary_pat._filter_values(lambda val: not val)
-        with_pat = true_pat.fmap(lambda _: lambda y: y).app_right(func(self))
-        without_pat = false_pat.fmap(lambda _: lambda y: y).app_right(self)
+    def when(self, boolean_pat, func):
+        """
+        Applies function `func` on each event of pattern if `boolean_pat` is true.
+
+        """
+        boolean_pat = sequence(boolean_pat)
+        true_pat = boolean_pat._filter_values(id)
+        false_pat = boolean_pat._filter_values(lambda val: not val)
+        with_pat = true_pat.fmap(lambda _: lambda y: y).app_left(func(self))
+        without_pat = false_pat.fmap(lambda _: lambda y: y).app_left(self)
         return stack(with_pat, without_pat)
+
+    def when_cycle(self, test_func, func):
+        """
+        Applies function `func` to pattern only if `test_func` returns true on
+        each cycle.
+
+        Similar to `when`, but instead of working with a boolean pattern, this
+        evaluates a boolean function with the cycle number and applies
+        (or not) transformation on each cycle.
+
+        """
+
+        def query(span):
+            if test_func(math.floor(span.begin)):
+                return func(self).query(span)
+            return self.query(span)
+
+        return Pattern(query).split_queries()
 
     def off(self, time_pat, func):
         return stack(self, func(self.early(time_pat)))
@@ -750,6 +772,15 @@ class Pattern:
 
     def _sometimes_pre_by(self, by, func):
         return stack(self.degrade_by(by), func(self).undegrade_by(by))
+
+    def somecycles(self, func):
+        return self.somecycles_by(0.5, func)
+
+    def somecycles_by(self, by_pat, func):
+        return reify(by_pat).fmap(lambda by: self._somecycles_by(by, func)).outer_join()
+
+    def _somecycles_by(self, by, func):
+        return self.when_cycle(lambda c: time_to_rand(c) < by, func)
 
     def __repr__(self):
         events = [str(e) for e in self.first_cycle()]

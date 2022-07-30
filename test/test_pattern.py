@@ -398,3 +398,37 @@ def test_sometimes_pre_by():
         Event(TimeSpan(0, 1), TimeSpan(3 / 4, 7 / 8), {"s": "bd"}),
         Event(TimeSpan(0, 1), TimeSpan(7 / 8, 1), {"s": "bd"}),
     ]
+
+
+def test_somecycles():
+    assert s("sd").fast(2).somecycles(lambda p: p << speed(3)).query(
+        TimeSpan(0, 4)
+    ) == [
+        Event(TimeSpan(0 / 1, 1 / 2), TimeSpan(0 / 1, 1 / 2), {"speed": 3, "s": "sd"}),
+        Event(TimeSpan(1 / 2, 1 / 1), TimeSpan(1 / 2, 1 / 1), {"speed": 3, "s": "sd"}),
+        Event(TimeSpan(1 / 1, 3 / 2), TimeSpan(1 / 1, 3 / 2), {"s": "sd"}),
+        Event(TimeSpan(3 / 2, 2 / 1), TimeSpan(3 / 2, 2 / 1), {"s": "sd"}),
+        Event(TimeSpan(2 / 1, 5 / 2), TimeSpan(2 / 1, 5 / 2), {"speed": 3, "s": "sd"}),
+        Event(TimeSpan(5 / 2, 3 / 1), TimeSpan(5 / 2, 3 / 1), {"speed": 3, "s": "sd"}),
+        Event(TimeSpan(3 / 1, 7 / 2), TimeSpan(3 / 1, 7 / 2), {"s": "sd"}),
+        Event(TimeSpan(7 / 2, 4 / 1), TimeSpan(7 / 2, 4 / 1), {"s": "sd"}),
+    ]
+
+
+def test_somecycles_by():
+    assert s("sd").fast(2).somecycles_by(0.03, lambda p: p << speed(3)).query(
+        TimeSpan(0, 6)
+    ) == [
+        Event(TimeSpan(0, 1 / 2), TimeSpan(0, 1 / 2), {"speed": 3, "s": "sd"}),
+        Event(TimeSpan(1 / 2, 1), TimeSpan(1 / 2, 1), {"speed": 3, "s": "sd"}),
+        Event(TimeSpan(1, 3 / 2), TimeSpan(1, 3 / 2), {"s": "sd"}),
+        Event(TimeSpan(3 / 2, 2 / 1), TimeSpan(3 / 2, 2 / 1), {"s": "sd"}),
+        Event(TimeSpan(2 / 1, 5 / 2), TimeSpan(2 / 1, 5 / 2), {"s": "sd"}),
+        Event(TimeSpan(5 / 2, 3 / 1), TimeSpan(5 / 2, 3 / 1), {"s": "sd"}),
+        Event(TimeSpan(3 / 1, 7 / 2), TimeSpan(3 / 1, 7 / 2), {"s": "sd"}),
+        Event(TimeSpan(7 / 2, 4 / 1), TimeSpan(7 / 2, 4 / 1), {"s": "sd"}),
+        Event(TimeSpan(4 / 1, 9 / 2), TimeSpan(4 / 1, 9 / 2), {"s": "sd"}),
+        Event(TimeSpan(9 / 2, 5 / 1), TimeSpan(9 / 2, 5 / 1), {"s": "sd"}),
+        Event(TimeSpan(5 / 1, 11 / 2), TimeSpan(5 / 1, 11 / 2), {"s": "sd"}),
+        Event(TimeSpan(11 / 2, 6 / 1), TimeSpan(11 / 2, 6 / 1), {"s": "sd"}),
+    ]
