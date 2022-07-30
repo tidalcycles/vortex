@@ -446,7 +446,7 @@ name = "pyqt5"
 version = "5.15.7"
 description = "Python bindings for the Qt cross platform application toolkit"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7"
 
 [package.dependencies]
@@ -458,7 +458,7 @@ name = "pyqt5-qt5"
 version = "5.15.2"
 description = "The subset of a Qt installation needed by PyQt5."
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [[package]]
@@ -466,7 +466,7 @@ name = "pyqt5-sip"
 version = "12.11.0"
 description = "The sip module support for PyQt5"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7"
 
 [[package]]
@@ -532,7 +532,7 @@ name = "qscintilla"
 version = "2.13.3"
 description = "Python bindings for the QScintilla programmers editor widget"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7"
 
 [package.dependencies]
@@ -623,13 +623,10 @@ category = "main"
 optional = false
 python-versions = "*"
 
-[extras]
-gui = ["PyQt5", "QScintilla"]
-
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11"
-content-hash = "21dd432839bea6114b51b2708907af7c0415f8968672376492c2922c53678755"
+content-hash = "caaf5a9ee8a5ee461c3fbef39ec49f96312ab905ad6a2a8b40b4af353594948b"
 
 [metadata.files]
 appnope = [
