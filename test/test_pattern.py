@@ -4,10 +4,9 @@ from itertools import groupby
 from vortex.control import s, speed
 from vortex.pattern import (
     Event,
-    Fraction,
     TimeSpan,
     choose,
-    chooseby,
+    choose_by,
     fast,
     fastcat,
     irand,
@@ -20,7 +19,7 @@ from vortex.pattern import (
     stack,
     timecat,
     wchoose,
-    wchooseby,
+    wchoose_by,
 )
 
 
@@ -255,7 +254,7 @@ def test_choose():
 
 
 def test_chooseby():
-    assert chooseby(perlin(), *range(8)).segment(4).first_cycle() == [
+    assert choose_by(perlin(), *range(8)).segment(4).first_cycle() == [
         Event(TimeSpan(0, 1 / 4), TimeSpan(0, 1 / 4), 0),
         Event(TimeSpan(1 / 4, 1 / 2), TimeSpan(1 / 4, 1 / 2), 1),
         Event(TimeSpan(1 / 2, 3 / 4), TimeSpan(1 / 2, 3 / 4), 3),
@@ -282,7 +281,7 @@ def test_wchoose():
 
 
 def test_wchooseby():
-    assert wchooseby(
+    assert wchoose_by(
         rand().late(100), ("a", 1), ("e", 0.5), ("g", 2), ("c", 1)
     ).segment(4).first_cycle() == [
         Event(TimeSpan(0, 1 / 4), TimeSpan(0, 1 / 4), "a"),

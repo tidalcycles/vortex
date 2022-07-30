@@ -1080,7 +1080,7 @@ def timecat(*time_pat_tuples):
     )
 
 
-def chooseby(pat, *vals):
+def choose_by(pat, *vals):
     """
     Randomly picks an element from the given list
 
@@ -1091,10 +1091,10 @@ def chooseby(pat, *vals):
 
 def choose(*vals):
     """Randomly picks an element from the given list"""
-    return chooseby(rand(), *vals)
+    return choose_by(rand(), *vals)
 
 
-def wchooseby(pat, *pairs):
+def wchoose_by(pat, *pairs):
     """
     Like @choose@, but works on an a list of tuples of values and weights
 
@@ -1118,4 +1118,4 @@ def wchooseby(pat, *pairs):
 
 def wchoose(*vals):
     """Like @choose@, but works on an a list of tuples of values and weights"""
-    return wchooseby(rand(), *vals)
+    return wchoose_by(rand(), *vals)
