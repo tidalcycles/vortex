@@ -30,9 +30,9 @@ your file system.
 
 Vortex depends on:
 
-* Python >= 3.8 or < 3.11
+* Python 3.8, 3.9 or 3.10
 * liblo
-* qt5
+* Qt 5
 
 #### Linux
 
