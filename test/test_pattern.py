@@ -1,14 +1,14 @@
 import math
 from itertools import groupby
 
-from vortex.control import s
-
+from vortex.control import s, speed
 from vortex.pattern import (
     Event,
     Fraction,
     TimeSpan,
     choose,
     chooseby,
+    fast,
     fastcat,
     irand,
     perlin,
@@ -121,9 +121,7 @@ def test_fastgap():
 
 
 def test_compress():
-    assert fastcat(pure("bd"), pure("sd")).compress(
-        Fraction(1, 4), Fraction(3, 4)
-    ).first_cycle() == [
+    assert fastcat(pure("bd"), pure("sd")).compress(1 / 4, 3 / 4).first_cycle() == [
         Event(TimeSpan(1 / 4, 1 / 2), TimeSpan(1 / 4, 1 / 2), "bd"),
         Event(TimeSpan(1 / 2, 3 / 4), TimeSpan(1 / 2, 3 / 4), "sd"),
     ]
@@ -161,43 +159,43 @@ def test_timecat():
 def test_striate():
     assert fastcat(s("bd"), s("sd")).striate(4).first_cycle() == [
         Event(
-            TimeSpan(Fraction(0, 1), Fraction(1, 1)),
-            TimeSpan(Fraction(0, 1), Fraction(1, 8)),
+            TimeSpan(0, 1),
+            TimeSpan(0, 1 / 8),
             {"s": "bd", "begin": 0.0, "end": 0.25},
         ),
         Event(
-            TimeSpan(Fraction(0, 1), Fraction(1, 1)),
-            TimeSpan(Fraction(1, 8), Fraction(1, 4)),
+            TimeSpan(0, 1),
+            TimeSpan(1 / 8, 1 / 4),
             {"s": "sd", "begin": 0.0, "end": 0.25},
         ),
         Event(
-            TimeSpan(Fraction(0, 1), Fraction(1, 1)),
-            TimeSpan(Fraction(1, 4), Fraction(3, 8)),
+            TimeSpan(0, 1),
+            TimeSpan(1 / 4, 3 / 8),
             {"s": "bd", "begin": 0.25, "end": 0.5},
         ),
         Event(
-            TimeSpan(Fraction(0, 1), Fraction(1, 1)),
-            TimeSpan(Fraction(3, 8), Fraction(1, 2)),
+            TimeSpan(0, 1),
+            TimeSpan(3 / 8, 1 / 2),
             {"s": "sd", "begin": 0.25, "end": 0.5},
         ),
         Event(
-            TimeSpan(Fraction(0, 1), Fraction(1, 1)),
-            TimeSpan(Fraction(1, 2), Fraction(5, 8)),
+            TimeSpan(0, 1),
+            TimeSpan(1 / 2, 5 / 8),
             {"s": "bd", "begin": 0.5, "end": 0.75},
         ),
         Event(
-            TimeSpan(Fraction(0, 1), Fraction(1, 1)),
-            TimeSpan(Fraction(5, 8), Fraction(3, 4)),
+            TimeSpan(0, 1),
+            TimeSpan(5 / 8, 3 / 4),
             {"s": "sd", "begin": 0.5, "end": 0.75},
         ),
         Event(
-            TimeSpan(Fraction(0, 1), Fraction(1, 1)),
-            TimeSpan(Fraction(3, 4), Fraction(7, 8)),
+            TimeSpan(0, 1),
+            TimeSpan(3 / 4, 7 / 8),
             {"s": "bd", "begin": 0.75, "end": 1.0},
         ),
         Event(
-            TimeSpan(Fraction(0, 1), Fraction(1, 1)),
-            TimeSpan(Fraction(7, 8), Fraction(1, 1)),
+            TimeSpan(0, 1),
+            TimeSpan(7 / 8, 1),
             {"s": "sd", "begin": 0.75, "end": 1.0},
         ),
     ]
@@ -348,4 +346,62 @@ def test_undegrade_by_using():
         Event(TimeSpan(5 / 8, 3 / 4), TimeSpan(5 / 8, 3 / 4), "sd"),
         Event(TimeSpan(3 / 4, 7 / 8), TimeSpan(3 / 4, 7 / 8), "sd"),
         Event(TimeSpan(7 / 8, 1), TimeSpan(7 / 8, 1), "sd"),
+    ]
+
+
+def test_sometimes():
+    assert s("bd").fast(8).sometimes(lambda p: p << speed(2)).first_cycle() == [
+        Event(TimeSpan(0, 1), TimeSpan(0, 1 / 8), {"speed": 2, "s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(1 / 8, 1 / 4), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(1 / 4, 3 / 8), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(3 / 8, 1 / 2), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(1 / 2, 5 / 8), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(5 / 8, 3 / 4), {"speed": 2, "s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(3 / 4, 7 / 8), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(7 / 8, 1), {"s": "bd"}),
+    ]
+
+
+def test_sometimes_by():
+    assert s("bd").fast(8).sometimes_by(
+        0.75, lambda p: p << speed(3)
+    ).first_cycle() == [
+        Event(TimeSpan(0, 1), TimeSpan(0, 1 / 8), {"speed": 3, "s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(1 / 8, 1 / 4), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(1 / 4, 3 / 8), {"speed": 3, "s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(3 / 8, 1 / 2), {"speed": 3, "s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(1 / 2, 5 / 8), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(5 / 8, 3 / 4), {"speed": 3, "s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(3 / 4, 7 / 8), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(7 / 8, 1), {"speed": 3, "s": "bd"}),
+    ]
+
+
+def test_sometimes_pre():
+    assert s("bd").fast(8).sometimes_pre(fast(2)).first_cycle() == [
+        Event(TimeSpan(0, 1), TimeSpan(1 / 16, 1 / 8), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(1 / 8, 1 / 4), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(1 / 4, 5 / 16), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(1 / 4, 3 / 8), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(5 / 16, 3 / 8), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(3 / 8, 1 / 2), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(7 / 16, 1 / 2), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(1 / 2, 5 / 8), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(3 / 4, 7 / 8), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(13 / 16, 7 / 8), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(7 / 8, 15 / 16), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(7 / 8, 1), {"s": "bd"}),
+    ]
+
+
+def test_sometimes_pre_by():
+    assert s("bd").fast(8).sometimes_pre_by(0.25, fast(2)).first_cycle() == [
+        Event(TimeSpan(0, 1), TimeSpan(1 / 8, 1 / 4), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(1 / 4, 3 / 8), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(5 / 16, 3 / 8), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(3 / 8, 1 / 2), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(1 / 2, 5 / 8), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(5 / 8, 3 / 4), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(3 / 4, 7 / 8), {"s": "bd"}),
+        Event(TimeSpan(0, 1), TimeSpan(7 / 8, 1), {"s": "bd"}),
     ]

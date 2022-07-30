@@ -690,6 +690,56 @@ class Pattern:
             prand._filter_values(lambda v: v <= val)
         )
 
+    def sometimes(self, func):
+        """
+        Applies a function to pattern, around 50% of the time, at
+        random.
+
+        >>> s("bd").fast(8).sometimes(lambda p: p << speed(2))
+
+        """
+        return self.sometimes_by(0.5, func)
+
+    def sometimes_by(self, by_pat, func):
+        """
+        Applies a function to pattern sometimes based on specified `by`
+        percentage, at random.
+
+        `by` is a number between 0 and 1, representing 0% to 100% chance of
+        applying function.
+
+        >>> s("bd").fast(8).sometimes_by(0.75, lambda p: p << speed(3))
+
+        """
+        return reify(by_pat).fmap(lambda by: self._sometimes_by(by, func)).inner_join()
+
+    def _sometimes_by(self, by, func):
+        return self.degrade(by).overlay(func(self.undegrade(by)))
+
+    def sometimes_pre(self, func):
+        """
+        Similar to `sometimes` but applies a function to the pattern *before*
+        filtering events 50% of the time, at random.
+
+        """
+        return self.sometimes_pre_by(0.5, func)
+
+    def sometimes_pre_by(self, by_pat, func):
+        """
+        Similar to `sometimes_by` but applies a function to the pattern *before*
+        filtering events sometimes, based on `by` percentage, at random.
+
+        `by` is a number between 0 and 1, representing 0% to 100% chance of
+        applying function.
+
+        """
+        return (
+            reify(by_pat).fmap(lambda by: self._sometimes_pre_by(by, func)).inner_join()
+        )
+
+    def _sometimes_pre_by(self, by, func):
+        return self.degrade(by).overlay(func(self).undegrade(by))
+
     def __repr__(self):
         events = [str(e) for e in self.first_cycle()]
         events_str = ",\n ".join(events).replace("\n", "\n ")
