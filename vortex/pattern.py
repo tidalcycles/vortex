@@ -399,7 +399,7 @@ class Pattern:
         return self.bind(id)
 
     def inner_bind(self, func):
-        return self._bind_whole(lambda a, _: a, func)
+        return self._bind_whole(lambda _, b: b, func)
 
     def inner_join(self):
         """Flattens a pattern of patterns into a pattern, where wholes are
@@ -407,7 +407,7 @@ class Pattern:
         return self.inner_bind(id)
 
     def outer_bind(self, func):
-        return self._bind_whole(lambda _, b: b, func)
+        return self._bind_whole(lambda a, _: a, func)
 
     def outer_join(self):
         """Flattens a pattern of patterns into a pattern, where wholes are
@@ -417,7 +417,7 @@ class Pattern:
     def _patternify(method):
         def patterned(self, *args):
             pat_arg = sequence(*args)
-            return pat_arg.fmap(lambda arg: method(self, arg)).outer_join()
+            return pat_arg.fmap(lambda arg: method(self, arg)).inner_join()
 
         return patterned
 
@@ -772,7 +772,7 @@ class Pattern:
         return self.somecycles_by(0.5, func)
 
     def somecycles_by(self, by_pat, func):
-        return reify(by_pat).fmap(lambda by: self._somecycles_by(by, func)).outer_join()
+        return reify(by_pat).fmap(lambda by: self._somecycles_by(by, func)).inner_join()
 
     def _somecycles_by(self, by, func):
         return self.when_cycle(lambda c: time_to_rand(c) < by, func)
@@ -820,7 +820,7 @@ class Pattern:
         >>> s("sd").euclid(5, 8, fastcat(0, 2, 4))
 
         """
-        return self.struct(_tparams(_euclid, k, n, rot).outer_join())
+        return self.struct(_tparams(_euclid, k, n, rot).inner_join())
 
     def __repr__(self):
         events = [str(e) for e in self.first_cycle()]
