@@ -160,22 +160,6 @@ class Event:
             and self.part <= other.part
         )
 
-    def __eq__(self, other) -> bool:
-        if isinstance(other, Event):
-            return (
-                self.whole == other.whole
-                and self.part == other.part
-                and self.value == other.value
-            )
-        return False
-
-    def __le__(self, other) -> bool:
-        return (
-            self.whole <= other.whole
-            and self.part <= other.part
-            and self.value <= other.value
-        )
-
 
 class Pattern:
     """
