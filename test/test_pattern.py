@@ -432,3 +432,33 @@ def test_somecycles_by():
         Event(TimeSpan(5 / 1, 11 / 2), TimeSpan(5 / 1, 11 / 2), {"s": "sd"}),
         Event(TimeSpan(11 / 2, 6 / 1), TimeSpan(11 / 2, 6 / 1), {"s": "sd"}),
     ]
+
+
+def test_struct():
+    assert pure("bd").struct(fastcat(1, 1, 0, 1, 0, 0, 1, 0)).first_cycle() == [
+        Event(TimeSpan(0, 1 / 8), TimeSpan(0, 1 / 8), "bd"),
+        Event(TimeSpan(1 / 8, 1 / 4), TimeSpan(1 / 8, 1 / 4), "bd"),
+        Event(TimeSpan(3 / 8, 1 / 2), TimeSpan(3 / 8, 1 / 2), "bd"),
+        Event(TimeSpan(3 / 4, 7 / 8), TimeSpan(3 / 4, 7 / 8), "bd"),
+    ]
+
+
+def test_mask():
+    assert s(fastcat("bd", "sd", "hh", "cp")).mask(
+        fastcat(1, 1, 0, 1, 0, 0, 1, 0)
+    ).first_cycle() == [
+        Event(TimeSpan(0, 1 / 4), TimeSpan(0, 1 / 8), {"s": "bd"}),
+        Event(TimeSpan(0, 1 / 4), TimeSpan(1 / 8, 1 / 4), {"s": "bd"}),
+        Event(TimeSpan(1 / 4, 1 / 2), TimeSpan(3 / 8, 1 / 2), {"s": "sd"}),
+        Event(TimeSpan(3 / 4, 1), TimeSpan(3 / 4, 7 / 8), {"s": "cp"}),
+    ]
+
+
+def test_euclid():
+    assert s("sd").euclid(fastcat(3, 5), 8, fastcat(0, 1)).first_cycle() == [
+        Event(TimeSpan(0, 1 / 8), TimeSpan(0, 1 / 8), {"s": "sd"}),
+        Event(TimeSpan(3 / 8, 1 / 2), TimeSpan(3 / 8, 1 / 2), {"s": "sd"}),
+        Event(TimeSpan(1 / 2, 5 / 8), TimeSpan(1 / 2, 5 / 8), {"s": "sd"}),
+        Event(TimeSpan(5 / 8, 3 / 4), TimeSpan(5 / 8, 3 / 4), {"s": "sd"}),
+        Event(TimeSpan(7 / 8, 1), TimeSpan(7 / 8, 1), {"s": "sd"}),
+    ]
