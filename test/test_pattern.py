@@ -372,7 +372,7 @@ def test_sometimes_by():
 
 def test_sometimes_pre():
     assert s("bd").fast(8).sometimes_pre(fast(2)).first_cycle() == [
-        Event(TimeSpan(16, 1 / 8), TimeSpan(16, 1 / 8), {"s": "bd"}),
+        Event(TimeSpan(1 / 16, 1 / 8), TimeSpan(1 / 16, 1 / 8), {"s": "bd"}),
         Event(TimeSpan(1 / 8, 1 / 4), TimeSpan(1 / 8, 1 / 4), {"s": "bd"}),
         Event(TimeSpan(1 / 4, 5 / 16), TimeSpan(1 / 4, 5 / 16), {"s": "bd"}),
         Event(TimeSpan(1 / 4, 3 / 8), TimeSpan(1 / 4, 3 / 8), {"s": "bd"}),
