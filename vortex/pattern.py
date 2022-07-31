@@ -116,6 +116,13 @@ class Event:
         self.part = part
         self.value = value
 
+    def whole_or_part(self):
+        """Returns the 'whole' timespan if it's present, othewise the 'part'"""
+        if self.whole:
+            return self.whole
+        else:
+            return self.part
+
     def with_span(self, func):
         """Returns a new event with the function f applies to the event timespan."""
         whole = None if not self.whole else func(self.whole)
@@ -288,12 +295,14 @@ class Pattern:
         def query(span):
             events = []
             for event_func in pat_func.query(span):
-                event_vals = pat_val.query(event_func.part)
+                event_vals = pat_val.query(event_func.whole_or_part());
+
                 for event_val in event_vals:
                     new_whole = event_func.whole
-                    new_part = event_func.part.intersection_e(event_val.part)
-                    new_value = event_func.value(event_val.value)
-                    events.append(Event(new_whole, new_part, new_value))
+                    new_part = event_func.part.intersection(event_val.part)
+                    if new_part:
+                        new_value = event_func.value(event_val.value)
+                        events.append(Event(new_whole, new_part, new_value))
             return events
 
         return Pattern(query)
@@ -304,12 +313,13 @@ class Pattern:
         def query(span):
             events = []
             for event_val in pat_val.query(span):
-                event_funcs = pat_func.query(event_val.part)
+                event_funcs = pat_func.query(event_val.whole_or_part());
                 for event_func in event_funcs:
                     new_whole = event_val.whole
-                    new_part = event_func.part.intersection_e(event_val.part)
-                    new_value = event_func.value(event_val.value)
-                    events.append(Event(new_whole, new_part, new_value))
+                    new_part = event_func.part.intersection(event_val.part)
+                    if new_part:
+                        new_value = event_func.value(event_val.value)
+                        events.append(Event(new_whole, new_part, new_value))
             return events
 
         return Pattern(query)
