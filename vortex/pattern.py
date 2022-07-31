@@ -1,11 +1,12 @@
 import math
 import sys
 from fractions import Fraction
-from functools import partial, total_ordering
+from functools import partial, reduce, total_ordering
 from itertools import accumulate
 from pprint import pformat
 from typing import Optional
 
+from .euclid import bjorklund
 from .utils import *
 
 """Returns the start of the cycle."""
@@ -386,7 +387,7 @@ class Pattern:
 
     def bind(self, func):
         def whole_func(a, b):
-            if a == None or b == None:
+            if a is None or b is None:
                 return None
             return a.intersection_e(b)
 
@@ -398,10 +399,7 @@ class Pattern:
         return self.bind(id)
 
     def inner_bind(self, func):
-        def whole_func(a, b):
-            return a
-
-        return self._bind_whole(whole_func, func)
+        return self._bind_whole(lambda a, _: a, func)
 
     def inner_join(self):
         """Flattens a pattern of patterns into a pattern, where wholes are
@@ -409,10 +407,7 @@ class Pattern:
         return self.inner_bind(id)
 
     def outer_bind(self, func):
-        def whole_func(a, b):
-            return b
-
-        return self._bind_whole(whole_func, func)
+        return self._bind_whole(lambda _, b: b, func)
 
     def outer_join(self):
         """Flattens a pattern of patterns into a pattern, where wholes are
@@ -782,6 +777,51 @@ class Pattern:
     def _somecycles_by(self, by, func):
         return self.when_cycle(lambda c: time_to_rand(c) < by, func)
 
+    def struct(self, *binary_pats):
+        """
+        Restructure the pattern according to a binary pattern (false values are
+        dropped).
+
+        """
+        return (
+            sequence(binary_pats)
+            .fmap(lambda b: lambda val: val if b else None)
+            .app_left(self)
+            ._remove_none()
+        )
+
+    def mask(self, *binary_pats):
+        """
+        Only let through parts of pattern corresponding to true values in the
+        given binary pattern.
+
+        """
+        return (
+            sequence(binary_pats)
+            .fmap(lambda b: lambda val: val if b else None)
+            .app_right(self)
+            ._remove_none()
+        )
+
+    def _remove_none(self):
+        return self._filter_values(lambda v: v)
+
+    def euclid(self, k, n, rot=0):
+        """
+        Change the structure of the pattern to form an euclidean rhythm
+
+        Euclidian rhythms are rhythms obtained using the greatest common divisor
+        of two numbers. They were described in 2004 by Godfried Toussaint, a
+        canadian computer scientist. Euclidian rhythms are really useful for
+        computer/algorithmic music because they can accurately describe a large
+        number of rhythms used in the most important music world traditions.
+
+        >>> s("bd").euclid(3, 8)
+        >>> s("sd").euclid(5, 8, fastcat(0, 2, 4))
+
+        """
+        return self.struct(_tparams(_euclid, k, n, rot).outer_join())
+
     def __repr__(self):
         events = [str(e) for e in self.first_cycle()]
         events_str = ",\n ".join(events).replace("\n", "\n ")
@@ -901,6 +941,17 @@ def reify(x):
     if not isinstance(x, Pattern):
         return pure(x)
     return x
+
+
+def _tparams(func, *params):
+    if not params:
+        return silence()
+    curried_func = curry(func)
+    return reduce(
+        lambda a, b: a.app_both(reify(b)),
+        params[1:],
+        reify(params[0]).fmap(curried_func),
+    )
 
 
 # Randomness
@@ -1146,3 +1197,11 @@ def wchoose_by(pat, *pairs):
 def wchoose(*vals):
     """Like @choose@, but works on an a list of tuples of values and weights"""
     return wchoose_by(rand(), *vals)
+
+
+def _euclid(k: int, n: int, rotation: float = 0):
+    """Generate an euclidean sequence, with optional rotation"""
+    b = bjorklund(k, n)
+    if rotation:
+        b = rotate_left(b, rotation)
+    return sequence(b)

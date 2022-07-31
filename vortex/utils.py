@@ -1,6 +1,6 @@
 import operator
 from fractions import Fraction
-from functools import partial
+from functools import partial, reduce, wraps
 
 
 def concat(lst) -> list:
@@ -20,6 +20,11 @@ def id(x):
 
 def merge_dicts(a, b, op=operator.add):
     return dict(a.items() + b.items() + [(k, op(a[k], b[k])) for k in set(b) & set(a)])
+
+
+def rotate_left(lst, n):
+    """Rotate an array `n` elements to the left"""
+    return lst[n:] + lst[:n]
 
 
 def partial_function(f):
@@ -68,3 +73,22 @@ def show_fraction(frac):
     else:
         result = "(%d/%d)" % (frac.numerator, frac.denominator)
     return result
+
+
+def curry(f):
+    @wraps(f)
+    def _(arg):
+        try:
+            return f(arg)
+        except TypeError:
+            return curry(wraps(f)(partial(f, arg)))
+
+    return _
+
+
+def uncurry(f):
+    @wraps(f)
+    def _(*args):
+        return reduce(lambda x, y: x(y), args, f)
+
+    return _
