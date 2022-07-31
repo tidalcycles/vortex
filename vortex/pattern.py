@@ -1199,7 +1199,7 @@ def wchoose(*vals):
     return wchoose_by(rand(), *vals)
 
 
-def _euclid(k: int, n: int, rotation: float = 0):
+def _euclid(k: int, n: int, rotation: float):
     """Generate an euclidean sequence, with optional rotation"""
     b = bjorklund(k, n)
     if rotation:
