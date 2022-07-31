@@ -22,6 +22,7 @@ pytest-reorder = "^0.1.1"
 pre-commit = "^2.20.0"
 black = "22.6.0"
 isort = "5.10.1"
+pytest-watch = "^4.2.0"
 
 [tool.poetry.scripts]
 vortex = 'vortex.cli:run'
