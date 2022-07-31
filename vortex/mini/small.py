@@ -1,5 +1,6 @@
-from parsimonious import NodeVisitor, Grammar
-from vortex.pattern import pure, fastcat
+from parsimonious import Grammar, NodeVisitor
+
+from vortex.pattern import fastcat, pure
 
 grammar = Grammar(
     r"""

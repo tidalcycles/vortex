@@ -1,27 +1,20 @@
 import contextlib
 import importlib
-import sys
 
-if sys.version_info[:2] >= (3, 8):
-    # TODO: Import directly (no need for conditional) when `python_requires = >= 3.8`
-    from importlib.metadata import PackageNotFoundError, version  # pragma: no cover
-else:
-    from importlib_metadata import PackageNotFoundError, version  # pragma: no cover
+import pkg_resources
 
 try:
     # Change here if project is renamed and does not equal the package name
-    dist_name = __name__
-    __version__ = version(dist_name)
-except PackageNotFoundError:  # pragma: no cover
+    package_name = __name__
+    __version__ = pkg_resources.get_distribution(package_name).version
+except pkg_resources.DistributionNotFound:  # pragma: no cover
     __version__ = "unknown"
-finally:
-    del version, PackageNotFoundError
 
 
-from .utils import *
-from .pattern import *
-from .vortex import *
 from .control import *
+from .pattern import *
+from .utils import *
+from .vortex import *
 
 
 @contextlib.contextmanager

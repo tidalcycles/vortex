@@ -1,6 +1,7 @@
+import pytest
+
 from vortex.mini.small import small
 from vortex.pattern import pure
-import pytest
 
 
 @pytest.mark.parametrize(

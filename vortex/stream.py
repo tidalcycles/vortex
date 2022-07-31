@@ -1,13 +1,14 @@
+import contextlib
+import importlib
 import logging
 import math
 import threading
-import importlib
 import time
-import contextlib
 from fractions import Fraction
 
 import liblo
 import link
+
 from vortex import *
 
 _logger = logging.getLogger(__name__)

@@ -1,4 +1,5 @@
 import pytest
+
 from vortex import fastcat, pure
 from vortex.mini import grammar, mini
 

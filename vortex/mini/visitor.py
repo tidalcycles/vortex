@@ -1,5 +1,6 @@
 from parsimonious import NodeVisitor
-from vortex.pattern import pure, fastcat
+
+from vortex.pattern import fastcat, pure
 
 
 class TidalVisitor(NodeVisitor):

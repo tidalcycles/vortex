@@ -1,0 +1,34 @@
+[tool.poetry]
+name = "vortex"
+version = "0.1.0-alpha.0"
+description = "Python port of TidalCycles"
+authors = ["Tidal Cyclists <vortex@tidalcycles.org>"]
+repository = "https://github.com/tidalcycles/vortex"
+license = "GPL-3.0-or-later"
+
+[tool.poetry.dependencies]
+python = ">=3.8,<3.11"
+parsy = "^1.4.0"
+LinkPython = "^0.1.1"
+pyliblo3 = "^0.13.0"
+ipython = "^8.4.0"
+PyQt5 = "^5.15.7"
+QScintilla = "^2.13.3"
+parsimonious = "^0.9.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.1.2"
+pytest-cov = "^3.0.0"
+pytest-reorder = "^0.1.1"
+pre-commit = "^2.20.0"
+black = "22.6.0"
+isort = "5.10.1"
+pytest-watch = "^4.2.0"
+pytest-benchmark = "^3.4.1"
+
+[tool.poetry.scripts]
+vortex = 'vortex.cli:run'
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
