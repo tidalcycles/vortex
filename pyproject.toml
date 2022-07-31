@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "vortex"
-version = "0.0.1"
+version = "0.1.0-alpha.0"
 description = "Python port of TidalCycles"
 authors = ["Tidal Cyclists <vortex@tidalcycles.org>"]
 repository = "https://github.com/tidalcycles/vortex"
