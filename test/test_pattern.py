@@ -462,3 +462,8 @@ def test_euclid():
         Event(TimeSpan(5 / 8, 3 / 4), TimeSpan(5 / 8, 3 / 4), {"s": "sd"}),
         Event(TimeSpan(7 / 8, 1), TimeSpan(7 / 8, 1), {"s": "sd"}),
     ]
+
+def test_app_left():
+    assert saw().segment(1).query(TimeSpan(0,0.25)) == [
+        Event(TimeSpan(0, 1), TimeSpan(0, 1/4), 0.5)
+    ]
