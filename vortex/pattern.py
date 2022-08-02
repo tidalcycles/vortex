@@ -1169,7 +1169,7 @@ def timecat(*time_pat_tuples):
     arranged = []
     accum = Fraction(0)
     for time, pat in time_pat_tuples:
-        arranged.append((accum, accum + Fraction(time), pat))
+        arranged.append((accum, accum + Fraction(time), reify(pat)))
         accum += time
     return stack(
         *[
