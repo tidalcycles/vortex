@@ -4,14 +4,28 @@ from parsimonious import Grammar, NodeVisitor
 from parsimonious.nodes import Node
 
 from vortex.control import n, s
-from vortex.pattern import degrade, fast, fastcat, id, pure, reify, silence, slow
+from vortex.pattern import (
+    degrade,
+    fast,
+    fastcat,
+    id,
+    pure,
+    reify,
+    silence,
+    slow,
+    timecat,
+)
 
 grammar = Grammar(
     r"""
-    start = ws? term ws?
+    start = ws? sequence ws?
+
+    sequence = seq_term (ws? seq_term)*
+    seq_term = term weight?
 
     # Terms
-    term = (number / rest / word_with_index) weight? modifiers
+    term = term_value modifiers
+    term_value = number / word_with_index / rest
     word_with_index = word index?
     weight = '@' number
     index = ':' number
@@ -34,7 +48,7 @@ grammar = Grammar(
 
     # Misc
     minus = '-'
-    ws = ~"\s*"
+    ws = ~"\s+"
     """
 )
 
@@ -44,16 +58,29 @@ class SmallVisitor(NodeVisitor):
         _, element, _ = children
         return element
 
+    def visit_sequence(self, _node, children):
+        seq_term, other_seq_terms = children
+        if isinstance(other_seq_terms, Node):
+            return reify(seq_term[1])
+        other_seq_terms = [t for _, t in other_seq_terms]
+        return timecat(seq_term, *other_seq_terms)
+
+    def visit_seq_term(self, _node, children):
+        term, weight = children
+        if isinstance(weight, Node):
+            return (1, term)
+        return (weight[0], term)
+
     ##
     # Terms
     #
 
     def visit_term(self, _node, children):
-        term, weight, modifiers = children
-        pat = modifiers(reify(term))
-        if isinstance(weight, Node):
-            return pat
-        return {"type": "term", "value": pat, "weight": weight}
+        value, modifiers = children
+        return modifiers(reify(value))
+
+    def visit_term_value(self, _node, children):
+        return children[0]
 
     def visit_rest(self, _node, _children):
         return silence()
@@ -81,6 +108,9 @@ class SmallVisitor(NodeVisitor):
             return lambda pat: reduce(lambda p, func: func(p), children, pat)
         return id
 
+    def visit_modifier(self, _node, children):
+        return children[0]
+
     def visit_fast(self, _node, children):
         _, number = children
         return fast(number)
@@ -104,6 +134,9 @@ class SmallVisitor(NodeVisitor):
     def visit_word(self, node, _children):
         return node.text
 
+    def visit_number(self, node, children):
+        return children[0]
+
     def visit_real(self, node, _children):
         return float(node.text)
 
@@ -121,15 +154,7 @@ class SmallVisitor(NodeVisitor):
         return
 
     def generic_visit(self, node, children):
-        """The generic visit method."""
-        if children and len(children) > 1:
-            raise ValueError(
-                (
-                    "Using generic_visit but there were multiple visited children. "
-                    "Please define a proper visit method for this node"
-                )
-            )
-        return (children and children[0]) or node
+        return children or node
 
 
 visitor = SmallVisitor()
