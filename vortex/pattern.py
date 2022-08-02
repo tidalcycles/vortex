@@ -300,7 +300,7 @@ class Pattern:
         def query(span):
             events = []
             for event_func in pat_func.query(span):
-                event_vals = pat_val.query(event_func.whole_or_part());
+                event_vals = pat_val.query(event_func.whole_or_part())
 
                 for event_val in event_vals:
                     new_whole = event_func.whole
@@ -318,7 +318,7 @@ class Pattern:
         def query(span):
             events = []
             for event_val in pat_val.query(span):
-                event_funcs = pat_func.query(event_val.whole_or_part());
+                event_funcs = pat_func.query(event_val.whole_or_part())
                 for event_func in event_funcs:
                     new_whole = event_val.whole
                     new_part = event_func.part.intersection(event_val.part)
@@ -1006,7 +1006,9 @@ def time_to_rand(a):
 
 # Signals
 
-silence = lambda: Pattern(lambda _: [])
+
+def silence():
+    return Pattern(lambda _: [])
 
 
 def signal(func):
@@ -1104,36 +1106,40 @@ def partial_decorator(f):
 
 @partial_decorator
 def fast(arg, pat):
-    return pat.fast(arg)
+    return reify(pat).fast(arg)
 
 
 @partial_decorator
 def slow(arg, pat):
-    return pat.slow(arg)
+    return reify(pat).slow(arg)
 
 
 @partial_decorator
 def early(arg, pat):
-    return pat.early(arg)
+    return reify(pat).early(arg)
 
 
 @partial_decorator
 def late(arg, pat):
-    return pat.late(arg)
+    return reify(pat).late(arg)
 
 
 @partial_decorator
 def jux(arg, pat):
-    return pat.jux(arg)
+    return reify(pat).jux(arg)
 
 
 @partial_decorator
 def union(pat_a, pat_b):
-    return pat_b.union(pat_a)
+    return reify(pat_b).union(pat_a)
 
 
 def rev(pat):
-    return pat.rev()
+    return reify(pat).rev()
+
+
+def degrade(pat):
+    return reify(pat).degrade()
 
 
 ## Combinators
