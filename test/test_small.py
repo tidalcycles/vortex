@@ -1,7 +1,7 @@
 import pytest
 
 from vortex.mini.small import small
-from vortex.pattern import pure
+from vortex.pattern import Pattern, degrade, fast, fastcat, pure, silence, slow, timecat
 
 
 @pytest.mark.parametrize(
@@ -15,12 +15,26 @@ from vortex.pattern import pure
         # words
         ("foo", pure("foo")),
         ("Bar", pure("Bar")),
+        # rest
+        ("~", silence()),
         # modifiers
-        ("bd*2", pure("bd").fast(2)),
-        ("bd/3", pure("bd").slow(3)),
-        # ("hh!", pure("hh")),
-        # ("hh?", )
+        ("bd*2", fast(2, "bd")),
+        ("bd/3", slow(3, "bd")),
+        ("hh!", fastcat("hh", "hh")),
+        ("hh!!", fastcat("hh", "hh", "hh")),
+        ("hh?", degrade("hh")),
+        ("hh??", degrade(degrade("hh"))),
+        (
+            "hh!??!",
+            fastcat(
+                degrade(degrade(fastcat("hh", "hh"))),
+                degrade(degrade(fastcat("hh", "hh"))),
+            ),
+        ),
+        pytest.param("hh@2", timecat((2, "hh")), marks=pytest.mark.xfail),
     ],
 )
 def test_eval(test_input, expected):
-    assert small(test_input).first_cycle() == expected.first_cycle()
+    pat = small(test_input)
+    assert isinstance(pat, Pattern)
+    assert pat.first_cycle() == expected.first_cycle()
