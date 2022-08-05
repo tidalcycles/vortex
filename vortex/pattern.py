@@ -96,11 +96,6 @@ class TimeSpan(object):
     def __le__(self, other) -> bool:
         return self.begin <= other.begin and self.end <= other.end
 
-    def __eq__(self, other) -> bool:
-        if isinstance(other, TimeSpan):
-            return self.begin == other.begin and self.end == other.end
-        return False
-
 
 @total_ordering
 class Event:
