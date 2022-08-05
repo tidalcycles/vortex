@@ -945,7 +945,7 @@ def polyrhythm(*xs):
     if len(seqs) == 0:
         return silence()
 
-    return stack(seqs)
+    return stack(*seqs)
 
 
 # alias
