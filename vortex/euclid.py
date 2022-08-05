@@ -1,6 +1,6 @@
 from typing import List
 
-from .utils import concat
+from .utils import flatten
 
 
 def bjorklund(k: int, n: int, safe=True) -> List[int]:
@@ -22,7 +22,7 @@ def bjorklund(k: int, n: int, safe=True) -> List[int]:
 
     bins = [[1] for _ in range(k)]
     if n == k:
-        return concat(bins)
+        return flatten(bins)
     remainders = [[0] for _ in range(n - k)]
 
     while len(remainders) > 1:
@@ -38,4 +38,4 @@ def bjorklund(k: int, n: int, safe=True) -> List[int]:
             bins = bins[: -len(new_remainders)]
             remainders = new_remainders
 
-    return concat(bins + remainders)
+    return flatten(bins + remainders)

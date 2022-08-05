@@ -183,7 +183,7 @@ class Pattern:
         a cycle."""
 
         def query(span) -> list:
-            return concat([self.query(subspan) for subspan in span.span_cycles()])
+            return flatten([self.query(subspan) for subspan in span.span_cycles()])
 
         return Pattern(query)
 
@@ -272,7 +272,7 @@ class Pattern:
                     event_func.value(event_val.value),
                 )
 
-            return concat(
+            return flatten(
                 [
                     remove_nones(
                         [apply(event_func, event_val) for event_val in event_vals]
@@ -396,7 +396,7 @@ class Pattern:
             def match(a):
                 return [withWhole(a, b) for b in func(a.value).query(a.part)]
 
-            return concat([match(ev) for ev in pat_val.query(span)])
+            return flatten([match(ev) for ev in pat_val.query(span)])
 
         return Pattern(query)
 
@@ -897,7 +897,7 @@ def stack(*pats):
     pats = [reify(pat) for pat in pats]
 
     def query(span):
-        return concat([pat.query(span) for pat in pats])
+        return flatten([pat.query(span) for pat in pats])
 
     return Pattern(query)
 
