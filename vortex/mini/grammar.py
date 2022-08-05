@@ -1,17 +1,23 @@
 """
 Mini-notation grammar for Vortex.
 
-Grammmar is defined using the PEG parsing library 'parsimonious' version 0.8.1.
-Given the set of rules and definitions (grammar) defined in this file,
-calling grammar.parse(mn) generates an abstract syntax tree (AST) for a given input mini-notation string named 'mn'.
+Grammar is defined using the PEG parsing library `parsimonious`.
 
-printing the tree object shows the generated ASTs. e.g.:
+Given the set of rules and definitions (grammar) defined in this file, calling
+`grammar.parse(mn)` generates an abstract syntax tree (AST) for a given input
+mini-notation string named `mn`.
+
+Printing the tree object shows the generated ASTs. e.g.:
 
 ```
-tree = grammar.parse('"bd(3, 8) cp")
+tree = grammar.parse("bd(3, 8) cp")
 ```
 
-yields the following (truncated) AST:
+yields the following (truncated) AST, which can be pretty-printed with:
+
+```
+print(tree.prettily())
+```
 
 ```
 <Node called "valid" matching "bd(3, 8) cp">
@@ -31,15 +37,16 @@ yields the following (truncated) AST:
                         <Node called "word" matching "cp">
 ```
 
-the '__main__' program contains 54 successfully parsed mini-notation test examples.
+The parsimonious README (https://github.com/erikrose/parsimonious) was all I
+needed to get started writing a 'port' of the TidalCycles mini-notation grammar
+for Vortex.
 
-The parsimonious lib's readme (https://github.com/erikrose/parsimonious) was all I needed to get started writing
-a 'port' of the TidalCycles mini-notation grammar for Vortex.
-
-The strudel PEG grammar written in pegjs by Felix Roos was a valuable starting point, and many ideas were taken from there.
+The strudel PEG grammar written in pegjs by Felix Roos was a valuable starting
+point, and many ideas were taken from there.
 https://github.com/tidalcycles/strudel/blob/main/packages/mini/krill.pegjs
 
-Reach out on the TidalCycles discord or club.tidalcycles.org if you have any bugs, optimizations, or questions.
+Reach out on the TidalCycles discord or club.tidalcycles.org if you have any
+bugs, optimizations, or questions.
 
 -Tyler
 
@@ -49,121 +56,63 @@ from parsimonious import Grammar
 
 grammar = Grammar(
     r"""
-    start = ws? (sequence / element) ws?
+    start = ws? sequence ws?
 
-    # a white-space separated collection of 2 or more elements like "bd bd" or "[bd bd] [bd bd]"
-    # underscores (continuation symbol) can be part of a sequence but cannot be the first element.
-    sequence = element (ws+ (element / underscore))+
+    ##
+    # Sequences
+    #
+    # A Sequence is a white-space separated collection of 2 or more elements
+    # like "bd bd" or "[bd bd] [bd bd]".  Underscores (continuation symbol) can
+    # be part of a sequence but cannot be the first element.
+    sequence = element (ws? element)*
 
-    # an element is a piece of the pattern like "[bd, bd]" , "[bd bd]@2", "bd@2", "[bd bd]" or "bd".
-    # does not include things like "bd bd" or "[bd bd]@2" or "bd!2 bd!2" which are each a 'sequence', a collection of elements.
-    element = stack / modified / bracketed / sample_select / word / rest
+    # An Element is an item of a Sequence, it can be a simple Term, or another
+    # subsequence: Polymeters (braces), Polyrhythms (square brackets) or one-cycle
+    # sequence (angle brackets)
+    element = element_value modifiers
+    element_value = term / polyrhythm_subseq / polymeter_subseq / polymeter1_subseq
 
-    # contains at least two sequences (or words), comma separated, and surrounded by square brackets
-    # e.g., [ bd, [cp cp]]
-    stack = lsquare ws? stack_elem (ws? comma ws? stack_elem)+ ws? rsquare
-    stack_elem = sequence / element
+    ##
+    # Subsequences
+    #
+    polyrhythm_subseq = '[' ws? subseq_body ws? ']'
+    polymeter_subseq = '{' ws? subseq_body ws? '}' polymeter_steps?
+    polymeter1_subseq = '<' ws? subseq_body ws? '>'
+    polymeter_steps = '%' number
+    subseq_body = sequence (ws? ',' ws? sequence)*
 
-    # TODO:  get groups e.g. "bd bd . hh hh hh" working
-    # group = ws? (sequence / element) (ws period ws (sequence / element))+ ws?
+    ##
+    # Terms
+    #
+    term = number / word_with_index / rest
+    word_with_index = word index?
+    index = ':' number
 
-    ##  [bd sd@3 [bd, sd ] ] with no outer modifier.
-    bracketed = square_bracketed / angle_bracketed / curly_bracketed
+    ##
+    # Term modifiers
+    #
+    modifiers = modifier*
+    modifier = fast / slow / repeat / degrade / weight
+    fast = '*' number
+    slow = '/' number
+    repeat = '!'+
+    degrade = '?'
+    weight = '@' number
 
-    square_bracketed = lsquare ws? bracketed_elem ws? rsquare
-
-    angle_bracketed = langle ws? bracketed_elem ws? rangle
-
-    curly_bracketed = lcurly ws? bracketed_elem ws? rcurly
-
-    # valid things that can go inside brackets.
-    bracketed_elem = sequence / element
-
-    # a pair containing a modifiable element e.g. "[bd bd]" and a modifier e.g. "@3"
-    modified = modifiable modifier
-
-    modifiable = bracketed / word
-
-    # e.g. bd:3
-    sample_select = word colon pos_integer
-
-    # single word definition (e.g bd, drum_sound, sample#2)
-    word = word_char+
-    word_char =  ~"\w" / minus / hashtag / period / "^" / underscore
-
-    rest = tilde
-
-    # TODO: add numeric element definition?
-
-
-    #modifier = basic_modifier
-    modifier = bjorklund / basic_modifier
-
-    # (3,8), (33 23 15, 16 17, 35),  (3, 8)!3
-    # Q: should euclidean pattern arguments take numeric-only patterns? "bd(bd, 8)" is valid tidalcycles.
-    # if so, i should make a numeric-only element definition
-    # Q:  should we support fractions in bjorklund?
-    # Q: why do these fail in tidal:  "bd(3,8)/3" "bd(3,8)*3" "bd(3,8)%3"
-    bjorklund = bjork_three_arg / bjork_two_arg
-    bjork_three_arg = lparen ws? (sequence / element / number) ws? comma ws? (sequence / element / number) ws? comma ws? (sequence / element / number) ws? rparen ws? basic_modifier?
-    bjork_two_arg = lparen ws? (sequence / element / number) ws?  comma ws? (sequence / element / number) ws? rparen ws? basic_modifier?
-
-    basic_modifier = weight / replicate / fast / slow / fixed_step
-
-    # e.g., @7
-    weight = at_symbol scalar
-
-    # e.g., !3
-    replicate = exclamation_point scalar
-
-    # e.g., *5
-    fast = asterisk scalar
-
-    # e.g., /5
-    slow = slash scalar
-
-    # e.g., /5
-    fixed_step = percent_sign scalar
-
-    # scalars are 3.00001 , (16/15), -35, -343.555, (-10000/15)
-    scalar = number / fraction
-    fraction = lparen ws? number ws? "/" ws? number ws? rparen
-    # NOTE:  consider whether "1." should be valid as opposed to "1.0"  ; "1." is not valid in haskell.
-    number = float / integer
-    float = integer period pos_integer
+    ##
+    # Primitives
+    #
+    # A primitive is a simple token like a word (string) or a number (real or
+    # integer).
+    word = ~"[-\w]+"
+    number = real / integer
+    real = integer '.' pos_integer?
     integer = minus? pos_integer
     pos_integer = !minus ~"[0-9]+"
+    rest = '~'
 
-    # names for symbols
-    hashtag = "#"
-    underscore = "_"
-    tilde = "~"
-    minus = "-"
-    plus = "+"
-    period = "."
-    colon = ":"
-    comma = ","
-
-    # symbol names for basic modifiers
-    asterisk = "*"
-    slash = "/"
-    at_symbol = "@"
-    exclamation_point = "!"
-    percent_sign = "%"
-
-    # names for brackets
-    lsquare = "["
-    rsquare = "]"
-    lcurly = "{"
-    rcurly = "}"
-    langle = "<"
-    rangle = ">"
-    lparen = "("
-    rparen = ")"
-    # TODO:  implement random choice with the pipe symbol.
-    pipe = "|"
-
-    # NOTE do we care about tabs?
-    ws = ~"\s*"
+    ## Misc
+    minus = '-'
+    ws = ~"\s+"
     """
 )

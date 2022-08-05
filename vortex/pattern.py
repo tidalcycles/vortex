@@ -703,6 +703,8 @@ class Pattern:
         numerical 0-1 ranged pattern.
 
         """
+        if by == 0:
+            return self
         if not prand:
             prand = rand()
         return self.fmap(lambda a: lambda _: a).app_left(
