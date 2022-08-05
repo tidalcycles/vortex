@@ -99,7 +99,8 @@ class MiniVisitor(NodeVisitor):
         return dict(type="modifier", op="repeat", value=n)
 
     def visit_degrade(self, _node, children):
-        return dict(type="modifier", op="degrade")
+        n = len(children)
+        return dict(type="modifier", op="degrade", value=n)
 
     def visit_weight(self, _node, children):
         _, number = children

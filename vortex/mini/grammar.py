@@ -96,7 +96,7 @@ grammar = Grammar(
     fast = '*' number
     slow = '/' number
     repeat = '!'+
-    degrade = '?'
+    degrade = '?'+
     weight = '@' number
 
     ##
