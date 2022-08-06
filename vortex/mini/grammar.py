@@ -101,8 +101,12 @@ grammar = Grammar(
     modifier = fast / slow / repeat / degrade / weight
     fast = '*' number
     slow = '/' number
-    repeat = '!'+
-    degrade = '?'+
+    repeat = (repeatn / repeat1)+
+    repeatn = '!' !'!' pos_integer
+    repeat1 = '!'
+    degrade = (degraden / degrade1)+
+    degraden = '?' !'?' pos_integer
+    degrade1 = '?'
     weight = '@' number
 
     ##

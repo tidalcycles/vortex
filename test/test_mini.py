@@ -140,6 +140,103 @@ from vortex.pattern import Pattern, degrade, fast, fastcat, pure, silence, slow,
             },
         ),
         (
+            "hh???",
+            {
+                "type": "sequence",
+                "elements": [
+                    {
+                        "type": "element",
+                        "value": {"type": "word", "value": "hh", "index": 0},
+                        "modifiers": [
+                            {"type": "modifier", "op": "degrade", "count": 3}
+                        ],
+                    }
+                ],
+            },
+        ),
+        (
+            "hh?4",
+            {
+                "type": "sequence",
+                "elements": [
+                    {
+                        "type": "element",
+                        "value": {"type": "word", "value": "hh", "index": 0},
+                        "modifiers": [
+                            {"type": "modifier", "op": "degrade", "count": 4}
+                        ],
+                    }
+                ],
+            },
+        ),
+        (
+            "hh?4??",
+            {
+                "type": "sequence",
+                "elements": [
+                    {
+                        "type": "element",
+                        "value": {"type": "word", "value": "hh", "index": 0},
+                        "modifiers": [
+                            {"type": "modifier", "op": "degrade", "count": 6}
+                        ],
+                    }
+                ],
+            },
+        ),
+        (
+            "hh!",
+            {
+                "type": "sequence",
+                "elements": [
+                    {
+                        "type": "element",
+                        "value": {"type": "word", "value": "hh", "index": 0},
+                        "modifiers": [{"type": "modifier", "op": "repeat", "count": 1}],
+                    }
+                ],
+            },
+        ),
+        (
+            "hh!!!",
+            {
+                "type": "sequence",
+                "elements": [
+                    {
+                        "type": "element",
+                        "value": {"type": "word", "value": "hh", "index": 0},
+                        "modifiers": [{"type": "modifier", "op": "repeat", "count": 3}],
+                    }
+                ],
+            },
+        ),
+        (
+            "hh!4",
+            {
+                "type": "sequence",
+                "elements": [
+                    {
+                        "type": "element",
+                        "value": {"type": "word", "value": "hh", "index": 0},
+                        "modifiers": [{"type": "modifier", "op": "repeat", "count": 4}],
+                    }
+                ],
+            },
+        ),
+        (
+            "hh!4!!",
+            {
+                "type": "sequence",
+                "elements": [
+                    {
+                        "type": "element",
+                        "value": {"type": "word", "value": "hh", "index": 0},
+                        "modifiers": [{"type": "modifier", "op": "repeat", "count": 6}],
+                    }
+                ],
+            },
+        ),
+        (
             "hh@2",
             {
                 "type": "sequence",
@@ -148,21 +245,6 @@ from vortex.pattern import Pattern, degrade, fast, fastcat, pure, silence, slow,
                         "type": "element",
                         "value": {"type": "word", "value": "hh", "index": 0},
                         "modifiers": [{"type": "modifier", "op": "weight", "value": 2}],
-                    }
-                ],
-            },
-        ),
-        (
-            "hh??",
-            {
-                "type": "sequence",
-                "elements": [
-                    {
-                        "type": "element",
-                        "value": {"type": "word", "value": "hh", "index": 0},
-                        "modifiers": [
-                            {"type": "modifier", "op": "degrade", "count": 2},
-                        ],
                     }
                 ],
             },
