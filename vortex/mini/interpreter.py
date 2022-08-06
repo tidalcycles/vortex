@@ -58,14 +58,22 @@ class MiniVisitor(NodeVisitor):
         return dict(type="sequence", elements=[element] + other_elements)
 
     def visit_element(self, _node, children):
-        value, euclid_modifier, modifiers = children
+        value, euclid_modifier, modifiers, elongate = children
+        weight = 1 if isinstance(elongate, Node) else len(elongate) + 1
         element = dict(
             type="element",
             value=value,
-            modifiers=modifiers,
         )
         if not isinstance(euclid_modifier, Node):
             element["euclid_modifier"] = euclid_modifier[0]
+        weight_mod = next(
+            (m for m in modifiers if m["op"] == "weight"),
+            dict(type="modifier", op="weight", value=weight),
+        )
+        modifiers = [m for m in modifiers if m["op"] != "weight"]
+        if weight_mod["value"] != 1:
+            modifiers.append(weight_mod)
+        element["modifiers"] = modifiers
         return element
 
     def visit_element_value(self, _node, children):

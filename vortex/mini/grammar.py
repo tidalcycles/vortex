@@ -70,7 +70,7 @@ grammar = Grammar(
     # An Element is an item of a Sequence, it can be a simple Term, or another
     # subsequence: Polymeters (braces), Polyrhythms (square brackets) or one-cycle
     # polymeter (angle brackets)
-    element = element_value euclid_modifier? modifiers
+    element = element_value euclid_modifier? modifiers (ws '_')*
     element_value = term / polyrhythm_subseq / polymeter_subseq / polymeter1_subseq
 
     ##
