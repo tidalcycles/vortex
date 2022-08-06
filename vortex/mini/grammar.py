@@ -99,8 +99,8 @@ grammar = Grammar(
     #
     modifiers = modifier*
     modifier = fast / slow / repeat / degrade / weight
-    fast = '*' number
-    slow = '/' number
+    fast = '*' element
+    slow = '/' element
     repeat = (repeatn / repeat1)+
     repeatn = '!' !'!' pos_integer
     repeat1 = '!'

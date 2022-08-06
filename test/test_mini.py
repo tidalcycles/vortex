@@ -106,7 +106,17 @@ from vortex.pattern import Pattern, degrade, fast, fastcat, pure, silence, slow,
                     {
                         "type": "element",
                         "value": {"type": "word", "value": "bd", "index": 0},
-                        "modifiers": [{"type": "modifier", "op": "fast", "value": 2}],
+                        "modifiers": [
+                            {
+                                "type": "modifier",
+                                "op": "fast",
+                                "value": {
+                                    "type": "element",
+                                    "value": {"type": "number", "value": 2},
+                                    "modifiers": [],
+                                },
+                            }
+                        ],
                     }
                 ],
             },
@@ -119,7 +129,17 @@ from vortex.pattern import Pattern, degrade, fast, fastcat, pure, silence, slow,
                     {
                         "type": "element",
                         "value": {"type": "word", "value": "bd", "index": 0},
-                        "modifiers": [{"type": "modifier", "op": "slow", "value": 3}],
+                        "modifiers": [
+                            {
+                                "type": "modifier",
+                                "op": "slow",
+                                "value": {
+                                    "type": "element",
+                                    "value": {"type": "number", "value": 3},
+                                    "modifiers": [],
+                                },
+                            }
+                        ],
                     }
                 ],
             },
@@ -276,9 +296,26 @@ from vortex.pattern import Pattern, degrade, fast, fastcat, pure, silence, slow,
                         "value": {"type": "word", "value": "hh", "index": 0},
                         "modifiers": [
                             {"type": "modifier", "op": "repeat", "count": 1},
-                            {"type": "modifier", "op": "slow", "value": 2},
-                            {"type": "modifier", "op": "repeat", "count": 1},
-                            {"type": "modifier", "op": "degrade", "count": 1},
+                            {
+                                "type": "modifier",
+                                "op": "slow",
+                                "value": {
+                                    "type": "element",
+                                    "value": {"type": "number", "value": 2},
+                                    "modifiers": [
+                                        {
+                                            "type": "modifier",
+                                            "op": "repeat",
+                                            "count": 1,
+                                        },
+                                        {
+                                            "type": "modifier",
+                                            "op": "degrade",
+                                            "count": 1,
+                                        },
+                                    ],
+                                },
+                            },
                         ],
                     }
                 ],
@@ -347,12 +384,32 @@ from vortex.pattern import Pattern, degrade, fast, fastcat, pure, silence, slow,
                     {
                         "type": "element",
                         "value": {"type": "word", "value": "sd", "index": 0},
-                        "modifiers": [{"type": "modifier", "op": "slow", "value": 2}],
+                        "modifiers": [
+                            {
+                                "type": "modifier",
+                                "op": "slow",
+                                "value": {
+                                    "type": "element",
+                                    "value": {"type": "number", "value": 2},
+                                    "modifiers": [],
+                                },
+                            }
+                        ],
                     },
                     {
                         "type": "element",
                         "value": {"type": "word", "value": "cp", "index": 0},
-                        "modifiers": [{"type": "modifier", "op": "fast", "value": 3}],
+                        "modifiers": [
+                            {
+                                "type": "modifier",
+                                "op": "fast",
+                                "value": {
+                                    "type": "element",
+                                    "value": {"type": "number", "value": 3},
+                                    "modifiers": [],
+                                },
+                            }
+                        ],
                     },
                 ],
             },

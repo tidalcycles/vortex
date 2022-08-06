@@ -202,7 +202,10 @@ class MiniInterpreter:
         return eval_method(node)
 
     def eval_sequence(self, node):
-        elements = [self.eval(n) for n in node["elements"]]
+        return self._eval_sequence_elements(node["elements"])
+
+    def _eval_sequence_elements(self, elements):
+        elements = [self.eval(n) for n in elements]
         tc_args = []
         # Because each element might have been replicated/repeated, each element
         # is actually a list of tuples (weight, pattern, degrade_ratio).
@@ -287,9 +290,11 @@ class MiniInterpreter:
         elif node["op"] == "repeat":
             return lambda w_p: [w_p] * (node["count"] + 1)
         elif node["op"] == "fast":
-            return lambda w_p: [(w_p[0], w_p[1].fast(node["value"]), w_p[2])]
+            param = self._eval_sequence_elements([node["value"]])
+            return lambda w_p: [(w_p[0], w_p[1].fast(param), w_p[2])]
         elif node["op"] == "slow":
-            return lambda w_p: [(w_p[0], w_p[1].slow(node["value"]), w_p[2])]
+            param = self._eval_sequence_elements([node["value"]])
+            return lambda w_p: [(w_p[0], w_p[1].slow(param), w_p[2])]
         elif node["op"] == "weight":
             # Overwrite current weight state value with the new weight from this
             # modifier.
