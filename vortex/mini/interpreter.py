@@ -198,10 +198,10 @@ class MiniVisitor(NodeVisitor):
 class MiniInterpreter:
     def eval(self, node):
         node_type = node["type"]
-        visit_method = getattr(self, f"visit_{node_type}")
-        return visit_method(node)
+        eval_method = getattr(self, f"eval_{node_type}")
+        return eval_method(node)
 
-    def visit_sequence(self, node):
+    def eval_sequence(self, node):
         elements = [self.eval(n) for n in node["elements"]]
         tc_args = []
         # Because each element might have been replicated/repeated, each element
@@ -221,10 +221,10 @@ class MiniInterpreter:
         # Finally use timecat to create a pattern out of this sequence
         return timecat(*tc_args)
 
-    def visit_polyrhythm(self, node):
+    def eval_polyrhythm(self, node):
         return polyrhythm(*[self.eval(seq) for seq in node["seqs"]])
 
-    def visit_polymeter(self, node):
+    def eval_polymeter(self, node):
         # FIXME: Is there a better way to do this? It'd be nice to use
         # `polymeter()`, but the sequences are already "sequence" patterns, not
         # a list of events. We might need to restructure grammar...
@@ -240,7 +240,7 @@ class MiniInterpreter:
             ]
         )
 
-    def visit_element(self, node):
+    def eval_element(self, node):
         # Here we collect all modifier functions of an element and reduce them
         modifiers = [self.eval(m) for m in node["modifiers"]]
         pat = self.eval(node["value"])
@@ -259,13 +259,13 @@ class MiniInterpreter:
             values = flatten([modifier(v) for v in values])
         return values
 
-    def visit_euclid_modifier(self, node):
+    def eval_euclid_modifier(self, node):
         k = self.eval(node["k"])
         n = self.eval(node["n"])
         rotation = self.eval(node["rotation"]) if "rotation" in node else pure(0)
         return k, n, rotation
 
-    def visit_modifier(self, node):
+    def eval_modifier(self, node):
         # This is a bit ugly, but we maintain the "state" of modifiers by returning
         # a tuple of 3 elements: (weight, pattern, degrade_ratio), where:
         #
@@ -296,14 +296,14 @@ class MiniInterpreter:
             return lambda w_p: [(node["value"], w_p[1], w_p[2])]
         return id
 
-    def visit_number(self, node):
+    def eval_number(self, node):
         return pure(node["value"])
 
-    def visit_word(self, node):
+    def eval_word(self, node):
         if node["index"]:
             return s(node["value"]) << n(node["index"])
         else:
             return pure(node["value"])
 
-    def visit_rest(self, node):
+    def eval_rest(self, node):
         return silence()
