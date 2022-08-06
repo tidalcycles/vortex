@@ -21,8 +21,15 @@ class MiniVisitor(NodeVisitor):
         return dict(type="sequence", elements=[element] + other_elements)
 
     def visit_element(self, _node, children):
-        value, modifiers = children
-        return dict(type="element", value=value, modifiers=modifiers)
+        value, euclid_modifier, modifiers = children
+        element = dict(
+            type="element",
+            value=value,
+            modifiers=modifiers,
+        )
+        if not isinstance(euclid_modifier, Node):
+            element["euclid_modifier"] = euclid_modifier[0]
+        return element
 
     def visit_element_value(self, _node, children):
         return children[0]
@@ -81,6 +88,17 @@ class MiniVisitor(NodeVisitor):
     ##
     # Modifiers
     #
+
+    def visit_euclid_modifier(self, _node, children):
+        _, _, k, _, _, _, n, rotation, _, _ = children
+        mod = dict(type="euclid_modifier", k=k, n=n)
+        if not isinstance(rotation, Node):
+            mod["rotation"] = rotation
+        return mod
+
+    def visit_euclid_rotation_param(self, _node, children):
+        _, _, _, rotation = children
+        return rotation
 
     def visit_modifiers(self, _node, children):
         mods = [m for m in children if m["op"] not in ("degrade", "weight")]
@@ -189,16 +207,27 @@ class MiniInterpreter:
     def visit_element(self, node):
         # Here we collect all modifier functions of an element and reduce them
         modifiers = [self.eval(m) for m in node["modifiers"]]
+        pat = self.eval(node["value"])
+        # Apply an euclid modifier if present
+        if "euclid_modifier" in node:
+            k, n, rotation = self.eval(node["euclid_modifier"])
+            pat = pat.euclid(k, n, rotation)
         # The initial value is the tuple of 3 elements (see visit_modifier): a
         # default weight of 1, a "pure" pattern of the elements value and
         # degrade ratio of 0 (no degradation).  It is a list of tuples, because
         # modifiers return a list of tuples (there might be repeat modifiers
         # that return multiple patterns).
-        values = [(1, self.eval(node["value"]), 0)]
+        values = [(1, pat, 0)]
         for modifier in modifiers:
             # We eventually flatten list of lists into a single list
             values = flatten([modifier(v) for v in values])
         return values
+
+    def visit_euclid_modifier(self, node):
+        k = self.eval(node["k"])
+        n = self.eval(node["n"])
+        rotation = self.eval(node["rotation"]) if "rotation" in node else pure(0)
+        return k, n, rotation
 
     def visit_modifier(self, node):
         # This is a bit ugly, but we maintain the "state" of modifiers by returning
