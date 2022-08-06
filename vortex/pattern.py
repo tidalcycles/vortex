@@ -1162,6 +1162,7 @@ def timecat(*time_pat_tuples):
     >>> timecat((1, s("bd*4")), (1, s("hh27*8")))
 
     """
+    time_pat_tuples = [(Fraction(t), p) for t, p in time_pat_tuples]
     total = sum(Fraction(time) for time, _ in time_pat_tuples)
     arranged = []
     accum = Fraction(0)
