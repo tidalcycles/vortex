@@ -163,12 +163,21 @@ class MiniInterpreter:
     def visit_sequence(self, node):
         elements = [self.eval(n) for n in node["elements"]]
         tc_args = []
+        # Because each element might have been replicated/repeated, each element
+        # is actually a list of tuples (weight, pattern, degrade_ratio).
         for es in elements:
+            # We extract the weight and degrade_ratio from the first element (it
+            # does not matter from which element, all have the same state
+            # values).
             weight = es[0][0] if es else 1
             deg_by = es[0][2] if es else 0
+            # Use the length of the replicated element as weight times the
+            # `weight` modifier (if present).  Build a sequence out of the
+            # replicated elements and degrade by the accumulated degrade ratio.
             tc_args.append(
                 (len(es) * weight, sequence(*[e[1] for e in es]).degrade_by(deg_by))
             )
+        # Finally use timecat to create a pattern out of this sequence
         return timecat(*tc_args)
 
     def visit_polyrhythm(self, node):
@@ -178,14 +187,35 @@ class MiniInterpreter:
         return polymeter(*[self.eval(seq) for seq in node["seqs"]], steps=node["steps"])
 
     def visit_element(self, node):
+        # Here we collect all modifier functions of an element and reduce them
         modifiers = [self.eval(m) for m in node["modifiers"]]
+        # The initial value is the tuple of 3 elements (see visit_modifier): a
+        # default weight of 1, a "pure" pattern of the elements value and
+        # degrade ratio of 0 (no degradation).  It is a list of tuples, because
+        # modifiers return a list of tuples (there might be repeat modifiers
+        # that return multiple patterns).
         values = [(1, self.eval(node["value"]), 0)]
         for modifier in modifiers:
+            # We eventually flatten list of lists into a single list
             values = flatten([modifier(v) for v in values])
         return values
 
     def visit_modifier(self, node):
+        # This is a bit ugly, but we maintain the "state" of modifiers by returning
+        # a tuple of 3 elements: (weight, pattern, degrade_ratio), where:
+        #
+        # * `weight` is the current weight value for timecat
+        # * `pattern` is the modified pattern
+        # * `degrade_ratio` is the accumulated degrade ratio.
+        #
+        # The return value of the modifier functions is a list of Patterns,
+        # because the repeat modifier might return multiple patterns of the
+        # element, so we generalize it into a list for all modifiers.
         if node["op"] == "degrade":
+            # Use the formula `n / (n + 1)` to increase the degrade ratio
+            # "linearly" We expect there is a single degrade modifier
+            # (guaranteed by the AST), so we can use the `count` as the final
+            # count of degrade occurrences.
             return lambda w_p: [
                 (w_p[0], w_p[1], Fraction(node["count"], node["count"] + 1))
             ]
@@ -196,6 +226,8 @@ class MiniInterpreter:
         elif node["op"] == "slow":
             return lambda w_p: [(w_p[0], w_p[1].slow(node["value"]), w_p[2])]
         elif node["op"] == "weight":
+            # Overwrite current weight state value with the new weight from this
+            # modifier.
             return lambda w_p: [(node["value"], w_p[1], w_p[2])]
         return id
 
