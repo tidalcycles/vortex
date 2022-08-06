@@ -23,10 +23,38 @@ class MiniVisitor(NodeVisitor):
         return element
 
     def visit_sequence(self, _node, children):
+        group, other_groups = children
+        if isinstance(other_groups, Node):
+            other_groups = []
+        other_groups = [e[3] for e in other_groups]
+        if other_groups:
+            # Workaround: Re-build AST nodes as if it were a polyrhythm ("a b .
+            # c" == "[a b] [c]")
+            return dict(
+                type="sequence",
+                elements=[
+                    dict(
+                        type="element",
+                        value=dict(type="polyrhythm", seqs=[group]),
+                        modifiers=[],
+                    ),
+                    *[
+                        dict(
+                            type="element",
+                            value=dict(type="polyrhythm", seqs=[g]),
+                            modifiers=[],
+                        )
+                        for g in other_groups
+                    ],
+                ],
+            )
+        return group
+
+    def visit_group(self, _node, children):
         element, other_elements = children
         if isinstance(other_elements, Node):
             other_elements = []
-        other_elements = [e for _, e in other_elements]
+        other_elements = [e[2] for e in other_elements]
         return dict(type="sequence", elements=[element] + other_elements)
 
     def visit_element(self, _node, children):

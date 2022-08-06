@@ -64,7 +64,8 @@ grammar = Grammar(
     # A Sequence is a white-space separated collection of 2 or more elements
     # like "bd bd" or "[bd bd] [bd bd]".  Underscores (continuation symbol) can
     # be part of a sequence but cannot be the first element.
-    sequence = element (ws element)*
+    sequence = group (ws '.' ws group)*
+    group = element (ws !'.' element)*
 
     # An Element is an item of a Sequence, it can be a simple Term, or another
     # subsequence: Polymeters (braces), Polyrhythms (square brackets) or one-cycle
