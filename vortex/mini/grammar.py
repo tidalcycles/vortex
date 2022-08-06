@@ -56,7 +56,7 @@ from parsimonious import Grammar
 
 grammar = Grammar(
     r"""
-    start = ws? sequence ws?
+    root = ws? sequence ws?
 
     ##
     # Sequences

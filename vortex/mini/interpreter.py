@@ -4,12 +4,21 @@ from parsimonious import NodeVisitor
 from parsimonious.nodes import Node
 
 from vortex.control import n, s
-from vortex.pattern import id, polymeter, polyrhythm, pure, sequence, silence, timecat
+from vortex.pattern import (
+    id,
+    polymeter,
+    polyrhythm,
+    pure,
+    sequence,
+    silence,
+    stack,
+    timecat,
+)
 from vortex.utils import flatten
 
 
 class MiniVisitor(NodeVisitor):
-    def visit_start(self, _node, children):
+    def visit_root(self, _node, children):
         _, element, _ = children
         return element
 
@@ -188,12 +197,12 @@ class MiniInterpreter:
             # does not matter from which element, all have the same state
             # values).
             weight = es[0][0] if es else 1
-            deg_by = es[0][2] if es else 0
+            deg_ratio = es[0][2] if es else 0
             # Use the length of the replicated element as weight times the
             # `weight` modifier (if present).  Build a sequence out of the
             # replicated elements and degrade by the accumulated degrade ratio.
             tc_args.append(
-                (len(es) * weight, sequence(*[e[1] for e in es]).degrade_by(deg_by))
+                (len(es) * weight, sequence(*[e[1] for e in es]).degrade_by(deg_ratio))
             )
         # Finally use timecat to create a pattern out of this sequence
         return timecat(*tc_args)
@@ -202,7 +211,20 @@ class MiniInterpreter:
         return polyrhythm(*[self.eval(seq) for seq in node["seqs"]])
 
     def visit_polymeter(self, node):
-        return polymeter(*[self.eval(seq) for seq in node["seqs"]], steps=node["steps"])
+        # FIXME: Is there a better way to do this? It'd be nice to use
+        # `polymeter()`, but the sequences are already "sequence" patterns, not
+        # a list of events. We might need to restructure grammar...
+
+        # return polymeter(*[self.eval(seq) for seq in node["seqs"]], steps=node["steps"])
+        fast_params = [
+            Fraction(node["steps"], len(seq["elements"])) for seq in node["seqs"]
+        ]
+        return stack(
+            *[
+                self.eval(seq).fast(fparam)
+                for seq, fparam in zip(node["seqs"], fast_params)
+            ]
+        )
 
     def visit_element(self, node):
         # Here we collect all modifier functions of an element and reduce them
