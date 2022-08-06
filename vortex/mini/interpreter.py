@@ -140,12 +140,12 @@ class MiniVisitor(NodeVisitor):
         return dict(type="modifier", op="slow", value=number)
 
     def visit_repeat(self, _node, children):
-        n = len(children)
-        return dict(type="modifier", op="repeat", count=n)
+        count = len(children)
+        return dict(type="modifier", op="repeat", count=count)
 
     def visit_degrade(self, _node, children):
-        n = len(children)
-        return dict(type="modifier", op="degrade", count=n)
+        count = len(children)
+        return dict(type="modifier", op="degrade", count=count)
 
     def visit_weight(self, _node, children):
         _, number = children
