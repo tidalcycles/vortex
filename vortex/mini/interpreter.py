@@ -1,3 +1,5 @@
+from fractions import Fraction
+
 from parsimonious import NodeVisitor
 from parsimonious.nodes import Node
 
@@ -184,7 +186,9 @@ class MiniInterpreter:
 
     def visit_modifier(self, node):
         if node["op"] == "degrade":
-            return lambda w_p: [(w_p[0], w_p[1], 1 - ((1 - w_p[2]) / 2))]
+            return lambda w_p: [
+                (w_p[0], w_p[1], Fraction(node["count"], node["count"] + 1))
+            ]
         elif node["op"] == "repeat":
             return lambda w_p: [w_p] * (node["count"] + 1)
         elif node["op"] == "fast":
