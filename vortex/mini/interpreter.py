@@ -81,7 +81,23 @@ class MiniVisitor(NodeVisitor):
     #
 
     def visit_modifiers(self, _node, children):
-        return children
+        mods = [m for m in children if m["op"] not in ("degrade", "weight")]
+
+        # The degrade modifier (?) does not take into account application order,
+        # so we merge them into a single modifier.
+        degrade_mods = [m for m in children if m["op"] == "degrade"]
+        deg_count = sum([m["count"] for m in degrade_mods])
+        if deg_count:
+            degrade_mod = dict(type="modifier", op="degrade", count=deg_count)
+            mods.append(degrade_mod)
+
+        # The weight modifier (@) can be duplicated, but only the last one is
+        # used, all others are ignored.
+        weight_mods = [m for m in children if m["op"] == "weight"]
+        if weight_mods:
+            mods.append(weight_mods[-1])
+
+        return mods
 
     def visit_modifier(self, _node, children):
         return children[0]
@@ -96,11 +112,11 @@ class MiniVisitor(NodeVisitor):
 
     def visit_repeat(self, _node, children):
         n = len(children)
-        return dict(type="modifier", op="repeat", value=n)
+        return dict(type="modifier", op="repeat", count=n)
 
     def visit_degrade(self, _node, children):
         n = len(children)
-        return dict(type="modifier", op="degrade", value=n)
+        return dict(type="modifier", op="degrade", count=n)
 
     def visit_weight(self, _node, children):
         _, number = children
@@ -170,7 +186,7 @@ class MiniInterpreter:
         if node["op"] == "degrade":
             return lambda w_p: [(w_p[0], w_p[1], 1 - ((1 - w_p[2]) / 2))]
         elif node["op"] == "repeat":
-            return lambda w_p: [w_p] * (node["value"] + 1)
+            return lambda w_p: [w_p] * (node["count"] + 1)
         elif node["op"] == "fast":
             return lambda w_p: [(w_p[0], w_p[1].fast(node["value"]), w_p[2])]
         elif node["op"] == "slow":

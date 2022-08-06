@@ -132,7 +132,9 @@ from vortex.pattern import Pattern, degrade, fast, fastcat, pure, silence, slow,
                     {
                         "type": "element",
                         "value": {"type": "word", "value": "hh", "index": 0},
-                        "modifiers": [{"type": "modifier", "op": "degrade"}],
+                        "modifiers": [
+                            {"type": "modifier", "op": "degrade", "count": 1}
+                        ],
                     }
                 ],
             },
@@ -159,8 +161,7 @@ from vortex.pattern import Pattern, degrade, fast, fastcat, pure, silence, slow,
                         "type": "element",
                         "value": {"type": "word", "value": "hh", "index": 0},
                         "modifiers": [
-                            {"type": "modifier", "op": "degrade"},
-                            {"type": "modifier", "op": "degrade"},
+                            {"type": "modifier", "op": "degrade", "count": 2},
                         ],
                     }
                 ],
@@ -175,10 +176,27 @@ from vortex.pattern import Pattern, degrade, fast, fastcat, pure, silence, slow,
                         "type": "element",
                         "value": {"type": "word", "value": "hh", "index": 0},
                         "modifiers": [
-                            {"type": "modifier", "op": "repeat", "value": 2},
-                            {"type": "modifier", "op": "degrade"},
-                            {"type": "modifier", "op": "degrade"},
-                            {"type": "modifier", "op": "repeat", "value": 1},
+                            {"type": "modifier", "op": "repeat", "count": 2},
+                            {"type": "modifier", "op": "repeat", "count": 1},
+                            {"type": "modifier", "op": "degrade", "count": 2},
+                        ],
+                    }
+                ],
+            },
+        ),
+        (
+            "hh!/2?!",
+            {
+                "type": "sequence",
+                "elements": [
+                    {
+                        "type": "element",
+                        "value": {"type": "word", "value": "hh", "index": 0},
+                        "modifiers": [
+                            {"type": "modifier", "op": "repeat", "count": 1},
+                            {"type": "modifier", "op": "slow", "value": 2},
+                            {"type": "modifier", "op": "repeat", "count": 1},
+                            {"type": "modifier", "op": "degrade", "count": 1},
                         ],
                     }
                 ],
@@ -234,12 +252,14 @@ from vortex.pattern import Pattern, degrade, fast, fastcat, pure, silence, slow,
                     {
                         "type": "element",
                         "value": {"type": "word", "value": "bd", "index": 0},
-                        "modifiers": [{"type": "modifier", "op": "repeat", "value": 1}],
+                        "modifiers": [{"type": "modifier", "op": "repeat", "count": 1}],
                     },
                     {
                         "type": "element",
                         "value": {"type": "word", "value": "hh", "index": 0},
-                        "modifiers": [{"type": "modifier", "op": "degrade"}],
+                        "modifiers": [
+                            {"type": "modifier", "op": "degrade", "count": 1}
+                        ],
                     },
                     {"type": "element", "value": {"type": "rest"}, "modifiers": []},
                     {
