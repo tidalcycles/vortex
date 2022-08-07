@@ -459,6 +459,40 @@ from vortex.mini import parse_mini
                 ],
             },
         ),
+        # random sequence
+        (
+            "bd | sd cp",
+            {
+                "type": "random_sequence",
+                "elements": [
+                    {
+                        "type": "sequence",
+                        "elements": [
+                            {
+                                "type": "element",
+                                "value": {"type": "word", "value": "bd", "index": 0},
+                                "modifiers": [],
+                            }
+                        ],
+                    },
+                    {
+                        "type": "sequence",
+                        "elements": [
+                            {
+                                "type": "element",
+                                "value": {"type": "word", "value": "sd", "index": 0},
+                                "modifiers": [],
+                            },
+                            {
+                                "type": "element",
+                                "value": {"type": "word", "value": "cp", "index": 0},
+                                "modifiers": [],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ),
     ],
 )
 def test_parse(input_code, expected_ast):

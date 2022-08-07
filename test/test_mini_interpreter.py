@@ -1,42 +1,55 @@
 import pytest
 
 from vortex.mini import mini
-from vortex.pattern import Pattern, degrade, fast, fastcat, pure, silence, slow, timecat
+from vortex.pattern import (
+    Pattern,
+    TimeSpan,
+    choose_cycles,
+    degrade,
+    fast,
+    fastcat,
+    pure,
+    silence,
+    slow,
+    timecat,
+)
 
 
 @pytest.mark.parametrize(
-    "input_code,expected_pat",
+    "input_code,query_span,expected_pat",
     [
         # numbers
-        ("45", pure(45)),
-        ("-2.", pure(-2.0)),
-        ("4.64", pure(4.64)),
-        ("-3", pure(-3)),
+        ("45", None, pure(45)),
+        ("-2.", None, pure(-2.0)),
+        ("4.64", None, pure(4.64)),
+        ("-3", None, pure(-3)),
         # words
-        ("foo", pure("foo")),
-        ("Bar", pure("Bar")),
+        ("foo", None, pure("foo")),
+        ("Bar", None, pure("Bar")),
         # rest
-        ("~", silence()),
+        ("~", None, silence()),
         # modifiers
-        ("bd*2", fast(2, "bd")),
-        ("bd/3", slow(3, "bd")),
-        ("hh?", degrade("hh")),
-        ("hh??", degrade(degrade("hh"))),
+        ("bd*2", None, fast(2, "bd")),
+        ("bd/3", None, slow(3, "bd")),
+        ("hh?", None, degrade("hh")),
+        ("hh??", None, degrade(degrade("hh"))),
         (
             "hh!!??",
+            None,
             degrade(degrade(fastcat("hh", "hh", "hh"))),
         ),
         # sequences
-        ("bd sd", fastcat("bd", "sd")),
-        ("bd hh sd", fastcat("bd", "hh", "sd")),
-        ("hh@2", pure("hh")),
-        ("bd hh@2", timecat((1, "bd"), (2, "hh"))),
-        ("bd hh@3 sd@2", timecat((1, "bd"), (3, "hh"), (2, "sd"))),
-        ("hh!", fastcat("hh", "hh")),
-        ("hh!!", fastcat("hh", "hh", "hh")),
-        ("bd! cp", fastcat("bd", "bd", "cp")),
+        ("bd sd", None, fastcat("bd", "sd")),
+        ("bd hh sd", None, fastcat("bd", "hh", "sd")),
+        ("hh@2", None, pure("hh")),
+        ("bd hh@2", None, timecat((1, "bd"), (2, "hh"))),
+        ("bd hh@3 sd@2", None, timecat((1, "bd"), (3, "hh"), (2, "sd"))),
+        ("hh!", None, fastcat("hh", "hh")),
+        ("hh!!", None, fastcat("hh", "hh", "hh")),
+        ("bd! cp", None, fastcat("bd", "bd", "cp")),
         (
             "bd! hh? ~ sd/2 cp*3",
+            None,
             timecat(
                 (1, "bd"),
                 (1, "bd"),
@@ -46,12 +59,15 @@ from vortex.pattern import Pattern, degrade, fast, fastcat, pure, silence, slow,
                 (1, fast(3, "cp")),
             ),
         ),
+        ("bd | sd", TimeSpan(0, 10), choose_cycles("bd", "sd")),
     ],
 )
-def test_eval(input_code, expected_pat):
+def test_eval(input_code, query_span, expected_pat):
     pat = mini(input_code)
     assert isinstance(pat, Pattern)
-    assert pat.first_cycle() == expected_pat.first_cycle()
+    if not query_span:
+        query_span = TimeSpan(0, 1)
+    assert pat.query(query_span) == expected_pat.query(query_span)
 
 
 # @pytest.mark.parametrize(

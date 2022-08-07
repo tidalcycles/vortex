@@ -4,11 +4,11 @@ from parsimonious import NodeVisitor
 from parsimonious.nodes import Node
 
 from vortex.control import n, s
+from vortex.pattern import pure  # polymeter,
 from vortex.pattern import (
+    choose_cycles,
     id,
-    polymeter,
     polyrhythm,
-    pure,
     sequence,
     silence,
     stack,
@@ -19,18 +19,21 @@ from vortex.utils import flatten
 
 class MiniVisitor(NodeVisitor):
     def visit_root(self, _node, children):
-        _, element, _ = children
-        return element
+        _, sequence, _ = children
+        return sequence
 
     def visit_sequence(self, _node, children):
-        group, other_groups = children
+        group, other_groups, other_seqs = children
         if isinstance(other_groups, Node):
             other_groups = []
+        if isinstance(other_seqs, Node):
+            other_seqs = []
         other_groups = [e[3] for e in other_groups]
+        other_seqs = [e[3] for e in other_seqs]
         if other_groups:
             # Workaround: Re-build AST nodes as if it were a polyrhythm ("a b .
             # c" == "[a b] [c]")
-            return dict(
+            group = dict(
                 type="sequence",
                 elements=[
                     dict(
@@ -48,6 +51,8 @@ class MiniVisitor(NodeVisitor):
                     ],
                 ],
             )
+        if other_seqs:
+            return dict(type="random_sequence", elements=[group, *other_seqs])
         return group
 
     def visit_group(self, _node, children):
@@ -260,6 +265,10 @@ class MiniInterpreter:
         # Finally use timecat to create a pattern out of this sequence
         return timecat(*tc_args)
 
+    def eval_random_sequence(self, node):
+        seqs = [self.eval(e) for e in node["elements"]]
+        return choose_cycles(*seqs)
+
     def eval_polyrhythm(self, node):
         return polyrhythm(*[self.eval(seq) for seq in node["seqs"]])
 
@@ -317,7 +326,7 @@ class MiniInterpreter:
         # element, so we generalize it into a list for all modifiers.
         if node["op"] == "degrade":
             # Use the formula `n / (n + 1)` to increase the degrade ratio
-            # "linearly" We expect there is a single degrade modifier
+            # "linearly".  We expect there is a single degrade modifier
             # (guaranteed by the AST), so we can use the `count` as the final
             # count of degrade occurrences.
             return lambda w_p: [
@@ -333,7 +342,8 @@ class MiniInterpreter:
             return lambda w_p: [(w_p[0], w_p[1].slow(param), w_p[2])]
         elif node["op"] == "weight":
             # Overwrite current weight state value with the new weight from this
-            # modifier.
+            # modifier.  The AST will only contain a single "weight" modifier,
+            # so there is no issue with replacing it.
             return lambda w_p: [(node["value"], w_p[1], w_p[2])]
         return id
 
