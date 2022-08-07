@@ -152,7 +152,15 @@ from vortex.mini import parse_mini
                         "type": "element",
                         "value": {"type": "word", "value": "hh", "index": 0},
                         "modifiers": [
-                            {"type": "modifier", "op": "degrade", "count": 1}
+                            {
+                                "type": "modifier",
+                                "op": "degrade",
+                                "value": {
+                                    "type": "degrade_arg",
+                                    "op": "count",
+                                    "value": 1,
+                                },
+                            }
                         ],
                     }
                 ],
@@ -167,7 +175,15 @@ from vortex.mini import parse_mini
                         "type": "element",
                         "value": {"type": "word", "value": "hh", "index": 0},
                         "modifiers": [
-                            {"type": "modifier", "op": "degrade", "count": 3}
+                            {
+                                "type": "modifier",
+                                "op": "degrade",
+                                "value": {
+                                    "type": "degrade_arg",
+                                    "op": "count",
+                                    "value": 3,
+                                },
+                            }
                         ],
                     }
                 ],
@@ -182,7 +198,15 @@ from vortex.mini import parse_mini
                         "type": "element",
                         "value": {"type": "word", "value": "hh", "index": 0},
                         "modifiers": [
-                            {"type": "modifier", "op": "degrade", "count": 4}
+                            {
+                                "type": "modifier",
+                                "op": "degrade",
+                                "value": {
+                                    "type": "degrade_arg",
+                                    "op": "count",
+                                    "value": 4,
+                                },
+                            }
                         ],
                     }
                 ],
@@ -197,7 +221,38 @@ from vortex.mini import parse_mini
                         "type": "element",
                         "value": {"type": "word", "value": "hh", "index": 0},
                         "modifiers": [
-                            {"type": "modifier", "op": "degrade", "count": 6}
+                            {
+                                "type": "modifier",
+                                "op": "degrade",
+                                "value": {
+                                    "type": "degrade_arg",
+                                    "op": "count",
+                                    "value": 6,
+                                },
+                            }
+                        ],
+                    }
+                ],
+            },
+        ),
+        (
+            "hh??0.87",
+            {
+                "type": "sequence",
+                "elements": [
+                    {
+                        "type": "element",
+                        "value": {"type": "word", "value": "hh", "index": 0},
+                        "modifiers": [
+                            {
+                                "type": "modifier",
+                                "op": "degrade",
+                                "value": {
+                                    "type": "degrade_arg",
+                                    "op": "value",
+                                    "value": 0.87,
+                                },
+                            }
                         ],
                     }
                 ],
@@ -279,7 +334,15 @@ from vortex.mini import parse_mini
                         "modifiers": [
                             {"type": "modifier", "op": "repeat", "count": 2},
                             {"type": "modifier", "op": "repeat", "count": 1},
-                            {"type": "modifier", "op": "degrade", "count": 2},
+                            {
+                                "type": "modifier",
+                                "op": "degrade",
+                                "value": {
+                                    "type": "degrade_arg",
+                                    "op": "count",
+                                    "value": 2,
+                                },
+                            },
                         ],
                     }
                 ],
@@ -310,7 +373,11 @@ from vortex.mini import parse_mini
                                         {
                                             "type": "modifier",
                                             "op": "degrade",
-                                            "count": 1,
+                                            "value": {
+                                                "type": "degrade_arg",
+                                                "op": "count",
+                                                "value": 1,
+                                            },
                                         },
                                     ],
                                 },
@@ -376,7 +443,15 @@ from vortex.mini import parse_mini
                         "type": "element",
                         "value": {"type": "word", "value": "hh", "index": 0},
                         "modifiers": [
-                            {"type": "modifier", "op": "degrade", "count": 1}
+                            {
+                                "type": "modifier",
+                                "op": "degrade",
+                                "value": {
+                                    "type": "degrade_arg",
+                                    "op": "count",
+                                    "value": 1,
+                                },
+                            }
                         ],
                     },
                     {"type": "element", "value": {"type": "rest"}, "modifiers": []},

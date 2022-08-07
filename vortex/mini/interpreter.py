@@ -153,13 +153,38 @@ class MiniVisitor(NodeVisitor):
     def visit_modifiers(self, _node, children):
         mods = [m for m in children if m["op"] not in ("degrade", "weight")]
 
+        # args = flatten(children)
+        # value_arg = next(reversed([a for a in args if a["op"] == "value"]), None)
+        # if value_arg:
+        #     arg = value_arg
+        # else:
+        #     arg = dict(
+        #         type="degrade_arg",
+        #         op="count",
+        #         value=sum([a["value"] for a in args if a["op"] == "count"]),
+        #     )
+
         # The degrade modifier (?) does not take into account application order,
         # so we merge them into a single modifier.
+        # There are two kinds of degrade modifiers, depending on its argument:
+        # 1) "count" (degrade1/degraden) and 2) "value" (degrader). If there is
+        # at least one "value" argument, the last occurrence takes precedences
+        # and overwrites other degrade modifiers.  Otherwise, we merge all other
+        # "count" arguments into a single "count" modifier to simplify
+        # representation.
         degrade_mods = [m for m in children if m["op"] == "degrade"]
-        deg_count = sum([m["count"] for m in degrade_mods])
-        if deg_count:
-            degrade_mod = dict(type="modifier", op="degrade", count=deg_count)
-            mods.append(degrade_mod)
+        if degrade_mods:
+            value_deg_mod = next(
+                reversed([a for a in degrade_mods if a["value"]["op"] == "value"]), None
+            )
+            count_deg_mods = [a for a in degrade_mods if a["value"]["op"] == "count"]
+            if value_deg_mod:
+                mods.append(value_deg_mod)
+            elif count_deg_mods:
+                count_deg_mod = count_deg_mods[0].copy()
+                deg_count = sum([m["value"]["value"] for m in count_deg_mods])
+                count_deg_mod["value"]["value"] = deg_count
+                mods.append(count_deg_mod)
 
         # The weight modifier (@) can be duplicated, but only the last one is
         # used, all others are ignored.
@@ -192,15 +217,18 @@ class MiniVisitor(NodeVisitor):
         return 1
 
     def visit_degrade(self, _node, children):
-        count = sum(flatten(children))
-        return dict(type="modifier", op="degrade", count=count)
+        return dict(type="modifier", op="degrade", value=children[0])
+
+    def visit_degrader(self, _node, children):
+        _, _, value = children
+        return dict(type="degrade_arg", op="value", value=value)
 
     def visit_degraden(self, _node, children):
-        _, _, count = children
-        return count
+        _, _, _, count = children
+        return dict(type="degrade_arg", op="count", value=count)
 
     def visit_degrade1(self, _node, children):
-        return 1
+        return dict(type="degrade_arg", op="count", value=1)
 
     def visit_weight(self, _node, children):
         _, number = children
@@ -224,6 +252,9 @@ class MiniVisitor(NodeVisitor):
 
     def visit_pos_integer(self, node, _children):
         return int(node.text)
+
+    def visit_pos_real(self, node, _children):
+        return float(node.text)
 
     ##
     # Others
@@ -329,9 +360,13 @@ class MiniInterpreter:
             # "linearly".  We expect there is a single degrade modifier
             # (guaranteed by the AST), so we can use the `count` as the final
             # count of degrade occurrences.
-            return lambda w_p: [
-                (w_p[0], w_p[1], Fraction(node["count"], node["count"] + 1))
-            ]
+            arg = node["value"]
+            if arg["op"] == "count":
+                return lambda w_p: [
+                    (w_p[0], w_p[1], Fraction(arg["value"], arg["value"] + 1))
+                ]
+            elif arg["op"] == "value":
+                return lambda w_p: [(w_p[0], w_p[1], arg["value"])]
         elif node["op"] == "repeat":
             return lambda w_p: [w_p] * (node["count"] + 1)
         elif node["op"] == "fast":
