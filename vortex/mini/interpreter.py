@@ -143,7 +143,7 @@ class MiniVisitor(NodeVisitor):
         _, _, k, _, _, _, n, rotation, _, _ = children
         mod = dict(type="euclid_modifier", k=k, n=n)
         if not isinstance(rotation, Node):
-            mod["rotation"] = rotation
+            mod["rotation"] = rotation[0]
         return mod
 
     def visit_euclid_rotation_param(self, _node, children):
@@ -152,17 +152,6 @@ class MiniVisitor(NodeVisitor):
 
     def visit_modifiers(self, _node, children):
         mods = [m for m in children if m["op"] not in ("degrade", "weight")]
-
-        # args = flatten(children)
-        # value_arg = next(reversed([a for a in args if a["op"] == "value"]), None)
-        # if value_arg:
-        #     arg = value_arg
-        # else:
-        #     arg = dict(
-        #         type="degrade_arg",
-        #         op="count",
-        #         value=sum([a["value"] for a in args if a["op"] == "count"]),
-        #     )
 
         # The degrade modifier (?) does not take into account application order,
         # so we merge them into a single modifier.

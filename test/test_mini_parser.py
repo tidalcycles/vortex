@@ -568,6 +568,25 @@ from vortex.mini import parse_mini
                 ],
             },
         ),
+        (
+            "bd _ _ sd",
+            {
+                "type": "sequence",
+                "elements": [
+                    {
+                        "type": "element",
+                        "value": {"type": "word", "value": "bd", "index": 0},
+                        "modifiers": [{"type": "modifier", "op": "weight", "value": 3}],
+                    },
+                    {
+                        "type": "element",
+                        "value": {"type": "word", "value": "sd", "index": 0},
+                        "modifiers": [],
+                    },
+                ],
+            },
+        ),
+        # ("bd sd . cp . hh*2", parse_mini("[bd sd] [cp] [hh*2]")),
     ],
 )
 def test_parse(input_code, expected_ast):

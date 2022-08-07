@@ -4,13 +4,16 @@ from vortex.mini import mini
 from vortex.pattern import (
     Pattern,
     TimeSpan,
+    cat,
     choose_cycles,
     degrade,
     fast,
-    fastcat,
+    polyrhythm,
     pure,
     silence,
     slow,
+    slowcat,
+    stack,
     timecat,
 )
 
@@ -36,17 +39,17 @@ from vortex.pattern import (
         (
             "hh!!??",
             None,
-            degrade(degrade(fastcat("hh", "hh", "hh"))),
+            degrade(degrade(cat("hh", "hh", "hh"))),
         ),
         # sequences
-        ("bd sd", None, fastcat("bd", "sd")),
-        ("bd hh sd", None, fastcat("bd", "hh", "sd")),
+        ("bd sd", None, cat("bd", "sd")),
+        ("bd hh sd", None, cat("bd", "hh", "sd")),
         ("hh@2", None, pure("hh")),
         ("bd hh@2", None, timecat((1, "bd"), (2, "hh"))),
         ("bd hh@3 sd@2", None, timecat((1, "bd"), (3, "hh"), (2, "sd"))),
-        ("hh!", None, fastcat("hh", "hh")),
-        ("hh!!", None, fastcat("hh", "hh", "hh")),
-        ("bd! cp", None, fastcat("bd", "bd", "cp")),
+        ("hh!", None, cat("hh", "hh")),
+        ("hh!!", None, cat("hh", "hh", "hh")),
+        ("bd! cp", None, cat("bd", "bd", "cp")),
         (
             "bd! hh? ~ sd/2 cp*3",
             None,
@@ -60,6 +63,25 @@ from vortex.pattern import (
             ),
         ),
         ("bd | sd", TimeSpan(0, 10), choose_cycles("bd", "sd")),
+        (
+            "[bd [~ sd]] cp",
+            None,
+            cat(polyrhythm(["bd", polyrhythm([silence(), "sd"])]), "cp"),
+        ),
+        (
+            "{a b c, D E}%2",
+            TimeSpan(0, 3),
+            slowcat(
+                stack(cat("a", "b"), cat("D", "E")),
+                stack(cat("c", "a"), cat("D", "E")),
+                stack(cat("b", "c"), cat("D", "E")),
+            ),
+        ),
+        ("<a b, c d e>", TimeSpan(0, 3), mini("{a b, c d e}%1")),
+        ("bd(3,8)", None, pure("bd").euclid(3, 8)),
+        ("bd(3,8,2)", None, pure("bd").euclid(3, 8, 2)),
+        ("bd(<3 5>,8,<2 4>)", None, pure("bd").euclid(slowcat(3, 5), 8, slowcat(2, 4))),
+        ("bd _ _ sd", None, mini("bd@3 sd")),
     ],
 )
 def test_eval(input_code, query_span, expected_pat):
@@ -67,7 +89,7 @@ def test_eval(input_code, query_span, expected_pat):
     assert isinstance(pat, Pattern)
     if not query_span:
         query_span = TimeSpan(0, 1)
-    assert pat.query(query_span) == expected_pat.query(query_span)
+    assert sorted(pat.query(query_span)) == sorted(expected_pat.query(query_span))
 
 
 # @pytest.mark.parametrize(
@@ -170,7 +192,7 @@ def test_eval(input_code, query_span, expected_pat):
 #     "test_input,expected",
 #     [
 #         ("bd", pure("bd")),
-#         ("bd sd", fastcat(pure("bd"), pure("sd"))),
+#         ("bd sd", cat(pure("bd"), pure("sd"))),
 #         ("drum_sound/4", pure("drum_sound").slow(4)),
 #     ],
 # )
