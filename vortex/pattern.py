@@ -1218,6 +1218,22 @@ def wchoose(*vals):
     return wchoose_by(rand(), *vals)
 
 
+def choose_cycle(*vals):
+    """Same as `randcat`"""
+    return choose(*vals).segment(1)
+
+
+def randcat(*vals):
+    """
+    Similar to `cat`, but rather than playing the given patterns in order, it
+    picks them at random.
+
+    >>> s(randcat("bd*2 sn", "jvbass*3", "drum*2", "ht mt")
+
+    """
+    return choose_cycle(*vals)
+
+
 def _euclid(k: int, n: int, rotation: float):
     """Generate an euclidean sequence, with optional rotation"""
     b = bjorklund(k, n)
