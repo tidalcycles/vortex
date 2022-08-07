@@ -1177,25 +1177,45 @@ def timecat(*time_pat_tuples):
     )
 
 
-def choose_by(pat, *vals):
-    """
-    Randomly picks an element from the given list
+def _choose_with(pat, *vals):
+    return pat.range(0, len(vals)).fmap(lambda v: reify(vals[math.floor(v)]))
 
-    Values are samples using the 0-1 ranged numerical pattern `pat`.
+
+def choose_with(pat, *vals):
     """
-    return pat.range(0, len(vals)).fmap(lambda v: vals[math.floor(v)])
+    Choose from the list of values (or patterns of values) using the given
+    pattern of numbers, which should be in the range of 0..1
+
+    """
+    return _choose_with(pat, *vals).outer_join()
 
 
 def choose(*vals):
-    """Randomly picks an element from the given list"""
-    return choose_by(rand(), *vals)
+    """Chooses randomly from the given list of values."""
+    return choose_with(rand(), *vals)
 
 
-def wchoose_by(pat, *pairs):
+def choose_cycles(*vals):
     """
-    Like @choose@, but works on an a list of tuples of values and weights
+    Similar to `cat`, but rather than playing the given patterns in order, it
+    picks them at random.
 
-    Values are samples using the 0-1 ranged numerical pattern `pat`.
+    >>> s(choose_cycles("bd*2 sn", "jvbass*3", "drum*2", "ht mt")
+
+    """
+    return choose(*vals).segment(1)
+
+
+def randcat(*vals):
+    """Alias of `choose_cycles`"""
+    return choose_cycles(*vals)
+
+
+def wchoose_with(pat, *pairs):
+    """
+    Like `wchoose`, but works on an a list of tuples of values and weights
+
+    Values are samples using the 0..1 ranged numerical pattern `pat`.
 
     """
     values, weights = list(zip(*pairs))
@@ -1215,23 +1235,7 @@ def wchoose_by(pat, *pairs):
 
 def wchoose(*vals):
     """Like @choose@, but works on an a list of tuples of values and weights"""
-    return wchoose_by(rand(), *vals)
-
-
-def choose_cycle(*vals):
-    """Same as `randcat`"""
-    return choose(*vals).segment(1)
-
-
-def randcat(*vals):
-    """
-    Similar to `cat`, but rather than playing the given patterns in order, it
-    picks them at random.
-
-    >>> s(randcat("bd*2 sn", "jvbass*3", "drum*2", "ht mt")
-
-    """
-    return choose_cycle(*vals)
+    return wchoose_with(rand(), *vals)
 
 
 def _euclid(k: int, n: int, rotation: float):
