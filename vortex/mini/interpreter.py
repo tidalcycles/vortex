@@ -28,7 +28,7 @@ class MiniVisitor(NodeVisitor):
             other_groups = []
         if isinstance(other_seqs, Node):
             other_seqs = []
-        other_groups = [e[3] for e in other_groups]
+        other_groups = [e[4] for e in other_groups]
         other_seqs = [e[3] for e in other_seqs]
         if other_groups:
             # Workaround: Re-build AST nodes as if it were a polyrhythm ("a b .
