@@ -82,6 +82,9 @@ from vortex.pattern import (
         ("bd(3,8,2)", None, pure("bd").euclid(3, 8, 2)),
         ("bd(<3 5>,8,<2 4>)", None, pure("bd").euclid(slowcat(3, 5), 8, slowcat(2, 4))),
         ("bd _ _ sd", None, mini("bd@3 sd")),
+        ("bd cp . sd", None, polyrhythm([cat("bd", "cp"), "sd"])),
+        ("bd*<2 3 4>", TimeSpan(0, 4), pure("bd").fast(slowcat(2, 3, 4))),
+        ("bd/[2 3]", TimeSpan(0, 4), pure("bd").slow(cat(2, 3))),
     ],
 )
 def test_eval(input_code, query_span, expected_pat):

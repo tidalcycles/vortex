@@ -586,7 +586,64 @@ from vortex.mini import parse_mini
                 ],
             },
         ),
-        # ("bd sd . cp . hh*2", parse_mini("[bd sd] [cp] [hh*2]")),
+        ("bd sd . cp . hh*2", parse_mini("[bd sd] [cp] [hh*2]")),
+        (
+            "bd*<2 3 4>",
+            {
+                "type": "sequence",
+                "elements": [
+                    {
+                        "type": "element",
+                        "value": {"type": "word", "value": "bd", "index": 0},
+                        "modifiers": [
+                            {
+                                "type": "modifier",
+                                "op": "fast",
+                                "value": {
+                                    "type": "element",
+                                    "value": {
+                                        "type": "polymeter",
+                                        "seqs": [
+                                            {
+                                                "type": "sequence",
+                                                "elements": [
+                                                    {
+                                                        "type": "element",
+                                                        "value": {
+                                                            "type": "number",
+                                                            "value": 2,
+                                                        },
+                                                        "modifiers": [],
+                                                    },
+                                                    {
+                                                        "type": "element",
+                                                        "value": {
+                                                            "type": "number",
+                                                            "value": 3,
+                                                        },
+                                                        "modifiers": [],
+                                                    },
+                                                    {
+                                                        "type": "element",
+                                                        "value": {
+                                                            "type": "number",
+                                                            "value": 4,
+                                                        },
+                                                        "modifiers": [],
+                                                    },
+                                                ],
+                                            }
+                                        ],
+                                        "steps": 1,
+                                    },
+                                    "modifiers": [],
+                                },
+                            }
+                        ],
+                    }
+                ],
+            },
+        ),
     ],
 )
 def test_parse(input_code, expected_ast):
