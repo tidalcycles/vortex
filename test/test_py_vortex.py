@@ -12,7 +12,7 @@ def multi_list():
 
 # Utilities
 def test_concat(multi_list):
-    flat_list = pyt.concat(multi_list)
+    flat_list = pyt.flatten(multi_list)
     assert flat_list == [1, 2, 3, 4, 5, 6]
 
 

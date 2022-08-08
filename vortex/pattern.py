@@ -178,7 +178,7 @@ class Pattern:
         a cycle."""
 
         def query(span) -> list:
-            return concat([self.query(subspan) for subspan in span.span_cycles()])
+            return flatten([self.query(subspan) for subspan in span.span_cycles()])
 
         return Pattern(query)
 
@@ -267,7 +267,7 @@ class Pattern:
                     event_func.value(event_val.value),
                 )
 
-            return concat(
+            return flatten(
                 [
                     remove_nones(
                         [apply(event_func, event_val) for event_val in event_vals]
@@ -295,7 +295,7 @@ class Pattern:
         def query(span):
             events = []
             for event_func in pat_func.query(span):
-                event_vals = pat_val.query(event_func.whole_or_part());
+                event_vals = pat_val.query(event_func.whole_or_part())
 
                 for event_val in event_vals:
                     new_whole = event_func.whole
@@ -313,7 +313,7 @@ class Pattern:
         def query(span):
             events = []
             for event_val in pat_val.query(span):
-                event_funcs = pat_func.query(event_val.whole_or_part());
+                event_funcs = pat_func.query(event_val.whole_or_part())
                 for event_func in event_funcs:
                     new_whole = event_val.whole
                     new_part = event_func.part.intersection(event_val.part)
@@ -391,7 +391,7 @@ class Pattern:
             def match(a):
                 return [withWhole(a, b) for b in func(a.value).query(a.part)]
 
-            return concat([match(ev) for ev in pat_val.query(span)])
+            return flatten([match(ev) for ev in pat_val.query(span)])
 
         return Pattern(query)
 
@@ -698,6 +698,8 @@ class Pattern:
         numerical 0-1 ranged pattern.
 
         """
+        if by == 0:
+            return self
         if not prand:
             prand = rand()
         return self.fmap(lambda a: lambda _: a).app_left(
@@ -892,7 +894,7 @@ def stack(*pats):
     pats = [reify(pat) for pat in pats]
 
     def query(span):
-        return concat([pat.query(span) for pat in pats])
+        return flatten([pat.query(span) for pat in pats])
 
     return Pattern(query)
 
@@ -940,7 +942,7 @@ def polyrhythm(*xs):
     if len(seqs) == 0:
         return silence()
 
-    return stack(seqs)
+    return stack(*seqs)
 
 
 # alias
@@ -1001,7 +1003,9 @@ def time_to_rand(a):
 
 # Signals
 
-silence = lambda: Pattern(lambda _: [])
+
+def silence():
+    return Pattern(lambda _: [])
 
 
 def signal(func):
@@ -1099,36 +1103,40 @@ def partial_decorator(f):
 
 @partial_decorator
 def fast(arg, pat):
-    return pat.fast(arg)
+    return reify(pat).fast(arg)
 
 
 @partial_decorator
 def slow(arg, pat):
-    return pat.slow(arg)
+    return reify(pat).slow(arg)
 
 
 @partial_decorator
 def early(arg, pat):
-    return pat.early(arg)
+    return reify(pat).early(arg)
 
 
 @partial_decorator
 def late(arg, pat):
-    return pat.late(arg)
+    return reify(pat).late(arg)
 
 
 @partial_decorator
 def jux(arg, pat):
-    return pat.jux(arg)
+    return reify(pat).jux(arg)
 
 
 @partial_decorator
 def union(pat_a, pat_b):
-    return pat_b.union(pat_a)
+    return reify(pat_b).union(pat_a)
 
 
 def rev(pat):
-    return pat.rev()
+    return reify(pat).rev()
+
+
+def degrade(pat):
+    return reify(pat).degrade()
 
 
 ## Combinators
@@ -1154,11 +1162,12 @@ def timecat(*time_pat_tuples):
     >>> timecat((1, s("bd*4")), (1, s("hh27*8")))
 
     """
+    time_pat_tuples = [(Fraction(t), p) for t, p in time_pat_tuples]
     total = sum(Fraction(time) for time, _ in time_pat_tuples)
     arranged = []
     accum = Fraction(0)
     for time, pat in time_pat_tuples:
-        arranged.append((accum, accum + Fraction(time), pat))
+        arranged.append((accum, accum + Fraction(time), reify(pat)))
         accum += time
     return stack(
         *[
@@ -1168,25 +1177,45 @@ def timecat(*time_pat_tuples):
     )
 
 
-def choose_by(pat, *vals):
-    """
-    Randomly picks an element from the given list
+def _choose_with(pat, *vals):
+    return pat.range(0, len(vals)).fmap(lambda v: reify(vals[math.floor(v)]))
 
-    Values are samples using the 0-1 ranged numerical pattern `pat`.
+
+def choose_with(pat, *vals):
     """
-    return pat.range(0, len(vals)).fmap(lambda v: vals[math.floor(v)])
+    Choose from the list of values (or patterns of values) using the given
+    pattern of numbers, which should be in the range of 0..1
+
+    """
+    return _choose_with(pat, *vals).outer_join()
 
 
 def choose(*vals):
-    """Randomly picks an element from the given list"""
-    return choose_by(rand(), *vals)
+    """Chooses randomly from the given list of values."""
+    return choose_with(rand(), *vals)
 
 
-def wchoose_by(pat, *pairs):
+def choose_cycles(*vals):
     """
-    Like @choose@, but works on an a list of tuples of values and weights
+    Similar to `cat`, but rather than playing the given patterns in order, it
+    picks them at random.
 
-    Values are samples using the 0-1 ranged numerical pattern `pat`.
+    >>> s(choose_cycles("bd*2 sn", "jvbass*3", "drum*2", "ht mt")
+
+    """
+    return choose(*vals).segment(1)
+
+
+def randcat(*vals):
+    """Alias of `choose_cycles`"""
+    return choose_cycles(*vals)
+
+
+def wchoose_with(pat, *pairs):
+    """
+    Like `wchoose`, but works on an a list of tuples of values and weights
+
+    Values are samples using the 0..1 ranged numerical pattern `pat`.
 
     """
     values, weights = list(zip(*pairs))
@@ -1206,7 +1235,7 @@ def wchoose_by(pat, *pairs):
 
 def wchoose(*vals):
     """Like @choose@, but works on an a list of tuples of values and weights"""
-    return wchoose_by(rand(), *vals)
+    return wchoose_with(rand(), *vals)
 
 
 def _euclid(k: int, n: int, rotation: float):

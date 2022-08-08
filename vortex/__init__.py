@@ -12,6 +12,7 @@ except pkg_resources.DistributionNotFound:  # pragma: no cover
 
 
 from .control import *
+from .mini import mini, parse_mini
 from .pattern import *
 from .utils import *
 from .vortex import *

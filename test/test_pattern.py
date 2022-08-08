@@ -6,20 +6,22 @@ from vortex.pattern import (
     Event,
     TimeSpan,
     choose,
-    choose_by,
+    choose_cycles,
+    choose_with,
     fast,
     fastcat,
     irand,
     perlin,
     pure,
     rand,
+    randcat,
     rev,
     saw,
     slowcat,
     stack,
     timecat,
     wchoose,
-    wchoose_by,
+    wchoose_with,
 )
 
 
@@ -247,8 +249,8 @@ def test_choose():
     ]
 
 
-def test_chooseby():
-    assert choose_by(perlin(), *range(8)).segment(4).first_cycle() == [
+def test_choose_with():
+    assert choose_with(perlin(), *range(8)).segment(4).first_cycle() == [
         Event(TimeSpan(0, 1 / 4), TimeSpan(0, 1 / 4), 0),
         Event(TimeSpan(1 / 4, 1 / 2), TimeSpan(1 / 4, 1 / 2), 1),
         Event(TimeSpan(1 / 2, 3 / 4), TimeSpan(1 / 2, 3 / 4), 3),
@@ -274,8 +276,8 @@ def test_wchoose():
     ]
 
 
-def test_wchooseby():
-    assert wchoose_by(
+def test_wchoose_with():
+    assert wchoose_with(
         rand().late(100), ("a", 1), ("e", 0.5), ("g", 2), ("c", 1)
     ).segment(4).first_cycle() == [
         Event(TimeSpan(0, 1 / 4), TimeSpan(0, 1 / 4), "a"),
@@ -296,6 +298,27 @@ def test_wchoose_distribution():
     # Check recurrence of values based on weights and uniform random distribution
     # a =~ 20, e =~ 10, g =~ 50, c =~ 20
     assert values_groupedby_count == {"a": 22, "e": 10, "g": 48, "c": 20}
+
+
+def test_choose_cycles():
+    assert choose_cycles("bd", "sd", "hh").query(TimeSpan(0, 10)) == [
+        Event(TimeSpan(0, 1), TimeSpan(0, 1), "bd"),
+        Event(TimeSpan(1, 2), TimeSpan(1, 2), "sd"),
+        Event(TimeSpan(2, 3), TimeSpan(2, 3), "sd"),
+        Event(TimeSpan(3, 4), TimeSpan(3, 4), "sd"),
+        Event(TimeSpan(4, 5), TimeSpan(4, 5), "hh"),
+        Event(TimeSpan(5, 6), TimeSpan(5, 6), "bd"),
+        Event(TimeSpan(6, 7), TimeSpan(6, 7), "bd"),
+        Event(TimeSpan(7, 8), TimeSpan(7, 8), "sd"),
+        Event(TimeSpan(8, 9), TimeSpan(8, 9), "sd"),
+        Event(TimeSpan(9, 10), TimeSpan(9, 10), "bd"),
+    ]
+
+
+def test_randcat():
+    assert randcat("bd", "sd", "hh").query(TimeSpan(0, 10)) == choose_cycles(
+        "bd", "sd", "hh"
+    ).query(TimeSpan(0, 10))
 
 
 def test_degrade():
@@ -463,7 +486,8 @@ def test_euclid():
         Event(TimeSpan(7 / 8, 1), TimeSpan(7 / 8, 1), {"s": "sd"}),
     ]
 
+
 def test_app_left():
-    assert saw().segment(1).query(TimeSpan(0,0.25)) == [
-        Event(TimeSpan(0, 1), TimeSpan(0, 1/4), 0.5)
+    assert saw().segment(1).query(TimeSpan(0, 0.25)) == [
+        Event(TimeSpan(0, 1), TimeSpan(0, 1 / 4), 0.5)
     ]

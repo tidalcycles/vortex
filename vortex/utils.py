@@ -3,7 +3,7 @@ from fractions import Fraction
 from functools import partial, reduce, wraps
 
 
-def concat(lst) -> list:
+def flatten(lst) -> list:
     """Flattens a list of lists"""
     return [item for sublist in lst for item in sublist]
 
