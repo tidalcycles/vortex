@@ -1,10 +1,13 @@
 [tool.poetry]
-name = "vortex"
+name = "tidalvortex"
 version = "0.1.0-alpha.0"
 description = "Python port of TidalCycles"
 authors = ["Tidal Cyclists <vortex@tidalcycles.org>"]
 repository = "https://github.com/tidalcycles/vortex"
 license = "GPL-3.0-or-later"
+packages = [
+    { include = "vortex" }
+]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.11"

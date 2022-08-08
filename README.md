@@ -7,32 +7,16 @@ for Python 3+.
 **This is free software, but currently free as in _free puppies_. It is moving
 fast and only really useful for playing with, not serious work.**
 
-## Usage
-
-From a terminal, run `vortex` to fire up a GUI editor. You can evaluate blocks
-of code by pressing <kbd>Ctrl</kbd>+<kbd>Enter</kbd> or
-<kbd>Command</kbd>+<kbd>Enter</kbd>.
-
-Alternatively, you can start a Vortex REPL by running `vortex --cli`. This REPL
-uses [IPython](https://ipython.org/) to evaluate Python code.
 
 ## Install
 
-There is no package published on PyPi yet, but you can install everything from
-the repository by following the instructions for development below.
-
-## Development
-
-First clone the repository, or download the zip file and unzip it somewhere on
-your file system.
-
 ### Dependencies
 
-Vortex depends on:
+Vortex requires:
 
 * Python 3.8, 3.9 or 3.10
-* liblo
-* Qt 5
+* liblo: OSC communication library
+* Qt 5: GUI library
 
 #### Linux
 
@@ -50,6 +34,30 @@ Run these commands only if a component appear to be missing. You can use
 
 * `brew install liblo`
 * `pip install -U pyqt5 pyqt5-sip sip`
+
+### Install Vortex
+
+Now, install the latest version of Vortex with `pip`:
+
+```
+pip install -U tidalvortex
+```
+
+
+## Usage
+
+From a terminal, run `vortex` to fire up a GUI editor. You can evaluate blocks
+of code by pressing <kbd>Ctrl</kbd>+<kbd>Enter</kbd> or
+<kbd>Command</kbd>+<kbd>Enter</kbd>.
+
+Alternatively, you can start a Vortex REPL by running `vortex --cli`. This REPL
+uses [IPython](https://ipython.org/) to evaluate Python code.
+
+
+## Development
+
+First clone the repository, or download the zip file and unzip it somewhere on
+your file system.
 
 ### Poetry
 
@@ -74,9 +82,10 @@ Vortex from other Python packages in your system.
 poetry install
 ```
 
-This will also install the `vortex` package.
+This will also install the `tidalvortex` package.
 
-Now refer to the Usage section.  Please note that for running the `vortex` CLI command, you will need to preprend `poetry run`:
+Now refer to the Usage section.  Please note that for running the `vortex` CLI
+command, you will need to preprend `poetry run`:
 
 For example:
 
@@ -120,10 +129,12 @@ automatically, useful for developing in a test-driven way.
 ### Publishing
 
 You can bump the package version with `poetry version {version}` where
-`{version}` is one of these: patch, minor, major, prepatch, preminor, premajor,
-prerelease.  This follows the [semantic versioning](https://semver.org/) scheme.
+`{version}` is a valid semver string or a valid bump rule: patch, minor, major,
+prepatch, preminor, premajor, prerelease.
+We follow the [semantic versioning](https://semver.org/) scheme.
 
 To publish the package, run `poetry publish`.
+
 
 ## Contributing
 
@@ -138,6 +149,7 @@ code of conduct.
 </a>
 
 Made with [contrib.rocks](https://contrib.rocks).
+
 
 ## License
 

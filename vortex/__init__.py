@@ -5,7 +5,7 @@ import pkg_resources
 
 try:
     # Change here if project is renamed and does not equal the package name
-    package_name = __name__
+    package_name = "tidalvortex"
     __version__ = pkg_resources.get_distribution(package_name).version
 except pkg_resources.DistributionNotFound:  # pragma: no cover
     __version__ = "unknown"
