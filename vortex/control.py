@@ -335,7 +335,7 @@ module_obj = sys.modules[__name__]
 # This had to go in its own function, for weird scoping reasons..
 def make_control(name):
     def ctrl(*args):
-        return sequence(*args).fmap(lambda v: {name: v})
+        return sequence(*[reify(arg) for arg in args]).fmap(lambda v: {name: v})
 
     # setattr(Pattern, name, lambda pat: Pattern(reify(pat).fmap(lambda v: {name: v}).query))
     setattr(module_obj, name, ctrl)
