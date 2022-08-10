@@ -900,6 +900,8 @@ def stack(*pats):
 
 
 def _sequence_count(x):
+    from .mini import mini
+
     if type(x) == list or type(x) == tuple:
         if len(x) == 1:
             return _sequence_count(x[0])
@@ -907,8 +909,9 @@ def _sequence_count(x):
             return (fastcat(*[sequence(x) for x in x]), len(x))
     if isinstance(x, Pattern):
         return (x, 1)
-    else:
-        return (pure(x), 1)
+    if isinstance(x, str):
+        return (mini(x), 1)
+    return (pure(x), 1)
 
 
 def sequence(*args):
@@ -949,8 +952,12 @@ def polyrhythm(*xs):
 pr = polyrhythm
 
 
-def reify(x):
+def reify(x) -> Pattern:
+    from .mini import mini
+
     if not isinstance(x, Pattern):
+        if isinstance(x, str):
+            return mini(x)
         return pure(x)
     return x
 
