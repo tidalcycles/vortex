@@ -143,7 +143,8 @@ class SuperDirtStream:
 
     """
 
-    def __init__(self, port=57120, latency=0.2):
+    def __init__(self, port=57120, latency=0.2, name=None):
+        self.name = name
         self.pattern = None
         self.latency = latency
 
@@ -210,6 +211,23 @@ class SuperDirtStream:
             # liblo.send(superdirt, "/dirt/play", *msg)
             bundle = liblo.Bundle(ts, liblo.Message("/dirt/play", *msg))
             liblo.send(self._address, bundle)
+
+    def set(self, pattern):
+        self.pattern = pattern
+        return self
+
+    def __lshift__(self, new_pattern):
+        if self.pattern:
+            return self.set(self.pattern << new_pattern)
+        return self.set(new_pattern)
+
+    def __rshift__(self, new_pattern):
+        if self.pattern:
+            return self.set(self.pattern >> new_pattern)
+        return self.set(new_pattern)
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} {repr(self.name)}>"
 
 
 if __name__ == "__main__":
