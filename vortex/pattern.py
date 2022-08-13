@@ -4,7 +4,7 @@ from fractions import Fraction
 from functools import partial, reduce, total_ordering
 from itertools import accumulate
 from pprint import pformat
-from typing import Optional
+from typing import Iterable, Optional
 
 from .euclid import bjorklund
 from .utils import *
@@ -366,20 +366,89 @@ class Pattern:
     def __rpow__(self, other):
         return self.fmap(lambda x: lambda y: y**x).app_left(reify(other))
 
-    def union(self, other):
-        return self.fmap(lambda x: lambda y: {**x, **y}).app_left(other)
+    def combine_right(self, *others):
+        """
+        Combine multiple dict patterns (AKA control patterns) by merging the
+        values from other patterns, and replacing any key with the same name.
+
+        If there are duplicate keys, the last pattern with that key takes
+        precedence when merging values.  For inverting the precedence, see
+        `combine_left`.
+
+        See `__rshift__` (`>>` operator)
+
+        >>> s("a").combine_right(n("0 1"), s("b c"))
+            ~[((0, 1), (0, ½), {'n': 0, 's': 'b'}),
+              ((0, 1), (½, 1), {'n': 1, 's': 'c'})] ...~
+
+        """
+        return reduce(
+            lambda a, b: a.fmap(lambda x: lambda y: {**x, **y}).app_left(b),
+            others,
+            self,
+        )
+
+    union = combine_right
+
+    def combine_left(self, *others):
+        """
+        Combine multiple dict patterns (AKA control patterns) by merging the
+        values from other patterns, and replacing any key with the same name.
+
+        If there are duplicate keys, the first pattern with that key takes
+        precedence when merging values.  For inverting the precedence, see
+        `combine_right`.
+
+        See `__lshift__` (`<<` operator)
+
+        >>> s("a").combine_left(n("0 1"), s("b c"))
+            ~[((0, 1), (0, ½), {'n': 0, 's': 'a'}),
+              ((0, 1), (½, 1), {'n': 1, 's': 'a'})] ...~
+
+        """
+        return reduce(
+            lambda a, b: a.fmap(lambda x: lambda y: {**y, **x}).app_left(b),
+            others,
+            self,
+        )
 
     def __rshift__(self, other):
-        """Overrides the >> operator to support combining patterns of
-        dictionaries (AKA 'control patterns'). Produces the union of
-        two patterns of dictionaries, with values from right replacing
-        any with the same name from the left
         """
-        return self.union(other)
+        Alias of `combine_right`
+
+        Accepts a Pattern or an iterable of Patterns.
+
+        >>> s("a") >> n("0 1") >> s("b c")
+            ~[((0, 1), (0, ½), {'n': 0, 's': 'b'}),
+              ((0, 1), (½, 1), {'n': 1, 's': 'c'})] ...~
+
+        >>> s("a") >> [s("b c"), n("0 1"), gain(0.75)]
+            ~[((0, 1), (0, ½), {'gain': 0.75, 'n': 0, 's': 'b'}),
+              ((0, 1), (½, 1), {'gain': 0.75, 'n': 1, 's': 'c'})] ...~
+
+        """
+        if not isinstance(other, Iterable):
+            other = [other]
+        return self.combine_right(*other)
 
     def __lshift__(self, other):
-        """Like >>, but matching values from left replace those on the right"""
-        return self.fmap(lambda x: lambda y: {**y, **x}).app_left(other)
+        """
+        Alias of `combine_left`
+
+        Accepts a Pattern or an iterable of Patterns.
+
+        >>> s("a") << n("0 1") << s("b c")
+            ~[((0, 1), (0, ½), {'n': 0, 's': 'a'}),
+              ((0, 1), (½, 1), {'n': 1, 's': 'a'})] ...~
+
+        >>> s("a") << [s("b c"), n("0 1"), gain(0.75)]
+            ~[((0, 1), (0, ½), {'gain': 0.75, 'n': 0, 's': 'a'}),
+              ((0, 1), (½, 1), {'gain': 0.75, 'n': 1, 's': 'a'})] ...~
+
+        """
+        if not isinstance(other, Iterable):
+            other = [other]
+        return self.combine_left(*other)
 
     def _bind_whole(self, choose_whole, func):
         pat_val = self
