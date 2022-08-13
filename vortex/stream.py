@@ -227,7 +227,8 @@ class SuperDirtStream:
         return self.set(new_pattern)
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} {repr(self.name)}>"
+        pattern_repr = " \n" + repr(self.pattern) if self.pattern else ""
+        return f"<{self.__class__.__name__} {repr(self.name)}{pattern_repr} at {hash(self)}>"
 
 
 if __name__ == "__main__":
