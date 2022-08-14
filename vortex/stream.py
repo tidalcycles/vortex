@@ -1,10 +1,12 @@
-import contextlib
-import importlib
+from __future__ import annotations
+
 import logging
 import math
 import threading
 import time
+from abc import ABC
 from fractions import Fraction
+from typing import Any, Dict
 
 import liblo
 import link
@@ -128,50 +130,26 @@ class LinkClock:
         return
 
 
-class SuperDirtStream:
+class BaseStream(ABC):
     """
-    A class for sending control pattern messages to SuperDirt
+    A class for playing control pattern events
 
     It should be subscribed to a LinkClock instance.
 
     Parameters
     ----------
-    port: int
-        The port where SuperDirt is listening
-    latency: float
-        SuperDirt latency
+    name: Optional[str]
+        Name of the stream instance
 
     """
 
-    def __init__(self, port=57120, latency=0.2, name=None):
+    def __init__(self, name: str = None):
         self.name = name
         self.pattern = None
-        self.latency = latency
-
-        self._port = port
-        self._address = liblo.Address(port)
-        self._is_playing = True
-
-    def play(self):
-        """Play stream"""
-        self._is_playing = True
-
-    def stop(self):
-        """Stop stream"""
-        self._is_playing = False
-
-    @property
-    def is_playing(self):
-        """Whether stream is currently playing"""
-        return self._is_playing
-
-    @property
-    def port(self):
-        """SuperDirt listening port"""
-        return self._port
 
     def notify_tick(self, cycle, s, cps, bpc, mill, now):
-        if not self._is_playing or not self.pattern:
+        """Called by a Clock every time it ticks, when subscribed to it"""
+        if not self.pattern:
             return
 
         cycle_from, cycle_to = cycle
@@ -195,40 +173,78 @@ class SuperDirtStream:
             ts = (link_on / mill) + liblo_diff + self.latency + nudge
 
             # print("liblo time %f link_time %f link_on %f cycle_on %f liblo_diff %f ts %f" % (liblo.time(), link_secs, link_on, cycle_on, liblo_diff, ts))
-            v = e.value
-            v["cps"] = float(cps)
-            v["cycle"] = float(cycle_on)
-            v["delta"] = float(delta_secs)
+            self.notify_event(
+                e.value,
+                timestamp=ts,
+                cps=float(cps),
+                cycle=float(cycle_on),
+                delta=float(delta_secs),
+            )
 
-            msg = []
-            for key, val in v.items():
-                if isinstance(val, Fraction):
-                    val = float(val)
-                msg.append(key)
-                msg.append(val)
-            _logger.info("%s", msg)
-
-            # liblo.send(superdirt, "/dirt/play", *msg)
-            bundle = liblo.Bundle(ts, liblo.Message("/dirt/play", *msg))
-            liblo.send(self._address, bundle)
-
-    def set(self, pattern):
-        self.pattern = pattern
-        return self
-
-    def __lshift__(self, new_pattern):
-        if self.pattern:
-            return self.set(self.pattern << new_pattern)
-        return self.set(new_pattern)
-
-    def __rshift__(self, new_pattern):
-        if self.pattern:
-            return self.set(self.pattern >> new_pattern)
-        return self.set(new_pattern)
+    def notify_event(
+        self,
+        event: Dict[str, Any],
+        timestamp: float,
+        cps: float,
+        cycle: float,
+        delta: float,
+    ):
+        """Called by `notify_tick` with the event and timestamp that should be played"""
+        raise NotImplementedError
 
     def __repr__(self):
         pattern_repr = " \n" + repr(self.pattern) if self.pattern else ""
-        return f"<{self.__class__.__name__} {repr(self.name)}{pattern_repr} at {hash(self)}>"
+        return f"<{self.__class__.__name__} {repr(self.name)}{pattern_repr}>"
+
+
+class SuperDirtStream(BaseStream):
+    """
+    A class for sending control pattern messages to SuperDirt
+
+    It should be subscribed to a LinkClock instance.
+
+    Parameters
+    ----------
+    port: int
+        The port where SuperDirt is listening
+    latency: float
+        SuperDirt latency
+
+    """
+
+    def __init__(self, port=57120, latency=0.2, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.latency = latency
+
+        self._port = port
+        self._address = liblo.Address(port)
+
+    @property
+    def port(self):
+        """SuperDirt listening port"""
+        return self._port
+
+    def notify_event(
+        self,
+        event: Dict[str, Any],
+        timestamp: float,
+        cps: float,
+        cycle: float,
+        delta: float,
+    ):
+        msg = []
+        for key, val in event.items():
+            if isinstance(val, Fraction):
+                val = float(val)
+            msg.append(key)
+            msg.append(val)
+        msg.extend(["cps", cps, "cycle", cycle, "delta", delta])
+        _logger.info("%s", msg)
+
+        # liblo.send(superdirt, "/dirt/play", *msg)
+        bundle = liblo.Bundle(timestamp, liblo.Message("/dirt/play", *msg))
+        liblo.send(self._address, bundle)
 
 
 if __name__ == "__main__":
