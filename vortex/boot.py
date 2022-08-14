@@ -5,13 +5,14 @@ _default_clock = LinkClock(bpm=120)
 _streams = {}
 
 
-def p(key, pattern):
+def p(key, pattern=None):
     if key not in _streams:
-        stream = SuperDirtStream()
+        stream = SuperDirtStream(name=key)
         _default_clock.subscribe(stream)
         _streams[key] = stream
-    _streams[key].pattern = pattern
-    return pattern
+    if pattern:
+        _streams[key].pattern = pattern
+    return _streams[key]
 
 
 def hush():
