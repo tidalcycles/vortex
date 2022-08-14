@@ -5,11 +5,13 @@ _default_clock = LinkClock(bpm=120)
 _streams = {}
 
 
-def p(key):
+def p(key, pattern=None):
     if key not in _streams:
         stream = SuperDirtStream(name=key)
         _default_clock.subscribe(stream)
         _streams[key] = stream
+    if pattern:
+        _streams[key].pattern = pattern
     return _streams[key]
 
 

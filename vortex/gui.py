@@ -27,8 +27,8 @@ DEFAULT_CODE = r"""# this is an example code
 # another block
 #
 
-p("test", s(stack(pure("gabba").fast(4), pure("cp").fast(3))).every(3, fast(2))
-    >> speed(sequence(2, 3))
+p("test", s(stack("gabba*4", "cp*3").every(3, fast(2)))
+    >> speed("2 3")
     >> room(0.5)
     >> size(0.8)
 )

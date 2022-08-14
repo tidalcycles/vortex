@@ -199,9 +199,7 @@ class BaseStream(ABC):
 
 class SuperDirtStream(BaseStream):
     """
-    A class for sending control pattern messages to SuperDirt
-
-    It should be subscribed to a LinkClock instance.
+    This Stream class sends control pattern messages to SuperDirt via OSC
 
     Parameters
     ----------
