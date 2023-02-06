@@ -1,10 +1,14 @@
-# This workflow will install Python dependencies and run tests
+# This workflow will install Python dependencies and run tests except on branch 'main' where CI action is used
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
 name: Vortex Tests
 
-on: [push, pull_request]
-
+on:
+  push:
+    branches: 
+    - '**'      # matches every branch
+    - '!main'   # excludes main
+    
 jobs:
   build:
 
