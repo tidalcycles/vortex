@@ -337,8 +337,12 @@ def make_control(name):
     def ctrl(*args):
         return sequence(*[reify(arg) for arg in args]).fmap(lambda v: {name: v})
 
+    def ctrl_pattern(self, *args):
+        return self >> sequence(*[reify(arg) for arg in args]).fmap(lambda v: {name: v})
+
     # setattr(Pattern, name, lambda pat: Pattern(reify(pat).fmap(lambda v: {name: v}).query))
     setattr(module_obj, name, ctrl)
+    setattr(Pattern, name, ctrl_pattern)
 
 
 for t, name, desc in generic_params:
