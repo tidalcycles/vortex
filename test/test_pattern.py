@@ -1,7 +1,7 @@
 import math
 from itertools import groupby
 
-from vortex.control import s, speed
+from vortex.control import s, speed, n
 from vortex.pattern import (
     Event,
     TimeSpan,
@@ -491,3 +491,20 @@ def test_app_left():
     assert saw().segment(1).query(TimeSpan(0, 0.25)) == [
         Event(TimeSpan(0, 1), TimeSpan(0, 1 / 4), 0.5)
     ]
+
+def test_rshift():
+    assert_equal_patterns(
+        s("a") >> n("0 1"),
+        s("a").combine_right(n("0 1"))
+    )
+    assert_equal_patterns(
+        s("a").n("0 1"),
+        s("a").combine_right(n("0 1"))
+    )
+
+def test_lshift():
+    assert_equal_patterns(
+        s("a") << n("0 1"),
+        s("a").combine_left(n("0 1"))
+    )
+
