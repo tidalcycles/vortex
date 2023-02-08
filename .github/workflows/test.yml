@@ -1,14 +1,14 @@
-# This workflow will install Python dependencies and run tests with a variety of Python versions
+# This workflow will install Python dependencies and run tests except on branch 'main' where CI action is used
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: CI
+name: Vortex Tests
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
+    branches: 
+    - '**'      # matches every branch
+    - '!main'   # excludes main
+    
 jobs:
   build:
 
@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.10"]
 
     steps:
     - uses: actions/checkout@v3
