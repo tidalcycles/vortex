@@ -16,7 +16,7 @@ Vortex requires:
 
 * Python 3.8, 3.9 or 3.10
 * liblo: OSC communication library
-* Qt 5: GUI library
+* Qt 6: GUI library
 
 #### Linux
 
@@ -34,6 +34,27 @@ Run these commands only if a component appear to be missing. You can use
 
 * `brew install liblo`
 * `pip install -U pyqt5 pyqt5-sip sip`
+
+#### Windows
+
+On Windows the liblo library has to be build manually by the following steps.
+
+- download and unpack http://downloads.sourceforge.net/liblo/liblo-0.31.tar.gz
+- install e.g. Microsoft Visual Studio 2022 Community Edition
+- install CMake build utility
+- `cd liblo\cmake`
+- `mkdir build`
+- `cd build`
+- `cmake ..`
+- `cmake --build .`
+- `pip install -U tidalvortex` (this will fail)
+- copy `liblo\cmake\build\Debug\liblo.lib` to `<pythonhome>\libs`
+- copy `liblo\cmake\build\build\lo\*.h` to `<pythonhome>\include`
+- copy `liblo\cmake\build\build\lo\*.h` to `<pythonhome>\include`
+- copy `liblo\lo\*.h` to `<pythonhome>\include`
+- `pip install -U tidalvortex` (this shall be successful)
+- copy `liblo\cmake\build\Debug\liblo.dll` to `<pythonhome>\Lib\site-packages`
+
 
 ### Install Vortex
 
@@ -69,7 +90,7 @@ After installing, check that you have Poetry working correctly by running
 
 ```bash
 $ poetry -V
-Poetry version 1.1.14
+Poetry version 1.3.2
 ```
 
 ### Install dependencies and Vortex package

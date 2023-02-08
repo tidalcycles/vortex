@@ -33,6 +33,16 @@ p("test", s(stack("gabba*4", "cp*3").every(3, fast(2)))
     >> size(0.8)
 )
 
+##
+# equivalent block
+#
+
+d["test"] = s(stack("gabba*4", "cp*3").every(3, fast(2)))
+    .speed("2 3")
+    .room(0.5)
+    .size(0.8)
+
+
 hush()
 
 """.replace(
