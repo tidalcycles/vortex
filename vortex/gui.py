@@ -144,7 +144,6 @@ class VortexMainWindow(QMainWindow):
         if code:
             _logger.info(f"Eval: '{code}'")
             try:
-                code = code.replace('\r', '').replace('\n', '')
                 exec(code, vars(self._dsl_module))
             except (TypeError, AttributeError) as e:
                 _logger.info("error: %s", str(e))
