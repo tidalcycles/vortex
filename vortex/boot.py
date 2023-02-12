@@ -2,21 +2,28 @@ from vortex import *
 from vortex.stream import LinkClock, SuperDirtStream
 
 _default_clock = LinkClock(bpm=120)
-_streams = {}
+__streams = {}
 
 
 def p(key, pattern=None):
-    if key not in _streams:
-        stream = SuperDirtStream(name=key)
-        _default_clock.subscribe(stream)
-        _streams[key] = stream
+    if key not in __streams:
+        __streams[key] = SuperDirtStream(name=key)
+        _default_clock.subscribe(__streams[key])
     if pattern:
-        _streams[key].pattern = pattern
-    return _streams[key]
+        __streams[key].pattern = pattern
+    return __streams[key]
 
 
 def hush():
-    for stream in _streams.values():
+    for stream in __streams.values():
         stream.pattern = silence
         _default_clock.unsubscribe(stream)
-    _streams.clear()
+    __streams.clear()
+
+
+class __Streams:
+    def __setitem__(self, key, value):
+        p(key, value)
+
+
+d = __Streams()

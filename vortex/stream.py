@@ -244,37 +244,43 @@ class SuperDirtStream(BaseStream):
         bundle = liblo.Bundle(timestamp, liblo.Message("/dirt/play", *msg))
         liblo.send(self._address, bundle)
 
+def setup_logging(loglevel):
+    """Setup basic logging
 
+    Args:
+      loglevel (int): minimum loglevel for emitting messages
+    """
+    logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
+    logging.basicConfig(
+        level=loglevel, stream=sys.stdout, format=logformat, datefmt="%Y-%m-%d %H:%M:%S"
+    )
+    
 if __name__ == "__main__":
+    setup_logging(logging.DEBUG)
     clock = LinkClock(120)
     clock.start()
 
     stream = SuperDirtStream()
     clock.subscribe(stream)
 
-    print(">> Wait a sec")
+    logging.info(">> Wait a sec")
     time.sleep(1)
 
-    print(">> Set pattern and let it play for 2 seconds")
-    stream.pattern = (
-        s(stack([pure("gabba").fast(pure(4)), pure("cp").fast(pure(3))]))
-        >> speed(sequence([pure(2), pure(3)]))
-        >> room(pure(0.5))
-        >> size(pure(0.8))
-    )
+    logging.info(">> Set pattern and let it play for 2 seconds")
+    stream.pattern = s(stack("gabba*4", "cp*3")).speed("2 3") >> room(0.5).size(0.8)
     time.sleep(2)
 
-    print(">> Stop the clock momentarily")
+    logging.info(">> Stop the clock momentarily")
     clock.stop()
 
-    print(">> Now, wait 3 secs")
+    logging.info(">> Now, wait 3 secs")
     time.sleep(3)
 
-    print(">> Start again...")
+    logging.info(">> Start again...")
     clock.start()
 
     time.sleep(2)
 
-    print(">> Stop the clock")
+    logging.info(">> Stop the clock")
     clock.stop()
-    print(">> Done")
+    logging.info(">> Done")
