@@ -344,8 +344,18 @@ def make_control(name):
     setattr(module_obj, name, ctrl)
     setattr(Pattern, name, ctrl_pattern)
 
+    return ctrl
+
 
 for t, name, desc in generic_params:
     make_control(name)
+
+def create_param(name):
+    """ Creates a new control function with the given name """
+    return make_control(name)
+
+def create_params(names):
+    """ Creates a new control functions from the given list of names """
+    return [make_control(name) for name in names]
 
 sound = s
