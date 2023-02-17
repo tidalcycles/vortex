@@ -1,7 +1,13 @@
 import math
 from itertools import groupby
 
-from vortex.control import s, speed, n
+from vortex.control import (
+    s, 
+    speed, 
+    n, 
+    create_param, 
+    create_params)
+
 from vortex.pattern import (
     Event,
     TimeSpan,
@@ -508,3 +514,17 @@ def test_lshift():
         s("a").combine_left(n("0 1"))
     )
 
+def test_create_param():
+    _foo = create_param('foo')
+    assert _foo(5).first_cycle() == [
+        Event(TimeSpan(0, 1), TimeSpan(0, 1), {"foo": 5})
+    ]
+
+def test_create_params():
+    _foo, _bar = create_params(['foo', 'bar'])
+    assert (_foo(17) >> _bar(42)).first_cycle() == [
+        Event(TimeSpan(0, 1), TimeSpan(0, 1), {"foo": 17, "bar": 42})
+    ]
+    assert s('bd').foo(17).bar(42).first_cycle() == [
+        Event(TimeSpan(0, 1), TimeSpan(0, 1), {"s": "bd", "foo": 17, "bar": 42})
+    ]
